@@ -28,6 +28,10 @@ public class OrderDAOImpl implements OrderDAO {
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String FIND_BY_ID = BASE_SELECT + "WHERE o.order_id = ?";
     private static final String FIND_BY_CUSTOMER = BASE_SELECT + "WHERE o.customer_id = ? ORDER BY o.created_at DESC";
+    private static final String FIND_BY_STATUS = BASE_SELECT + "WHERE o.order_status = ? ORDER BY o.created_at";
+    private static final String FIND_ALL = BASE_SELECT + "ORDER BY o.created_at DESC";
+    private static final String UPDATE_STATUS =
+            "UPDATE orders SET order_status = ? WHERE order_id = ? AND order_status = ?";
 
     @Override
     public int insert(Connection conn, Order order) throws SQLException {
@@ -73,6 +77,42 @@ public class OrderDAOImpl implements OrderDAO {
             }
         }
         return orders;
+    }
+
+    @Override
+    public List<Order> findByStatus(Connection conn, OrderStatus status) throws SQLException {
+        List<Order> orders = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(FIND_BY_STATUS)) {
+            ps.setString(1, status.name());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    orders.add(mapRow(rs));
+                }
+            }
+        }
+        return orders;
+    }
+
+    @Override
+    public List<Order> findAll(Connection conn) throws SQLException {
+        List<Order> orders = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(FIND_ALL);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                orders.add(mapRow(rs));
+            }
+        }
+        return orders;
+    }
+
+    @Override
+    public int updateStatus(Connection conn, int orderId, OrderStatus expectedCurrent, OrderStatus newStatus) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(UPDATE_STATUS)) {
+            ps.setString(1, newStatus.name());
+            ps.setInt(2, orderId);
+            ps.setString(3, expectedCurrent.name());
+            return ps.executeUpdate();
+        }
     }
 
     private void setNullableInt(PreparedStatement ps, int index, Integer value) throws SQLException {
