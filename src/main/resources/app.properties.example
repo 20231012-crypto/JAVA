@@ -1,0 +1,8 @@
+# Directory where uploaded product images are stored (outside the deployed WAR so
+# they survive Tomcat re-exploding the webapp on every redeploy). Must exist and be writable.
+upload.dir=C:/eaut-canteen-uploads
+
+# VietQR bank-transfer config, used to render the payment QR at checkout/order-detail.
+vietqr.bankId=970436
+vietqr.accountNo=0000000000
+vietqr.accountName=CANTEEN EAUT
