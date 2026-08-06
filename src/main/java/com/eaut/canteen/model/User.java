@@ -1,8 +1,11 @@
 package com.eaut.canteen.model;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class User {
+
+    private static final DateTimeFormatter DISPLAY_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private int userId;
     private String username;
@@ -96,5 +99,9 @@ public class User {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getCreatedAtDisplay() {
+        return createdAt == null ? "" : createdAt.format(DISPLAY_FORMAT);
     }
 }

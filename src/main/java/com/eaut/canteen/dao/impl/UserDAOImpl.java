@@ -5,6 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.eaut.canteen.dao.UserDAO;
 import com.eaut.canteen.model.AccountStatus;
@@ -24,6 +26,12 @@ public class UserDAOImpl implements UserDAO {
     private static final String INSERT =
             "INSERT INTO users (username, password_hash, full_name, email, phone, role, status) " +
             "VALUES (?, ?, ?, ?, ?, ?, ?)";
+    private static final String FIND_ALL_STAFF =
+            "SELECT * FROM users WHERE role <> 'CUSTOMER' ORDER BY role, full_name";
+    private static final String UPDATE_STATUS =
+            "UPDATE users SET status = ? WHERE user_id = ?";
+    private static final String FIND_BY_ROLE =
+            "SELECT * FROM users WHERE role = ? AND status = 'ACTIVE' ORDER BY full_name";
 
     @Override
     public User findById(Connection conn, int userId) throws SQLException {
@@ -81,6 +89,41 @@ public class UserDAOImpl implements UserDAO {
                 return keys.getInt(1);
             }
         }
+    }
+
+    @Override
+    public List<User> findAllStaff(Connection conn) throws SQLException {
+        List<User> staff = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(FIND_ALL_STAFF);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                staff.add(mapRow(rs));
+            }
+        }
+        return staff;
+    }
+
+    @Override
+    public void updateStatus(Connection conn, int userId, AccountStatus status) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(UPDATE_STATUS)) {
+            ps.setString(1, status.name());
+            ps.setInt(2, userId);
+            ps.executeUpdate();
+        }
+    }
+
+    @Override
+    public List<User> findByRole(Connection conn, Role role) throws SQLException {
+        List<User> users = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(FIND_BY_ROLE)) {
+            ps.setString(1, role.name());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    users.add(mapRow(rs));
+                }
+            }
+        }
+        return users;
     }
 
     private User mapRow(ResultSet rs) throws SQLException {

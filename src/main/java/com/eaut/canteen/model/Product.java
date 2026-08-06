@@ -15,6 +15,8 @@ public class Product {
     private boolean active;
     /** Populated only by DAO methods that join shelf_stock (e.g. catalog listing). */
     private int shelfQuantity;
+    /** Populated only by DAO methods that join warehouse_stock (e.g. admin listing). */
+    private int warehouseQuantity;
 
     public int getProductId() {
         return productId;
@@ -98,5 +100,13 @@ public class Product {
 
     public boolean isInStock() {
         return shelfQuantity > 0;
+    }
+
+    public int getWarehouseQuantity() {
+        return warehouseQuantity;
+    }
+
+    public void setWarehouseQuantity(int warehouseQuantity) {
+        this.warehouseQuantity = warehouseQuantity;
     }
 }
