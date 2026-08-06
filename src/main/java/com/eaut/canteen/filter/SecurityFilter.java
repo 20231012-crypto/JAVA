@@ -60,6 +60,7 @@ public class SecurityFilter implements Filter {
     private boolean isPublic(String path) {
         return path.isEmpty() || path.equals("/")
                 || path.equals("/login") || path.equals("/register") || path.equals("/logout")
+                || path.equals("/manifest.json") || path.equals("/sw.js")
                 || isUnderPrefix(path, "/products")
                 || isUnderPrefix(path, "/assets")
                 || isUnderPrefix(path, "/images");

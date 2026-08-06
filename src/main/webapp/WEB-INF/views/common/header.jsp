@@ -14,6 +14,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
+
+    <!-- Installable webapp (Add to Home Screen) -->
+    <link rel="manifest" href="${pageContext.request.contextPath}/manifest.json">
+    <meta name="theme-color" content="#00A082">
+    <link rel="apple-touch-icon" href="${pageContext.request.contextPath}/assets/icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Căng tin EAUT">
+    <script src="${pageContext.request.contextPath}/assets/js/pwa.js" defer></script>
+
     <title><c:out value="${pageTitle}" /> - Căng tin EAUT</title>
 </head>
 <body>
