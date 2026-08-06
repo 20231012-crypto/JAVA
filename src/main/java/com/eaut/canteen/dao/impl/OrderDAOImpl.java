@@ -32,6 +32,9 @@ public class OrderDAOImpl implements OrderDAO {
     private static final String FIND_ALL = BASE_SELECT + "ORDER BY o.created_at DESC";
     private static final String UPDATE_STATUS =
             "UPDATE orders SET order_status = ? WHERE order_id = ? AND order_status = ?";
+    private static final String MARK_PAID =
+            "UPDATE orders SET payment_status = 'PAID', payment_confirmed_by = ?, payment_confirmed_at = NOW() " +
+            "WHERE order_id = ? AND payment_status = 'UNPAID'";
 
     @Override
     public int insert(Connection conn, Order order) throws SQLException {
@@ -111,6 +114,15 @@ public class OrderDAOImpl implements OrderDAO {
             ps.setString(1, newStatus.name());
             ps.setInt(2, orderId);
             ps.setString(3, expectedCurrent.name());
+            return ps.executeUpdate();
+        }
+    }
+
+    @Override
+    public int markPaid(Connection conn, int orderId, int confirmedBy) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(MARK_PAID)) {
+            ps.setInt(1, confirmedBy);
+            ps.setInt(2, orderId);
             return ps.executeUpdate();
         }
     }

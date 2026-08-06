@@ -16,8 +16,18 @@
             <span class="badge badge-${fn:toLowerCase(order.orderStatus)}"><c:out value="${order.orderStatus.displayName}" /></span>
         </div>
 
+        <c:if test="${order.paymentMethod == 'VIETQR' && order.paymentStatus == 'UNPAID'}">
+            <div class="alert alert-error">Đơn chưa thanh toán. Kiểm tra ngân hàng theo nội dung <strong><c:out value="${transferNote}" /></strong> rồi bấm "Đã nhận thanh toán" — cần thanh toán xong mới xác nhận được đơn.</div>
+        </c:if>
+
         <c:if test="${order.orderStatus == 'PENDING' || order.orderStatus == 'CONFIRMED'}">
             <div style="display:flex; gap:10px; margin:16px 0; flex-wrap:wrap;">
+                <c:if test="${order.paymentMethod == 'VIETQR' && order.paymentStatus == 'UNPAID'}">
+                    <form method="post" action="${pageContext.request.contextPath}/sales/orders/mark-paid">
+                        <input type="hidden" name="orderId" value="${order.orderId}">
+                        <button type="submit" class="btn btn-primary">Đã nhận thanh toán</button>
+                    </form>
+                </c:if>
                 <c:if test="${order.orderStatus == 'PENDING'}">
                     <form method="post" action="${pageContext.request.contextPath}/sales/orders/confirm">
                         <input type="hidden" name="orderId" value="${order.orderId}">
@@ -52,6 +62,13 @@
                 <div class="summary-row"><span>Tạm tính</span><span><fmt:formatNumber value="${order.subtotal}" type="number" groupingUsed="true" />₫</span></div>
                 <div class="summary-row"><span>Phí ship</span><span><fmt:formatNumber value="${order.shippingFee}" type="number" groupingUsed="true" />₫</span></div>
                 <div class="summary-row summary-total"><span>Tổng cộng</span><span><fmt:formatNumber value="${order.totalAmount}" type="number" groupingUsed="true" />₫</span></div>
+
+                <c:if test="${not empty qrImageUrl}">
+                    <div style="text-align:center; margin-top:20px; padding-top:16px; border-top:1px solid rgba(0,0,0,0.1);">
+                        <img src="${qrImageUrl}" alt="Mã VietQR" style="width:100%; max-width:200px; border-radius:8px;">
+                        <p style="margin-top:8px; font-size:0.9rem;">Nội dung: <strong><c:out value="${transferNote}" /></strong></p>
+                    </div>
+                </c:if>
             </div>
 
             <div>

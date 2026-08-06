@@ -24,4 +24,10 @@ public interface OrderDAO {
      * @return affected row count — 0 means the order's status already changed under the caller.
      */
     int updateStatus(Connection conn, int orderId, OrderStatus expectedCurrent, OrderStatus newStatus) throws SQLException;
+
+    /**
+     * Guarded UNPAID -> PAID transition.
+     * @return affected row count — 0 means the order was already paid.
+     */
+    int markPaid(Connection conn, int orderId, int confirmedBy) throws SQLException;
 }

@@ -31,7 +31,16 @@
                     </div>
                     <div class="form-group">
                         <label>Phương thức thanh toán</label>
-                        <p style="color:var(--color-text-muted);">Thanh toán khi nhận hàng (COD)</p>
+                        <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+                            <label style="display:flex; align-items:center; gap:8px; font-weight:400;">
+                                <input type="radio" name="paymentMethod" value="COD" checked style="width:auto;">
+                                Thanh toán khi nhận hàng (COD)
+                            </label>
+                            <label style="display:flex; align-items:center; gap:8px; font-weight:400;">
+                                <input type="radio" name="paymentMethod" value="VIETQR" style="width:auto;">
+                                Chuyển khoản VietQR
+                            </label>
+                        </div>
                     </div>
                 </div>
 

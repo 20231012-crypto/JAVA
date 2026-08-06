@@ -76,6 +76,8 @@ public class CheckoutServlet extends HttpServlet {
         User customer = (User) req.getSession().getAttribute("user");
         int buildingId = Integer.parseInt(req.getParameter("buildingId"));
         String note = req.getParameter("note");
+        PaymentMethod paymentMethod = "VIETQR".equals(req.getParameter("paymentMethod"))
+                ? PaymentMethod.VIETQR : PaymentMethod.COD;
 
         try (Connection conn = DBConnection.getConnection()) {
             Building building = buildingDAO.findById(conn, buildingId);
@@ -98,7 +100,7 @@ public class CheckoutServlet extends HttpServlet {
                 order.setShippingFee(shippingFee);
                 order.setTotalAmount(subtotal.add(shippingFee));
                 order.setOrderStatus(OrderStatus.PENDING);
-                order.setPaymentMethod(PaymentMethod.COD);
+                order.setPaymentMethod(paymentMethod);
                 order.setPaymentStatus(PaymentStatus.UNPAID);
                 order.setNote(note);
 

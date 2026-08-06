@@ -12,8 +12,11 @@ import com.eaut.canteen.dao.impl.OrderDAOImpl;
 import com.eaut.canteen.dao.impl.OrderItemDAOImpl;
 import com.eaut.canteen.dao.impl.OrderStatusHistoryDAOImpl;
 import com.eaut.canteen.model.Order;
+import com.eaut.canteen.model.PaymentMethod;
+import com.eaut.canteen.model.PaymentStatus;
 import com.eaut.canteen.model.User;
 import com.eaut.canteen.util.DBConnection;
+import com.eaut.canteen.util.VietQRUtil;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -67,6 +70,10 @@ public class OrderHistoryServlet extends HttpServlet {
         req.setAttribute("order", order);
         req.setAttribute("items", orderItemDAO.findByOrderId(conn, orderId));
         req.setAttribute("history", historyDAO.findByOrderId(conn, orderId));
+        if (order.getPaymentMethod() == PaymentMethod.VIETQR && order.getPaymentStatus() == PaymentStatus.UNPAID) {
+            req.setAttribute("qrImageUrl", VietQRUtil.qrImageUrl(orderId, order.getTotalAmount()));
+            req.setAttribute("transferNote", VietQRUtil.transferNote(orderId));
+        }
         req.getRequestDispatcher("/WEB-INF/views/customer/order-detail.jsp").forward(req, resp);
     }
 }

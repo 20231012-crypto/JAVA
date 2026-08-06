@@ -23,6 +23,15 @@
                 <div class="summary-row"><span>Tạm tính</span><span><fmt:formatNumber value="${order.subtotal}" type="number" groupingUsed="true" />₫</span></div>
                 <div class="summary-row"><span>Phí ship</span><span><fmt:formatNumber value="${order.shippingFee}" type="number" groupingUsed="true" />₫</span></div>
                 <div class="summary-row summary-total"><span>Tổng cộng</span><span><fmt:formatNumber value="${order.totalAmount}" type="number" groupingUsed="true" />₫</span></div>
+
+                <c:if test="${not empty qrImageUrl}">
+                    <div style="text-align:center; margin-top:20px; padding-top:16px; border-top:1px solid rgba(0,0,0,0.1);">
+                        <p style="font-weight:600; margin-bottom:8px;">Quét mã để chuyển khoản</p>
+                        <img src="${qrImageUrl}" alt="Mã VietQR" style="width:100%; max-width:220px; border-radius:8px;">
+                        <p style="margin-top:8px; font-size:0.9rem;">Nội dung chuyển khoản: <strong><c:out value="${transferNote}" /></strong></p>
+                        <p style="color:var(--color-danger); font-size:0.85rem;">Vui lòng giữ nguyên nội dung chuyển khoản để được xác nhận nhanh.</p>
+                    </div>
+                </c:if>
             </div>
 
             <div>
