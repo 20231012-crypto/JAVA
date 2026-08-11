@@ -7,6 +7,7 @@
 # Local secrets — copy the .example file and fill in your own values
 src/main/resources/db.properties
 src/main/resources/app.properties
+.env
 
 # IDE metadata
 .classpath

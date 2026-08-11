@@ -10,10 +10,9 @@ public final class AppConfig {
 
     static {
         try (InputStream in = AppConfig.class.getResourceAsStream("/app.properties")) {
-            if (in == null) {
-                throw new IOException("app.properties not found on classpath — copy app.properties.example to app.properties");
+            if (in != null) {
+                props.load(in);
             }
-            props.load(in);
         } catch (IOException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -22,7 +21,17 @@ public final class AppConfig {
     private AppConfig() {
     }
 
+    /**
+     * Env var override wins when set (e.g. "google.clientId" -> "GOOGLE_CLIENTID"), so a hosted
+     * deploy with no classpath app.properties can be configured via platform env vars while local
+     * dev keeps using app.properties unchanged.
+     */
     public static String get(String key) {
+        String envKey = key.toUpperCase().replace('.', '_');
+        String envVal = System.getenv(envKey);
+        if (envVal != null && !envVal.isBlank()) {
+            return envVal;
+        }
         return props.getProperty(key);
     }
 }
