@@ -10,6 +10,7 @@ import java.util.List;
 
 import com.eaut.canteen.dao.UserDAO;
 import com.eaut.canteen.model.AccountStatus;
+import com.eaut.canteen.model.AuthProvider;
 import com.eaut.canteen.model.Role;
 import com.eaut.canteen.model.User;
 
@@ -19,19 +20,25 @@ public class UserDAOImpl implements UserDAO {
             "SELECT * FROM users WHERE user_id = ?";
     private static final String FIND_BY_USERNAME =
             "SELECT * FROM users WHERE username = ?";
+    private static final String FIND_BY_EMAIL =
+            "SELECT * FROM users WHERE email = ?";
+    private static final String FIND_BY_GOOGLE_SUB =
+            "SELECT * FROM users WHERE google_sub = ?";
     private static final String EXISTS_BY_USERNAME =
             "SELECT 1 FROM users WHERE username = ?";
     private static final String EXISTS_BY_EMAIL =
             "SELECT 1 FROM users WHERE email = ?";
     private static final String INSERT =
-            "INSERT INTO users (username, password_hash, full_name, email, phone, role, status) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?)";
+            "INSERT INTO users (username, password_hash, google_sub, auth_provider, full_name, email, phone, role, status) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String FIND_ALL_STAFF =
             "SELECT * FROM users WHERE role <> 'CUSTOMER' ORDER BY role, full_name";
     private static final String UPDATE_STATUS =
             "UPDATE users SET status = ? WHERE user_id = ?";
     private static final String FIND_BY_ROLE =
             "SELECT * FROM users WHERE role = ? AND status = 'ACTIVE' ORDER BY full_name";
+    private static final String LINK_GOOGLE_ACCOUNT =
+            "UPDATE users SET google_sub = ?, auth_provider = 'GOOGLE' WHERE user_id = ?";
 
     @Override
     public User findById(Connection conn, int userId) throws SQLException {
@@ -47,6 +54,26 @@ public class UserDAOImpl implements UserDAO {
     public User findByUsername(Connection conn, String username) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(FIND_BY_USERNAME)) {
             ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? mapRow(rs) : null;
+            }
+        }
+    }
+
+    @Override
+    public User findByEmail(Connection conn, String email) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(FIND_BY_EMAIL)) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? mapRow(rs) : null;
+            }
+        }
+    }
+
+    @Override
+    public User findByGoogleSub(Connection conn, String googleSub) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(FIND_BY_GOOGLE_SUB)) {
+            ps.setString(1, googleSub);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? mapRow(rs) : null;
             }
@@ -78,16 +105,27 @@ public class UserDAOImpl implements UserDAO {
         try (PreparedStatement ps = conn.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, user.getUsername());
             ps.setString(2, user.getPasswordHash());
-            ps.setString(3, user.getFullName());
-            ps.setString(4, user.getEmail());
-            ps.setString(5, user.getPhone());
-            ps.setString(6, user.getRole().name());
-            ps.setString(7, user.getStatus().name());
+            ps.setString(3, user.getGoogleSub());
+            ps.setString(4, user.getAuthProvider().name());
+            ps.setString(5, user.getFullName());
+            ps.setString(6, user.getEmail());
+            ps.setString(7, user.getPhone());
+            ps.setString(8, user.getRole().name());
+            ps.setString(9, user.getStatus().name());
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 keys.next();
                 return keys.getInt(1);
             }
+        }
+    }
+
+    @Override
+    public void linkGoogleAccount(Connection conn, int userId, String googleSub) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(LINK_GOOGLE_ACCOUNT)) {
+            ps.setString(1, googleSub);
+            ps.setInt(2, userId);
+            ps.executeUpdate();
         }
     }
 
@@ -131,6 +169,8 @@ public class UserDAOImpl implements UserDAO {
         user.setUserId(rs.getInt("user_id"));
         user.setUsername(rs.getString("username"));
         user.setPasswordHash(rs.getString("password_hash"));
+        user.setGoogleSub(rs.getString("google_sub"));
+        user.setAuthProvider(AuthProvider.valueOf(rs.getString("auth_provider")));
         user.setFullName(rs.getString("full_name"));
         user.setEmail(rs.getString("email"));
         user.setPhone(rs.getString("phone"));

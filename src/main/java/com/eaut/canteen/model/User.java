@@ -10,6 +10,8 @@ public class User {
     private int userId;
     private String username;
     private String passwordHash;
+    private String googleSub;
+    private AuthProvider authProvider = AuthProvider.LOCAL;
     private String fullName;
     private String email;
     private String phone;
@@ -43,6 +45,22 @@ public class User {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public String getGoogleSub() {
+        return googleSub;
+    }
+
+    public void setGoogleSub(String googleSub) {
+        this.googleSub = googleSub;
+    }
+
+    public AuthProvider getAuthProvider() {
+        return authProvider;
+    }
+
+    public void setAuthProvider(AuthProvider authProvider) {
+        this.authProvider = authProvider;
     }
 
     public String getFullName() {

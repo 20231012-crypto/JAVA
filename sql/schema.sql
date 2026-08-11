@@ -30,7 +30,9 @@ CREATE TABLE categories (
 CREATE TABLE users (
   user_id        INT AUTO_INCREMENT PRIMARY KEY,
   username       VARCHAR(50) NOT NULL UNIQUE,
-  password_hash  VARCHAR(60) NOT NULL,
+  password_hash  VARCHAR(60) NULL,        -- NULL for GOOGLE-provider accounts (no local password)
+  google_sub     VARCHAR(255) NULL UNIQUE, -- Google account's stable "sub" claim; set when auth_provider=GOOGLE
+  auth_provider  ENUM('LOCAL','GOOGLE') NOT NULL DEFAULT 'LOCAL',
   full_name      VARCHAR(100) NOT NULL,
   email          VARCHAR(100) NOT NULL UNIQUE,
   phone          VARCHAR(15) NULL,

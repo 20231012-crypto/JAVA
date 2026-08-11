@@ -37,8 +37,7 @@
     <c:choose>
         <c:when test="${empty sessionScope.user}">
             <div class="site-nav">
-                <a href="${ctx}/login">Đăng nhập</a>
-                <a class="btn btn-primary btn-sm" href="${ctx}/register">Đăng ký</a>
+                <a class="btn btn-primary btn-sm" href="${ctx}/login">Đăng nhập / Đăng ký</a>
             </div>
         </c:when>
         <c:otherwise>

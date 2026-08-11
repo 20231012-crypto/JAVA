@@ -6,9 +6,11 @@ import java.sql.SQLException;
 
 import com.eaut.canteen.dao.UserDAO;
 import com.eaut.canteen.dao.impl.UserDAOImpl;
+import com.eaut.canteen.model.AccountStatus;
 import com.eaut.canteen.model.Role;
 import com.eaut.canteen.model.User;
 import com.eaut.canteen.util.DBConnection;
+import com.eaut.canteen.util.GoogleAuthUtil;
 import com.eaut.canteen.util.PasswordUtil;
 
 import jakarta.servlet.ServletException;
@@ -26,8 +28,7 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        req.setAttribute("pageTitle", "Đăng nhập");
-        req.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(req, resp);
+        showForm(req, resp, null, null);
     }
 
     @Override
@@ -40,11 +41,16 @@ public class LoginServlet extends HttpServlet {
         try (Connection conn = DBConnection.getConnection()) {
             User user = userDAO.findByUsername(conn, username);
 
-            if (user == null || !PasswordUtil.verify(password, user.getPasswordHash())) {
-                req.setAttribute("pageTitle", "Đăng nhập");
-                req.setAttribute("error", "Tên đăng nhập hoặc mật khẩu không đúng.");
-                req.setAttribute("username", username);
-                req.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(req, resp);
+            // password_hash is null for Google-only accounts (no local password to check against);
+            // guard against a null-hash NPE the same way as any other login failure.
+            if (user == null || user.getPasswordHash() == null
+                    || !PasswordUtil.verify(password, user.getPasswordHash())) {
+                showForm(req, resp, "Tên đăng nhập hoặc mật khẩu không đúng.", username);
+                return;
+            }
+
+            if (user.getStatus() == AccountStatus.DISABLED) {
+                showForm(req, resp, "Tài khoản của bạn đã bị vô hiệu hoá.", username);
                 return;
             }
 
@@ -56,6 +62,18 @@ public class LoginServlet extends HttpServlet {
         } catch (SQLException e) {
             throw new ServletException(e);
         }
+    }
+
+    private void showForm(HttpServletRequest req, HttpServletResponse resp, String error, String username)
+            throws ServletException, IOException {
+        req.setAttribute("pageTitle", "Đăng nhập");
+        req.setAttribute("googleClientId", GoogleAuthUtil.getClientId());
+        req.setAttribute("googleAllowedDomain", GoogleAuthUtil.getAllowedDomain());
+        if (error != null) {
+            req.setAttribute("error", error);
+            req.setAttribute("username", username);
+        }
+        req.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(req, resp);
     }
 
     private String resolveDestination(Role role, String redirect) {
