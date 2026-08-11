@@ -8,8 +8,10 @@ vietqr.accountNo=0000000000
 vietqr.accountName=CANTEEN EAUT
 
 # Google Sign-In (customer login/registration only — staff still use username+password).
+# Any Google account can sign in, there is no email-domain restriction.
 # Create an OAuth 2.0 Client ID (Web application) in Google Cloud Console > APIs & Services >
-# Credentials, add every origin you test from (e.g. http://localhost:8080) under
-# "Authorized JavaScript origins", then paste the client ID below.
+# Credentials: add every origin you test from (e.g. http://localhost:8080) under "Authorized
+# JavaScript origins", AND add the exact login callback URL (e.g.
+# http://localhost:8080/canteen-webapp/auth/google) under "Authorized redirect URIs" — both are
+# required by the button's redirect flow. Then paste the client ID below.
 google.clientId=YOUR_CLIENT_ID.apps.googleusercontent.com
-google.allowedDomain=eaut.edu.vn

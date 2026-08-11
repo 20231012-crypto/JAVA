@@ -17,16 +17,13 @@
 
             <div class="auth-section">
                 <p class="auth-section-title">Khách hàng</p>
-                <p class="hint" style="margin-bottom:16px;">
-                    Đăng nhập hoặc đăng ký bằng email trường (đuôi @<c:out value="${googleAllowedDomain}" />).
-                </p>
+                <p class="hint" style="margin-bottom:16px;">Đăng nhập hoặc đăng ký bằng tài khoản Google của bạn.</p>
 
                 <script src="https://accounts.google.com/gsi/client" async defer></script>
                 <div id="g_id_onload"
                      data-client_id="${googleClientId}"
                      data-login_uri="${pageContext.request.contextPath}/auth/google"
                      data-ux_mode="redirect"
-                     data-hd="${googleAllowedDomain}"
                      data-auto_prompt="false">
                 </div>
                 <div class="g_id_signin"

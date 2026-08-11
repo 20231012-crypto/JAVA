@@ -51,16 +51,9 @@ public class GoogleAuthServlet extends HttpServlet {
             return;
         }
 
-        // data-hd on the button only hints Google's account chooser — the actual domain
-        // restriction is enforced here, server-side, against the signed token payload.
-        String allowedDomain = GoogleAuthUtil.getAllowedDomain();
         String email = payload.getEmail();
-        boolean domainOk = Boolean.TRUE.equals(payload.getEmailVerified())
-                && email != null
-                && email.toLowerCase().endsWith(("@" + allowedDomain).toLowerCase())
-                && (payload.getHostedDomain() == null || payload.getHostedDomain().equalsIgnoreCase(allowedDomain));
-        if (!domainOk) {
-            fail(req, resp, "Chỉ chấp nhận đăng nhập bằng email trường (@" + allowedDomain + ").");
+        if (!Boolean.TRUE.equals(payload.getEmailVerified()) || email == null) {
+            fail(req, resp, "Không thể xác thực email tài khoản Google, vui lòng thử lại.");
             return;
         }
 
@@ -162,7 +155,6 @@ public class GoogleAuthServlet extends HttpServlet {
         req.setAttribute("pageTitle", "Đăng nhập");
         req.setAttribute("error", message);
         req.setAttribute("googleClientId", GoogleAuthUtil.getClientId());
-        req.setAttribute("googleAllowedDomain", GoogleAuthUtil.getAllowedDomain());
         req.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(req, resp);
     }
 }

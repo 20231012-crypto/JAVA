@@ -68,7 +68,6 @@ public class LoginServlet extends HttpServlet {
             throws ServletException, IOException {
         req.setAttribute("pageTitle", "Đăng nhập");
         req.setAttribute("googleClientId", GoogleAuthUtil.getClientId());
-        req.setAttribute("googleAllowedDomain", GoogleAuthUtil.getAllowedDomain());
         if (error != null) {
             req.setAttribute("error", error);
             req.setAttribute("username", username);

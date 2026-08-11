@@ -11,8 +11,8 @@ import com.google.api.client.json.gson.GsonFactory;
 
 /**
  * Verifies "Sign in with Google" ID tokens. This only proves a token was genuinely issued by
- * Google for this app's client ID and identifies the signed-in Google account — the
- * @eaut.edu.vn domain restriction is enforced by the caller (GoogleAuthServlet), not here.
+ * Google for this app's client ID and identifies the signed-in Google account — any Google
+ * account is accepted, there is no email-domain restriction.
  */
 public final class GoogleAuthUtil {
 
@@ -26,10 +26,6 @@ public final class GoogleAuthUtil {
 
     public static String getClientId() {
         return AppConfig.get("google.clientId");
-    }
-
-    public static String getAllowedDomain() {
-        return AppConfig.get("google.allowedDomain");
     }
 
     /** Returns the verified payload, or null if the token is missing, expired, tampered, or issued for a different app. */
