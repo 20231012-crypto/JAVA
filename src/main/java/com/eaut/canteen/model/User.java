@@ -1,7 +1,9 @@
 package com.eaut.canteen.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 public class User {
 
@@ -18,7 +20,18 @@ public class User {
     private Role role;
     private AccountStatus status;
     private Integer buildingId;
+    private BigDecimal walletBalance = BigDecimal.ZERO;
+    private boolean eautStudent;
     private LocalDateTime createdAt;
+
+    /**
+     * This actor's permission keys for the current session, as a Map so JSTL/EL can test
+     * membership with {@code ${sessionScope.user.permissions['products.manage']}} (Set has no EL
+     * bracket-index support; Map does). Populated once at login (see LoginServlet/
+     * GoogleAuthServlet) from RoleDAO#findPermissionKeysForRole — never re-derived per request.
+     * Empty/absent for User instances built only for display (e.g. "sold_by" on someone else's order).
+     */
+    private Map<String, Boolean> permissions = Map.of();
 
     public User() {
     }
@@ -109,6 +122,35 @@ public class User {
 
     public void setBuildingId(Integer buildingId) {
         this.buildingId = buildingId;
+    }
+
+    public BigDecimal getWalletBalance() {
+        return walletBalance;
+    }
+
+    public void setWalletBalance(BigDecimal walletBalance) {
+        this.walletBalance = walletBalance;
+    }
+
+    /** Smart ID marker: true when this account's email was @eaut.edu.vn at signup — see AppConfig "smartId.discountPercent". */
+    public boolean isEautStudent() {
+        return eautStudent;
+    }
+
+    public void setEautStudent(boolean eautStudent) {
+        this.eautStudent = eautStudent;
+    }
+
+    public Map<String, Boolean> getPermissions() {
+        return permissions;
+    }
+
+    public void setPermissions(Map<String, Boolean> permissions) {
+        this.permissions = permissions;
+    }
+
+    public boolean hasPermission(String permissionKey) {
+        return Boolean.TRUE.equals(permissions.get(permissionKey));
     }
 
     public LocalDateTime getCreatedAt() {

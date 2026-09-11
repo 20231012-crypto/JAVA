@@ -32,7 +32,7 @@
                     <tbody>
                         <c:forEach var="o" items="${orders}">
                             <tr>
-                                <td>#${o.orderId}</td>
+                                <td><c:out value="${o.orderCode}" /></td>
                                 <td><c:out value="${o.createdAtDisplay}" /></td>
                                 <td><c:out value="${o.buildingName}" /></td>
                                 <td><fmt:formatNumber value="${o.totalAmount}" type="number" groupingUsed="true" />₫</td>

@@ -40,6 +40,11 @@
                                 <input type="radio" name="paymentMethod" value="VIETQR" style="width:auto;">
                                 Chuyển khoản VietQR
                             </label>
+                            <label style="display:flex; align-items:center; gap:8px; font-weight:400;">
+                                <input type="radio" name="paymentMethod" value="WALLET" style="width:auto;"
+                                       ${walletBalance <= 0 ? 'disabled' : ''}>
+                                Ví EAUT Pay (số dư: <fmt:formatNumber value="${walletBalance}" type="number" groupingUsed="true" />₫)
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -52,10 +57,16 @@
                             <span><fmt:formatNumber value="${item.lineTotal}" type="number" groupingUsed="true" />₫</span>
                         </div>
                     </c:forEach>
-                    <div class="summary-row summary-total">
+                    <div class="summary-row">
                         <span>Tạm tính</span>
                         <span><fmt:formatNumber value="${cart.subtotal}" type="number" groupingUsed="true" />₫</span>
                     </div>
+                    <c:if test="${not empty smartIdDiscount}">
+                        <div class="summary-row" style="color:var(--color-gold);">
+                            <span class="smart-id-badge" style="padding:2px 8px;">🪪 EAUT Smart ID</span>
+                            <span>-<fmt:formatNumber value="${smartIdDiscount}" type="number" groupingUsed="true" />₫</span>
+                        </div>
+                    </c:if>
                     <p style="color:var(--color-text-muted); font-size:0.85rem; margin-top:8px;">
                         Phí ship sẽ được cộng theo tòa nhà bạn chọn.
                     </p>

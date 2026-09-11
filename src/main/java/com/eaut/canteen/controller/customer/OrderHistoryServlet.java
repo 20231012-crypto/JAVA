@@ -66,7 +66,7 @@ public class OrderHistoryServlet extends HttpServlet {
             return;
         }
 
-        req.setAttribute("pageTitle", "Đơn hàng #" + order.getOrderId());
+        req.setAttribute("pageTitle", "Đơn hàng " + order.getOrderCode());
         req.setAttribute("order", order);
         req.setAttribute("items", orderItemDAO.findByOrderId(conn, orderId));
         req.setAttribute("history", historyDAO.findByOrderId(conn, orderId));

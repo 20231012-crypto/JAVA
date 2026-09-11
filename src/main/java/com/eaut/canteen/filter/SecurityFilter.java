@@ -1,8 +1,8 @@
 package com.eaut.canteen.filter;
 
 import java.io.IOException;
+import java.util.List;
 
-import com.eaut.canteen.model.Role;
 import com.eaut.canteen.model.User;
 
 import jakarta.servlet.Filter;
@@ -19,9 +19,37 @@ import jakarta.servlet.http.HttpSession;
  * Single merged auth+RBAC gate. Two separate filters would need a guaranteed execution
  * order (a role check assuming an auth check already ran) which the servlet spec does not
  * promise for annotation-declared filters — so both checks live in one filter instead.
+ *
+ * <p>Route -&gt; required-permission is a static table, not a fixed role, so which actual roles
+ * can reach a route is entirely up to what's assigned in /admin/roles — a brand-new role with the
+ * right permission gets in with zero code changes here. Rules are checked most-specific-first
+ * (see RULES) since some sub-paths need a narrower permission than the rest of their prefix
+ * (e.g. "/sales/orders/confirm" is stricter than plain "/sales/orders").
  */
 @WebFilter("/*")
 public class SecurityFilter implements Filter {
+
+    private record PathRule(String prefix, String permission) {
+    }
+
+    private static final List<PathRule> RULES = List.of(
+            new PathRule("/admin/buildings", "buildings.manage"),
+            new PathRule("/admin/categories", "categories.manage"),
+            new PathRule("/admin/products", "products.manage"),
+            new PathRule("/admin/staff", "staff.manage"),
+            new PathRule("/admin/roles", "roles.manage"),
+            new PathRule("/admin/stock-imports", "stock.import"),
+            new PathRule("/admin/wallet", "wallet.topup"),
+            new PathRule("/admin/reports", "reports.view"),
+            new PathRule("/admin", "admin.dashboard"),
+            new PathRule("/sales/orders/confirm", "orders.action"),
+            new PathRule("/sales/orders/reject", "orders.action"),
+            new PathRule("/sales/orders/cancel", "orders.action"),
+            new PathRule("/sales/orders/mark-paid", "orders.payment_confirm"),
+            new PathRule("/sales/orders", "orders.queue"),
+            new PathRule("/sales/counter-sale", "sales.counter"),
+            new PathRule("/store/transfers", "store.transfer"),
+            new PathRule("/store/orders", "store.fulfillment"));
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -43,9 +71,8 @@ public class SecurityFilter implements Filter {
             return;
         }
 
-        if (isRoleMismatch(path, "/admin", user.getRole(), Role.ADMIN)
-                || isRoleMismatch(path, "/sales", user.getRole(), Role.SALES_STAFF)
-                || isRoleMismatch(path, "/store", user.getRole(), Role.STORE_STAFF)) {
+        String requiredPermission = resolveRequiredPermission(path);
+        if (requiredPermission != null && !user.hasPermission(requiredPermission)) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
@@ -53,8 +80,14 @@ public class SecurityFilter implements Filter {
         chain.doFilter(request, response);
     }
 
-    private boolean isRoleMismatch(String path, String prefix, Role actual, Role required) {
-        return isUnderPrefix(path, prefix) && actual != required;
+    /** null means "no admin/sales/store rule applies" — e.g. /cart, /checkout, /orders, which only require being logged in. */
+    private String resolveRequiredPermission(String path) {
+        for (PathRule rule : RULES) {
+            if (isUnderPrefix(path, rule.prefix())) {
+                return rule.permission();
+            }
+        }
+        return null;
     }
 
     private boolean isPublic(String path) {

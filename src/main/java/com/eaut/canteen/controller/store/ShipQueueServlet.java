@@ -3,8 +3,6 @@ package com.eaut.canteen.controller.store;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.eaut.canteen.dao.OrderDAO;
 import com.eaut.canteen.dao.impl.OrderDAOImpl;
@@ -28,12 +26,9 @@ public class ShipQueueServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         try (Connection conn = DBConnection.getConnection()) {
-            List<Order> orders = new ArrayList<>();
-            orders.addAll(orderDAO.findByStatus(conn, OrderStatus.CONFIRMED));
-            orders.addAll(orderDAO.findByStatus(conn, OrderStatus.SHIPPING));
-
             req.setAttribute("pageTitle", "Đơn cần giao");
-            req.setAttribute("orders", orders);
+            req.setAttribute("confirmedOrders", orderDAO.findByStatus(conn, OrderStatus.CONFIRMED));
+            req.setAttribute("shippingOrders", orderDAO.findByStatus(conn, OrderStatus.SHIPPING));
             req.getRequestDispatcher("/WEB-INF/views/store/ship-queue.jsp").forward(req, resp);
         } catch (SQLException e) {
             throw new ServletException(e);

@@ -7,7 +7,7 @@
 <main class="page-content">
     <div class="container">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-            <h1>Đơn hàng #${order.orderId}</h1>
+            <h1>Đơn hàng <c:out value="${order.orderCode}" /></h1>
             <span class="badge badge-${fn:toLowerCase(order.orderStatus)}"><c:out value="${order.orderStatus.displayName}" /></span>
         </div>
 
@@ -22,6 +22,9 @@
                 </c:if>
                 <div class="summary-row"><span>Tạm tính</span><span><fmt:formatNumber value="${order.subtotal}" type="number" groupingUsed="true" />₫</span></div>
                 <div class="summary-row"><span>Phí ship</span><span><fmt:formatNumber value="${order.shippingFee}" type="number" groupingUsed="true" />₫</span></div>
+                <c:if test="${order.discountAmount > 0}">
+                    <div class="summary-row" style="color:var(--color-gold);"><span>🪪 Giảm giá Smart ID</span><span>-<fmt:formatNumber value="${order.discountAmount}" type="number" groupingUsed="true" />₫</span></div>
+                </c:if>
                 <div class="summary-row summary-total"><span>Tổng cộng</span><span><fmt:formatNumber value="${order.totalAmount}" type="number" groupingUsed="true" />₫</span></div>
 
                 <c:if test="${not empty qrImageUrl}">

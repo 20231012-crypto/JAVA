@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import com.eaut.canteen.dao.RoleDAO;
 import com.eaut.canteen.dao.UserDAO;
+import com.eaut.canteen.dao.impl.RoleDAOImpl;
 import com.eaut.canteen.dao.impl.UserDAOImpl;
 import com.eaut.canteen.model.AccountStatus;
 import com.eaut.canteen.model.AuthProvider;
@@ -25,16 +27,20 @@ import jakarta.servlet.http.HttpSession;
 /**
  * Receives the POST from Google Identity Services' "Sign in with Google" button
  * (button is configured with data-ux_mode="redirect" / data-login_uri pointed here in
- * login.jsp). Find-or-create: a customer's first Google sign-in creates their account,
+ * login-customer.jsp). Find-or-create: a customer's first Google sign-in creates their account,
  * every later one just logs them in — there is no separate registration step.
  *
  * Customer accounts only. Staff/Admin keep username+password login via LoginServlet,
- * provisioned by an Admin — this endpoint never touches non-CUSTOMER rows.
+ * provisioned by an Admin — this endpoint never touches non-customer-default rows.
  */
 @WebServlet("/auth/google")
 public class GoogleAuthServlet extends HttpServlet {
 
+    /** EAUT Smart ID: any account signing up with this email domain gets the automatic checkout discount — see AppConfig "smartId.discountPercent". */
+    private static final String EAUT_EMAIL_DOMAIN = "@eaut.edu.vn";
+
     private final UserDAO userDAO = new UserDAOImpl();
+    private final RoleDAO roleDAO = new RoleDAOImpl();
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -66,7 +72,7 @@ public class GoogleAuthServlet extends HttpServlet {
                 User existing = userDAO.findByEmail(conn, email);
                 if (existing == null) {
                     user = createCustomer(conn, payload, email, googleSub);
-                } else if (existing.getRole() == Role.CUSTOMER && existing.getAuthProvider() == AuthProvider.LOCAL) {
+                } else if (existing.getRole().isCustomerDefault() && existing.getAuthProvider() == AuthProvider.LOCAL) {
                     // Same person's pre-Google account (created before this feature existed) — link it.
                     userDAO.linkGoogleAccount(conn, existing.getUserId(), googleSub);
                     user = existing;
@@ -82,6 +88,7 @@ public class GoogleAuthServlet extends HttpServlet {
             }
 
             user.setPasswordHash(null);
+            user.setPermissions(roleDAO.findPermissionMapForRole(conn, user.getRole().getRoleId()));
             HttpSession session = req.getSession(true);
             session.setAttribute("user", user);
             resp.sendRedirect(req.getContextPath() + "/products");
@@ -94,6 +101,11 @@ public class GoogleAuthServlet extends HttpServlet {
         Object nameClaim = payload.get("name");
         String fullName = nameClaim == null ? email.substring(0, email.indexOf('@')) : nameClaim.toString();
 
+        Role customerRole = roleDAO.findCustomerDefaultRole(conn);
+        if (customerRole == null) {
+            throw new IllegalStateException("No role has is_customer_default=TRUE — check /admin/roles or the seed data.");
+        }
+
         User user = new User();
         user.setUsername(generateUsername(conn, email));
         user.setPasswordHash(null);
@@ -101,8 +113,9 @@ public class GoogleAuthServlet extends HttpServlet {
         user.setAuthProvider(AuthProvider.GOOGLE);
         user.setFullName(fullName);
         user.setEmail(email);
-        user.setRole(Role.CUSTOMER);
+        user.setRole(customerRole);
         user.setStatus(AccountStatus.ACTIVE);
+        user.setEautStudent(email.toLowerCase().endsWith(EAUT_EMAIL_DOMAIN));
 
         int userId = userDAO.insert(conn, user);
         user.setUserId(userId);
@@ -152,9 +165,6 @@ public class GoogleAuthServlet extends HttpServlet {
 
     private void fail(HttpServletRequest req, HttpServletResponse resp, String message)
             throws ServletException, IOException {
-        req.setAttribute("pageTitle", "Đăng nhập");
-        req.setAttribute("error", message);
-        req.setAttribute("googleClientId", GoogleAuthUtil.getClientId());
-        req.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(req, resp);
+        LoginServlet.showCustomerForm(req, resp, message);
     }
 }

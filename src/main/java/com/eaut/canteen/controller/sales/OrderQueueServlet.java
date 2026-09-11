@@ -48,23 +48,25 @@ public class OrderQueueServlet extends HttpServlet {
     private void showQueue(HttpServletRequest req, HttpServletResponse resp, Connection conn)
             throws SQLException, ServletException, IOException {
         String statusParam = req.getParameter("status");
-        List<Order> orders;
-        String selectedStatus;
-
-        if (statusParam == null || statusParam.isBlank() || "PENDING".equals(statusParam)) {
-            orders = orderDAO.findByStatus(conn, OrderStatus.PENDING);
-            selectedStatus = "PENDING";
-        } else if ("ALL".equals(statusParam)) {
-            orders = orderDAO.findAll(conn);
-            selectedStatus = "ALL";
-        } else {
-            orders = orderDAO.findByStatus(conn, OrderStatus.valueOf(statusParam));
-            selectedStatus = statusParam;
-        }
-
         req.setAttribute("pageTitle", "Đơn hàng");
-        req.setAttribute("orders", orders);
-        req.setAttribute("selectedStatus", selectedStatus);
+
+        // Default view: a live-feeling 3-column board (PENDING/CONFIRMED/SHIPPING) instead of one
+        // flat table filtered to a single status — the filter chips below still switch to the
+        // flat table for a specific status or the full history ("ALL").
+        if (statusParam == null || statusParam.isBlank()) {
+            req.setAttribute("boardMode", true);
+            req.setAttribute("pendingOrders", orderDAO.findByStatus(conn, OrderStatus.PENDING));
+            req.setAttribute("confirmedOrders", orderDAO.findByStatus(conn, OrderStatus.CONFIRMED));
+            req.setAttribute("shippingOrders", orderDAO.findByStatus(conn, OrderStatus.SHIPPING));
+            req.setAttribute("selectedStatus", "");
+        } else {
+            req.setAttribute("boardMode", false);
+            List<Order> orders = "ALL".equals(statusParam)
+                    ? orderDAO.findAll(conn)
+                    : orderDAO.findByStatus(conn, OrderStatus.valueOf(statusParam));
+            req.setAttribute("orders", orders);
+            req.setAttribute("selectedStatus", statusParam);
+        }
         req.getRequestDispatcher("/WEB-INF/views/sales/order-queue.jsp").forward(req, resp);
     }
 
@@ -77,7 +79,7 @@ public class OrderQueueServlet extends HttpServlet {
             return;
         }
 
-        req.setAttribute("pageTitle", "Đơn hàng #" + order.getOrderId());
+        req.setAttribute("pageTitle", "Đơn hàng " + order.getOrderCode());
         req.setAttribute("order", order);
         req.setAttribute("items", orderItemDAO.findByOrderId(conn, orderId));
         req.setAttribute("history", historyDAO.findByOrderId(conn, orderId));

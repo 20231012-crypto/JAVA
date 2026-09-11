@@ -21,13 +21,26 @@ public final class DBConnection {
             } else if (System.getenv("DB_URL") == null) {
                 throw new IOException("db.properties not found on classpath and no DB_URL env var set — copy db.properties.example to db.properties, or set DB_URL/DB_USERNAME/DB_PASSWORD env vars");
             }
-            Class.forName(resolve("DB_DRIVER", "db.driver", "com.mysql.cj.jdbc.Driver"));
+            String url = resolve("DB_URL", "db.url", null);
+            Class.forName(resolve("DB_DRIVER", "db.driver", driverFor(url)));
         } catch (IOException | ClassNotFoundException e) {
             throw new ExceptionInInitializerError(e);
         }
     }
 
     private DBConnection() {
+    }
+
+    /**
+     * DB_DRIVER/db.driver still wins when set explicitly, but both supported databases (MySQL for
+     * local dev per README, PostgreSQL for the Render+Neon deploy in render-deploy.md) work with
+     * zero extra config by picking the driver class from the JDBC URL's own scheme.
+     */
+    private static String driverFor(String url) {
+        if (url != null && url.startsWith("jdbc:postgresql:")) {
+            return "org.postgresql.Driver";
+        }
+        return "com.mysql.cj.jdbc.Driver";
     }
 
     private static String resolve(String envKey, String propKey, String fallback) {

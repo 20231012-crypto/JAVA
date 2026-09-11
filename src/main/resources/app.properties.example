@@ -15,3 +15,8 @@ vietqr.accountName=CANTEEN EAUT
 # http://localhost:8080/canteen-webapp/auth/google) under "Authorized redirect URIs" — both are
 # required by the button's redirect flow. Then paste the client ID below.
 google.clientId=YOUR_CLIENT_ID.apps.googleusercontent.com
+
+# EAUT Smart ID automatic discount (whole percent, applied to subtotal at checkout) for any
+# customer whose email ended in @eaut.edu.vn at signup (see GoogleAuthServlet). Optional —
+# CheckoutServlet defaults to 10 if this key is absent.
+smartId.discountPercent=10

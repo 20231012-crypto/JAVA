@@ -1,31 +1,39 @@
 /* ===== Design tokens ===== */
+/* EAUT brand palette: blue/white (school colors). --color-accent is the one brand blue used for
+   links, primary buttons, and active nav — --color-info is a separate cyan so the "SHIPPING"
+   status badge doesn't visually collide with brand-blue chrome around it. */
 :root {
-    --color-bg: #FFF8E7;
+    --color-bg: #F1F5FB;
     --color-surface: #ffffff;
-    --color-accent: #00A082;
-    --color-accent-dark: #008068;
-    --color-accent-soft: #E6F7F1;
+    --color-accent: #1E4FA3;
+    --color-accent-dark: #163B7D;
+    --color-accent-soft: #E8F0FC;
     --color-text: #1f2937;
     --color-text-muted: #6b7280;
-    --color-border: #e5e7eb;
+    --color-border: #e2e8f0;
     --color-danger: #DC2626;
     --color-danger-soft: #FEE2E2;
     --color-warning: #D97706;
     --color-warning-soft: #FEF3C7;
-    --color-info: #2563EB;
-    --color-info-soft: #DBEAFE;
+    --color-info: #0891B2;
+    --color-info-soft: #CFFAFE;
     --color-success: #16A34A;
     --color-success-soft: #DCFCE7;
     --color-neutral: #6B7280;
     --color-neutral-soft: #F3F4F6;
+
+    /* EAUT Smart ID / EAUT Pay accent — kept distinct from brand blue so wallet/discount UI reads
+       as its own thing at a glance (see checkout.jsp, admin/wallet.jsp). */
+    --color-gold: #B7791F;
+    --color-gold-soft: #FEF3E0;
 
     --radius-container: 24px;
     --radius-card: 16px;
     --radius-input: 8px;
     --radius-pill: 999px;
 
-    --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.1);
-    --shadow-container: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-card: 0 2px 4px rgba(30, 79, 163, 0.08);
+    --shadow-container: 0 4px 6px rgba(30, 79, 163, 0.08);
 }
 
 /* ===== Reset & base ===== */
@@ -609,4 +617,227 @@ img {
         padding: 6px 10px;
         font-size: 0.85rem;
     }
+}
+
+/* ===== Login chooser ("/login") — separate cards for customer vs staff, no combined form ===== */
+.login-choice-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    max-width: 800px;
+    margin: 40px auto;
+}
+
+.login-choice-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-container);
+    box-shadow: var(--shadow-container);
+    padding: 40px 28px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    border: 2px solid transparent;
+    transition: border-color 0.2s, transform 0.1s;
+}
+
+.login-choice-card:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+.login-choice-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+}
+
+.login-choice-card h2 {
+    color: var(--color-text);
+    font-size: 1.25rem;
+}
+
+.login-choice-card p {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
+@media screen and (max-width: 640px) {
+    .login-choice-grid {
+        grid-template-columns: 1fr;
+        margin: 20px auto;
+    }
+}
+
+/* ===== Hero banner (customer catalog landing) ===== */
+.hero-banner {
+    background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-dark) 100%);
+    border-radius: var(--radius-container);
+    padding: 32px;
+    color: #ffffff;
+    margin: 20px auto 0;
+    max-width: 1200px;
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 24px;
+    align-items: center;
+}
+
+.hero-banner-eyebrow {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 4px 14px;
+    border-radius: var(--radius-pill);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    margin-bottom: 12px;
+}
+
+.hero-banner h1 {
+    font-size: 1.7rem;
+    line-height: 1.3;
+    margin-bottom: 10px;
+}
+
+.hero-banner p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.95rem;
+    margin-bottom: 18px;
+}
+
+.hero-info-pills {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.hero-info-pill {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-input);
+    padding: 8px 12px;
+    font-size: 0.78rem;
+}
+
+.hero-info-pill strong {
+    display: block;
+    font-size: 0.82rem;
+    margin-bottom: 2px;
+}
+
+.hero-banner-image {
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.1);
+    min-height: 160px;
+}
+
+.hero-banner-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+@media screen and (max-width: 768px) {
+    .hero-banner {
+        grid-template-columns: 1fr;
+        padding: 24px;
+    }
+}
+
+/* ===== EAUT Smart ID / EAUT Pay badges ===== */
+.smart-id-badge, .wallet-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--color-gold-soft);
+    color: var(--color-gold);
+    border-radius: var(--radius-pill);
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* ===== Kanban-style live order board (sales/order-queue, store/ship-queue) ===== */
+.kanban-board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+    margin-top: 20px;
+    align-items: start;
+}
+
+.kanban-column {
+    background: var(--color-neutral-soft);
+    border-radius: var(--radius-card);
+    padding: 14px;
+}
+
+.kanban-column-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding: 0 4px;
+}
+
+.kanban-column-header h3 {
+    font-size: 0.95rem;
+    color: var(--color-text);
+}
+
+.kanban-count {
+    background: var(--color-surface);
+    border-radius: var(--radius-pill);
+    padding: 2px 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-accent);
+}
+
+.kanban-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-input);
+    box-shadow: var(--shadow-card);
+    padding: 12px 14px;
+    margin-bottom: 10px;
+}
+
+.kanban-card:last-child {
+    margin-bottom: 0;
+}
+
+.kanban-ticket {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.kanban-ticket-code {
+    font-weight: 700;
+    color: var(--color-accent);
+    font-size: 1.05rem;
+}
+
+.kanban-elapsed {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+}
+
+.kanban-empty {
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    padding: 20px 0;
 }

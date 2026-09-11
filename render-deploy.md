@@ -1,72 +1,60 @@
-# Deploy lên Render (DB chạy tại máy local)
+# Deploy lên Render + Neon (PostgreSQL)
 
-## Giới hạn cần biết trước
+## Vì sao đổi từ MySQL/ngrok sang Neon
 
-- **DB chạy trên máy bạn** → app trên Render chỉ hoạt động khi máy tính này **đang bật** và
-  **ngrok đang chạy**. Tắt máy/tắt ngrok = app trên Render mất kết nối DB.
-- **Ảnh sản phẩm upload trên Render bị mất khi redeploy/restart** — ổ đĩa của Render là ephemeral
-  (không lưu trạng thái). Muốn ảnh tồn tại lâu dài cần Render Persistent Disk (trả phí) hoặc
-  chuyển sang lưu ảnh ở dịch vụ ngoài (S3, Cloudinary...). Ngoài phạm vi hôm nay — chấp nhận giới
-  hạn này cho mục đích demo/nộp bài trước.
-- Đây là giải pháp phù hợp để **demo/nộp bài**, không phải kiến trúc production thật.
+Bản trước dùng MySQL chạy trên máy cá nhân, lộ ra ngoài qua tunnel ngrok — nghĩa là app trên
+Render chỉ sống khi máy đó **đang bật và ngrok đang chạy**, và địa chỉ tunnel đổi mỗi lần khởi
+động lại (bản ngrok miễn phí). **Neon** là PostgreSQL managed, có sẵn 24/7, không phụ thuộc máy cá
+nhân nào — đây là kiến trúc phù hợp để deploy thật, không chỉ demo tạm.
 
-## Bước 1 — Cho MySQL local nhận kết nối từ xa
+Ảnh sản phẩm upload trên Render vẫn bị mất khi redeploy/restart (ổ đĩa container là ephemeral).
+Muốn ảnh tồn tại lâu dài cần Render Persistent Disk (trả phí) hoặc dịch vụ lưu trữ ngoài (S3,
+Cloudinary...) — ngoài phạm vi tài liệu này.
 
-1. Mở file cấu hình MySQL (`my.ini` trên Windows, thường ở
-   `C:\ProgramData\MySQL\MySQL Server 8.0\my.ini`), tìm dòng `bind-address` và đổi thành:
+## Bước 1 — Chuẩn bị database trên Neon
+
+1. Tạo project tại [neon.tech](https://neon.tech) (có sẵn nếu bạn đã có `neondb`).
+2. Lấy connection string dạng `postgresql://<user>:<password>@<host>/<database>?sslmode=require`
+   từ Neon Console → Connection Details.
+3. Khởi tạo schema — chạy `sql/schema.postgres.sql` rồi `sql/seed.postgres.sql` (theo đúng thứ tự
+   này) trên database đó, qua Neon SQL Editor (dán nội dung file, chạy) hoặc `psql`:
    ```
-   bind-address = 0.0.0.0
+   psql "postgresql://<user>:<password>@<host>/<database>?sslmode=require" -f sql/schema.postgres.sql
+   psql "postgresql://<user>:<password>@<host>/<database>?sslmode=require" -f sql/seed.postgres.sql
    ```
-   Khởi động lại service MySQL sau khi sửa.
+   `seed.postgres.sql` tạo sẵn tài khoản quản lý: **admin / admin123** — đổi mật khẩu hoặc xoá tài
+   khoản này trước khi dùng thật, và tạo sẵn 4 vai trò mặc định + toàn bộ danh mục quyền (xem
+   `/admin/roles` sau khi đăng nhập để tạo thêm vai trò hoặc chỉnh quyền).
+4. **Không chạy `sql/schema.sql`/`sql/seed.sql`** (bản MySQL) lên Neon — hai cú pháp không tương
+   thích (ENUM/AUTO_INCREMENT/ENGINE=... là MySQL-only). Bản MySQL vẫn dùng được cho dev local theo
+   README nếu bạn chạy Tomcat trên máy mình.
 
-2. Tạo (hoặc sửa) user MySQL cho phép kết nối từ host bất kỳ (không chỉ `localhost`):
-   ```sql
-   CREATE USER 'canteen_app'@'%' IDENTIFIED BY 'MAT_KHAU_MANH_O_DAY';
-   GRANT ALL PRIVILEGES ON eaut_canteen.* TO 'canteen_app'@'%';
-   FLUSH PRIVILEGES;
-   ```
-   Dùng user riêng này (không dùng `root`) khi expose ra internet.
-
-## Bước 2 — Mở tunnel ngrok cho cổng 3306 (MySQL)
-
-```
-ngrok tcp 3306
-```
-
-Ngrok in ra một địa chỉ dạng:
-```
-Forwarding   tcp://0.tcp.ngrok.io:12345 -> localhost:3306
-```
-
-Ghi lại **host** (`0.tcp.ngrok.io`) và **port** (`12345`) — đây là địa chỉ Render sẽ dùng để kết
-nối vào MySQL của bạn.
-
-> Lưu ý: với ngrok bản miễn phí, địa chỉ này **đổi mỗi lần khởi động lại tunnel** → mỗi lần chạy
-> lại `ngrok tcp 3306`, phải vào Render cập nhật lại biến `DB_URL`.
-
-## Bước 3 — Deploy trên Render
+## Bước 2 — Deploy trên Render
 
 1. Vào [render.com](https://render.com) → **New** → **Web Service**.
 2. Chọn repo GitHub `20231012-crypto/JAVA`, branch `main`.
-3. Runtime: chọn **Docker** (Render tự nhận diện `Dockerfile` ở gốc repo).
+3. Runtime: **Docker** (Render tự nhận diện `Dockerfile` ở gốc repo — driver PostgreSQL đã có sẵn
+   trong `pom.xml`, `DBConnection` tự chọn đúng driver theo scheme của `DB_URL`, không cần khai báo
+   thêm biến `DB_DRIVER`).
 4. Instance type: Free (đủ cho demo) hoặc Starter.
 5. Thêm **Environment Variables** (mục *Environment* trong Render):
 
    | Key | Value | Ghi chú |
    |---|---|---|
-   | `DB_URL` | `jdbc:mysql://0.tcp.ngrok.io:12345/eaut_canteen?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Ho_Chi_Minh` | Thay host:port bằng địa chỉ ngrok ở Bước 2 |
-   | `DB_USERNAME` | `canteen_app` | |
-   | `DB_PASSWORD` | `MAT_KHAU_MANH_O_DAY` | |
-   | `GOOGLE_CLIENTID` | `958284026141-oaeoh76l8j00jv4ms5qcrug35tim8ber.apps.googleusercontent.com` | Lấy từ `app.properties` hiện tại |
+   | `DB_URL` | `jdbc:postgresql://<host>/<database>?sslmode=require` | Thêm tiền tố `jdbc:` vào connection string Neon; **bỏ** `channel_binding` (tham số riêng của libpq, driver JDBC không hiểu) |
+   | `DB_USERNAME` | `<user>` từ Neon | |
+   | `DB_PASSWORD` | `<password>` từ Neon | |
+   | `GOOGLE_CLIENTID` | Client ID Google OAuth đang dùng | |
    | `UPLOAD_DIR` | `/tmp/eaut-canteen-uploads` | Thư mục trong container Render (mất khi restart, xem giới hạn ở trên) |
    | `VIETQR_BANKID` | `970436` | |
    | `VIETQR_ACCOUNTNO` | `0000000000` | |
    | `VIETQR_ACCOUNTNAME` | `CANTEEN EAUT` | |
+   | `SMARTID_DISCOUNTPERCENT` | `10` | Tuỳ chọn — % giảm giá tự động cho tài khoản @eaut.edu.vn, mặc định 10 nếu bỏ trống |
 
 6. Bấm **Create Web Service** → Render tự build Docker image và deploy.
 7. Sau khi deploy xong, Render cấp một URL dạng `https://<ten-service>.onrender.com`.
 
-## Bước 4 — Cập nhật Google Cloud Console
+## Bước 3 — Cập nhật Google Cloud Console
 
 Vào Google Cloud Console → APIs & Services → Credentials → OAuth Client ID đang dùng, thêm:
 
@@ -78,14 +66,11 @@ Vào Google Cloud Console → APIs & Services → Credentials → OAuth Client I
 ## Kiểm tra sau khi deploy
 
 - Mở `https://<ten-service>.onrender.com/products` — phải load được danh sách sản phẩm (chứng tỏ
-  kết nối DB qua ngrok hoạt động).
-- Thử đăng nhập admin/nhân viên (username/password) và đăng nhập Google.
-- Nếu lỗi 500 ngay khi mở trang: kiểm tra Render → Logs, thường do `DB_URL` sai hoặc tunnel ngrok
-  đã đổi địa chỉ.
-
-## Mỗi lần khởi động lại máy / ngrok
-
-1. Bật MySQL (nếu chưa tự khởi động cùng Windows).
-2. Chạy lại `ngrok tcp 3306`.
-3. Lấy địa chỉ tunnel mới → vào Render → Environment → sửa `DB_URL` → **Save Changes** (Render tự
-   redeploy).
+  kết nối Neon hoạt động).
+- Thử đăng nhập nhân viên tại `/login/staff` (username/password) và khách hàng tại `/login/customer`
+  (Google Sign-In).
+- Nếu lỗi 500 ngay khi mở trang: kiểm tra Render → Logs. Lỗi thường gặp:
+  - `DB_URL` thiếu tiền tố `jdbc:`, hoặc còn tham số `channel_binding` (driver JDBC không nhận).
+  - Sai mật khẩu/host Neon (kiểm tra lại trong Neon Console → có thể cần reset password nếu đã
+    từng lộ connection string ra ngoài).
+  - Chưa chạy `schema.postgres.sql`/`seed.postgres.sql` lên đúng database đang trỏ tới.

@@ -5,7 +5,12 @@
 <jsp:include page="/WEB-INF/views/common/nav.jsp" />
 <main class="page-content">
     <div class="container">
-        <h1>Tài khoản nhân viên</h1>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <h1>Tài khoản nhân viên</h1>
+            <c:if test="${sessionScope.user.permissions['roles.manage']}">
+                <a class="btn btn-secondary btn-sm" href="${pageContext.request.contextPath}/admin/roles">Quản lý vai trò &amp; phân quyền</a>
+            </c:if>
+        </div>
 
         <c:if test="${not empty error}">
             <div class="alert alert-error"><c:out value="${error}" /></div>
@@ -34,11 +39,11 @@
                 <input type="password" id="password" name="password" minlength="6" required>
             </div>
             <div class="form-group" style="margin-bottom:0;">
-                <label for="role">Vai trò</label>
-                <select id="role" name="role" required>
-                    <option value="ADMIN">Quản lý</option>
-                    <option value="SALES_STAFF">Nhân viên bán hàng</option>
-                    <option value="STORE_STAFF">Nhân viên cửa hàng</option>
+                <label for="roleId">Vai trò</label>
+                <select id="roleId" name="roleId" required>
+                    <c:forEach var="r" items="${assignableRoles}">
+                        <option value="${r.roleId}"><c:out value="${r.displayName}" /></option>
+                    </c:forEach>
                 </select>
             </div>
             <button type="submit" class="btn btn-primary">Tạo tài khoản</button>
@@ -54,13 +59,7 @@
                         <td><c:out value="${u.fullName}" /></td>
                         <td><c:out value="${u.username}" /></td>
                         <td><c:out value="${u.email}" /></td>
-                        <td>
-                            <c:choose>
-                                <c:when test="${u.role == 'ADMIN'}">Quản lý</c:when>
-                                <c:when test="${u.role == 'SALES_STAFF'}">Nhân viên bán hàng</c:when>
-                                <c:when test="${u.role == 'STORE_STAFF'}">Nhân viên cửa hàng</c:when>
-                            </c:choose>
-                        </td>
+                        <td><c:out value="${u.role.displayName}" /></td>
                         <td>
                             <c:choose>
                                 <c:when test="${u.status == 'ACTIVE'}"><span class="badge badge-completed">Đang hoạt động</span></c:when>

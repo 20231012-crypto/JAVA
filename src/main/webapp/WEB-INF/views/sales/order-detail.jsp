@@ -12,7 +12,7 @@
         </c:if>
 
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-            <h1>Đơn hàng #${order.orderId}</h1>
+            <h1>Đơn hàng <c:out value="${order.orderCode}" /></h1>
             <span class="badge badge-${fn:toLowerCase(order.orderStatus)}"><c:out value="${order.orderStatus.displayName}" /></span>
         </div>
 

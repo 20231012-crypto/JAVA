@@ -1,5 +1,6 @@
 package com.eaut.canteen.dao.impl;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,29 +17,37 @@ import com.eaut.canteen.model.User;
 
 public class UserDAOImpl implements UserDAO {
 
+    // Every SELECT joins roles so a User is always built with its full Role (id/key/display
+    // name/flags) rather than a bare id — mapRow relies on the joined columns being present.
+    private static final String BASE_SELECT =
+            "SELECT u.*, r.role_key, r.display_name AS role_display_name, r.is_system AS role_is_system, " +
+            "r.is_customer_default AS role_is_customer_default " +
+            "FROM users u JOIN roles r ON r.role_id = u.role_id ";
     private static final String FIND_BY_ID =
-            "SELECT * FROM users WHERE user_id = ?";
+            BASE_SELECT + "WHERE u.user_id = ?";
     private static final String FIND_BY_USERNAME =
-            "SELECT * FROM users WHERE username = ?";
+            BASE_SELECT + "WHERE u.username = ?";
     private static final String FIND_BY_EMAIL =
-            "SELECT * FROM users WHERE email = ?";
+            BASE_SELECT + "WHERE u.email = ?";
     private static final String FIND_BY_GOOGLE_SUB =
-            "SELECT * FROM users WHERE google_sub = ?";
+            BASE_SELECT + "WHERE u.google_sub = ?";
     private static final String EXISTS_BY_USERNAME =
             "SELECT 1 FROM users WHERE username = ?";
     private static final String EXISTS_BY_EMAIL =
             "SELECT 1 FROM users WHERE email = ?";
     private static final String INSERT =
-            "INSERT INTO users (username, password_hash, google_sub, auth_provider, full_name, email, phone, role, status) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            "INSERT INTO users (username, password_hash, google_sub, auth_provider, full_name, email, phone, role_id, status, is_eaut_student) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String FIND_ALL_STAFF =
-            "SELECT * FROM users WHERE role <> 'CUSTOMER' ORDER BY role, full_name";
+            BASE_SELECT + "WHERE r.is_customer_default = FALSE ORDER BY r.display_name, u.full_name";
     private static final String UPDATE_STATUS =
             "UPDATE users SET status = ? WHERE user_id = ?";
-    private static final String FIND_BY_ROLE =
-            "SELECT * FROM users WHERE role = ? AND status = 'ACTIVE' ORDER BY full_name";
+    private static final String FIND_BY_ROLE_ID =
+            BASE_SELECT + "WHERE u.role_id = ? AND u.status = 'ACTIVE' ORDER BY u.full_name";
     private static final String LINK_GOOGLE_ACCOUNT =
             "UPDATE users SET google_sub = ?, auth_provider = 'GOOGLE' WHERE user_id = ?";
+    private static final String ADJUST_WALLET =
+            "UPDATE users SET wallet_balance = wallet_balance + ? WHERE user_id = ?";
 
     @Override
     public User findById(Connection conn, int userId) throws SQLException {
@@ -110,8 +119,9 @@ public class UserDAOImpl implements UserDAO {
             ps.setString(5, user.getFullName());
             ps.setString(6, user.getEmail());
             ps.setString(7, user.getPhone());
-            ps.setString(8, user.getRole().name());
+            ps.setInt(8, user.getRole().getRoleId());
             ps.setString(9, user.getStatus().name());
+            ps.setBoolean(10, user.isEautStudent());
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 keys.next();
@@ -151,10 +161,10 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
-    public List<User> findByRole(Connection conn, Role role) throws SQLException {
+    public List<User> findByRole(Connection conn, int roleId) throws SQLException {
         List<User> users = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement(FIND_BY_ROLE)) {
-            ps.setString(1, role.name());
+        try (PreparedStatement ps = conn.prepareStatement(FIND_BY_ROLE_ID)) {
+            ps.setInt(1, roleId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     users.add(mapRow(rs));
@@ -162,6 +172,15 @@ public class UserDAOImpl implements UserDAO {
             }
         }
         return users;
+    }
+
+    @Override
+    public void adjustWalletBalance(Connection conn, int userId, BigDecimal delta) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(ADJUST_WALLET)) {
+            ps.setBigDecimal(1, delta);
+            ps.setInt(2, userId);
+            ps.executeUpdate();
+        }
     }
 
     private User mapRow(ResultSet rs) throws SQLException {
@@ -174,10 +193,20 @@ public class UserDAOImpl implements UserDAO {
         user.setFullName(rs.getString("full_name"));
         user.setEmail(rs.getString("email"));
         user.setPhone(rs.getString("phone"));
-        user.setRole(Role.valueOf(rs.getString("role")));
+
+        Role role = new Role();
+        role.setRoleId(rs.getInt("role_id"));
+        role.setRoleKey(rs.getString("role_key"));
+        role.setDisplayName(rs.getString("role_display_name"));
+        role.setSystem(rs.getBoolean("role_is_system"));
+        role.setCustomerDefault(rs.getBoolean("role_is_customer_default"));
+        user.setRole(role);
+
         user.setStatus(AccountStatus.valueOf(rs.getString("status")));
         int buildingId = rs.getInt("building_id");
         user.setBuildingId(rs.wasNull() ? null : buildingId);
+        user.setWalletBalance(rs.getBigDecimal("wallet_balance"));
+        user.setEautStudent(rs.getBoolean("is_eaut_student"));
         if (rs.getTimestamp("created_at") != null) {
             user.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
         }

@@ -1,6 +1,7 @@
 package com.eaut.canteen.model;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -9,6 +10,7 @@ public class Order {
     private static final DateTimeFormatter DISPLAY_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private int orderId;
+    private String orderCode;
     private Integer customerId;
     private Integer buildingId;
     private String buildingName;
@@ -16,6 +18,7 @@ public class Order {
     private Integer soldBy;
     private BigDecimal subtotal;
     private BigDecimal shippingFee;
+    private BigDecimal discountAmount = BigDecimal.ZERO;
     private BigDecimal totalAmount;
     private OrderStatus orderStatus;
     private PaymentMethod paymentMethod;
@@ -32,6 +35,15 @@ public class Order {
 
     public void setOrderId(int orderId) {
         this.orderId = orderId;
+    }
+
+    /** Short ticket code shown to customers/kitchen board (e.g. "A-142"); assigned by OrderDAOImpl#insert. */
+    public String getOrderCode() {
+        return orderCode;
+    }
+
+    public void setOrderCode(String orderCode) {
+        this.orderCode = orderCode;
     }
 
     public Integer getCustomerId() {
@@ -88,6 +100,15 @@ public class Order {
 
     public void setShippingFee(BigDecimal shippingFee) {
         this.shippingFee = shippingFee;
+    }
+
+    /** EAUT Smart ID automatic discount (see AppConfig "smartId.discountPercent"); zero when not applicable. */
+    public BigDecimal getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(BigDecimal discountAmount) {
+        this.discountAmount = discountAmount;
     }
 
     public BigDecimal getTotalAmount() {
@@ -157,6 +178,21 @@ public class Order {
     /** JSTL's fmt:formatDate can't format java.time types, so views use this instead. */
     public String getCreatedAtDisplay() {
         return createdAt == null ? "" : createdAt.format(DISPLAY_FORMAT);
+    }
+
+    /** "5 phút" / "1 giờ 20 phút" since creation — for the live-feeling Kanban board (sales/order-queue.jsp, store/ship-queue.jsp). Computed fresh on each call, not cached. */
+    public String getElapsedDisplay() {
+        if (createdAt == null) {
+            return "";
+        }
+        long minutes = Duration.between(createdAt, LocalDateTime.now()).toMinutes();
+        if (minutes < 1) {
+            return "vừa xong";
+        }
+        if (minutes < 60) {
+            return minutes + " phút";
+        }
+        return (minutes / 60) + " giờ " + (minutes % 60) + " phút";
     }
 
     public LocalDateTime getUpdatedAt() {

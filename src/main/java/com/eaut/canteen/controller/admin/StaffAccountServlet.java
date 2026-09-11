@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import com.eaut.canteen.dao.RoleDAO;
 import com.eaut.canteen.dao.UserDAO;
+import com.eaut.canteen.dao.impl.RoleDAOImpl;
 import com.eaut.canteen.dao.impl.UserDAOImpl;
 import com.eaut.canteen.model.AccountStatus;
 import com.eaut.canteen.model.Role;
@@ -22,14 +24,13 @@ import jakarta.servlet.http.HttpServletResponse;
 public class StaffAccountServlet extends HttpServlet {
 
     private static final UserDAO userDAO = new UserDAOImpl();
+    private static final RoleDAO roleDAO = new RoleDAOImpl();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         try (Connection conn = DBConnection.getConnection()) {
-            req.setAttribute("pageTitle", "Tài khoản nhân viên");
-            req.setAttribute("staff", userDAO.findAllStaff(conn));
-            req.getRequestDispatcher("/WEB-INF/views/admin/staff-accounts.jsp").forward(req, resp);
+            showForm(req, resp, conn, null);
         } catch (SQLException e) {
             throw new ServletException(e);
         }
@@ -59,21 +60,17 @@ public class StaffAccountServlet extends HttpServlet {
         String fullName = req.getParameter("fullName");
         String email = req.getParameter("email");
         String phone = req.getParameter("phone");
-        Role role = Role.valueOf(req.getParameter("role"));
+        int roleId = Integer.parseInt(req.getParameter("roleId"));
+        Role role = roleDAO.findById(conn, roleId);
 
         if (username == null || username.isBlank() || password == null || password.length() < 6
-                || fullName == null || fullName.isBlank() || email == null || email.isBlank()) {
-            req.setAttribute("error", "Vui lòng nhập đầy đủ thông tin, mật khẩu tối thiểu 6 ký tự.");
-            req.setAttribute("pageTitle", "Tài khoản nhân viên");
-            req.setAttribute("staff", userDAO.findAllStaff(conn));
-            req.getRequestDispatcher("/WEB-INF/views/admin/staff-accounts.jsp").forward(req, resp);
+                || fullName == null || fullName.isBlank() || email == null || email.isBlank()
+                || role == null || role.isCustomerDefault()) {
+            showForm(req, resp, conn, "Vui lòng nhập đầy đủ thông tin hợp lệ, mật khẩu tối thiểu 6 ký tự.");
             return;
         }
         if (userDAO.existsByUsername(conn, username) || userDAO.existsByEmail(conn, email)) {
-            req.setAttribute("error", "Tên đăng nhập hoặc email đã được sử dụng.");
-            req.setAttribute("pageTitle", "Tài khoản nhân viên");
-            req.setAttribute("staff", userDAO.findAllStaff(conn));
-            req.getRequestDispatcher("/WEB-INF/views/admin/staff-accounts.jsp").forward(req, resp);
+            showForm(req, resp, conn, "Tên đăng nhập hoặc email đã được sử dụng.");
             return;
         }
 
@@ -88,5 +85,19 @@ public class StaffAccountServlet extends HttpServlet {
         userDAO.insert(conn, user);
 
         resp.sendRedirect(req.getContextPath() + "/admin/staff");
+    }
+
+    private void showForm(HttpServletRequest req, HttpServletResponse resp, Connection conn, String error)
+            throws SQLException, ServletException, IOException {
+        req.setAttribute("pageTitle", "Tài khoản nhân viên");
+        req.setAttribute("staff", userDAO.findAllStaff(conn));
+        // Customers self-register via Google, not this form — offer every other role, including
+        // any custom ones an admin has created in /admin/roles.
+        req.setAttribute("assignableRoles", roleDAO.findAll(conn).stream()
+                .filter(r -> !r.isCustomerDefault()).toList());
+        if (error != null) {
+            req.setAttribute("error", error);
+        }
+        req.getRequestDispatcher("/WEB-INF/views/admin/staff-accounts.jsp").forward(req, resp);
     }
 }
