@@ -14,6 +14,9 @@ public class Order {
     private Integer customerId;
     private Integer buildingId;
     private String buildingName;
+    private String customerName;
+    private String customerStudentId;
+    private String customerClassName;
     private OrderChannel channel;
     private Integer soldBy;
     private BigDecimal subtotal;
@@ -27,6 +30,7 @@ public class Order {
     private PaymentStatus paymentStatus;
     private Integer paymentConfirmedBy;
     private LocalDateTime paymentConfirmedAt;
+    private LocalDateTime estimatedReadyAt;
     private String note;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -70,6 +74,31 @@ public class Order {
 
     public void setBuildingName(String buildingName) {
         this.buildingName = buildingName;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    /** MSSV — null unless the customer is an EAUT student who's gone through the checkout info gate. */
+    public String getCustomerStudentId() {
+        return customerStudentId;
+    }
+
+    public void setCustomerStudentId(String customerStudentId) {
+        this.customerStudentId = customerStudentId;
+    }
+
+    public String getCustomerClassName() {
+        return customerClassName;
+    }
+
+    public void setCustomerClassName(String customerClassName) {
+        this.customerClassName = customerClassName;
     }
 
     public OrderChannel getChannel() {
@@ -177,6 +206,20 @@ public class Order {
 
     public void setPaymentConfirmedAt(LocalDateTime paymentConfirmedAt) {
         this.paymentConfirmedAt = paymentConfirmedAt;
+    }
+
+    /** Set when the order is confirmed (see OrderActionServlet) — drives the KDS countdown timer on the sales Kanban board. */
+    public LocalDateTime getEstimatedReadyAt() {
+        return estimatedReadyAt;
+    }
+
+    public void setEstimatedReadyAt(LocalDateTime estimatedReadyAt) {
+        this.estimatedReadyAt = estimatedReadyAt;
+    }
+
+    /** Epoch millis for the JS countdown timer — JSTL/EL can't format java.time types, and JS needs a plain number anyway. */
+    public Long getEstimatedReadyAtEpochMillis() {
+        return estimatedReadyAt == null ? null : estimatedReadyAt.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
 
     public String getNote() {

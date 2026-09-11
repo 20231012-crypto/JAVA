@@ -22,8 +22,11 @@ import com.eaut.canteen.model.PaymentStatus;
 public class OrderDAOImpl implements OrderDAO {
 
     private static final String BASE_SELECT =
-            "SELECT o.*, b.name AS building_name FROM orders o " +
-            "LEFT JOIN buildings b ON o.building_id = b.building_id ";
+            "SELECT o.*, b.name AS building_name, " +
+            "u.full_name AS customer_name, u.student_id AS customer_student_id, u.class_name AS customer_class_name " +
+            "FROM orders o " +
+            "LEFT JOIN buildings b ON o.building_id = b.building_id " +
+            "LEFT JOIN users u ON o.customer_id = u.user_id ";
 
     private static final String NEXT_TICKET_NO = "SELECT nextval('order_ticket_seq')";
 
@@ -51,6 +54,8 @@ public class OrderDAOImpl implements OrderDAO {
     private static final String COUNT_BY_HOUR_TODAY =
             "SELECT EXTRACT(HOUR FROM created_at) AS hour_of_day, COUNT(*) FROM orders " +
             "WHERE DATE(created_at) = CURRENT_DATE GROUP BY hour_of_day ORDER BY hour_of_day";
+    private static final String SET_ESTIMATED_READY_AT =
+            "UPDATE orders SET estimated_ready_at = ? WHERE order_id = ?";
 
     @Override
     public int insert(Connection conn, Order order) throws SQLException {
@@ -193,6 +198,15 @@ public class OrderDAOImpl implements OrderDAO {
         return byHour;
     }
 
+    @Override
+    public void setEstimatedReadyAt(Connection conn, int orderId, java.time.LocalDateTime estimatedReadyAt) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(SET_ESTIMATED_READY_AT)) {
+            ps.setTimestamp(1, java.sql.Timestamp.valueOf(estimatedReadyAt));
+            ps.setInt(2, orderId);
+            ps.executeUpdate();
+        }
+    }
+
     private void setNullableInt(PreparedStatement ps, int index, Integer value) throws SQLException {
         if (value == null) {
             ps.setNull(index, Types.INTEGER);
@@ -212,6 +226,9 @@ public class OrderDAOImpl implements OrderDAO {
         int buildingId = rs.getInt("building_id");
         order.setBuildingId(rs.wasNull() ? null : buildingId);
         order.setBuildingName(rs.getString("building_name"));
+        order.setCustomerName(rs.getString("customer_name"));
+        order.setCustomerStudentId(rs.getString("customer_student_id"));
+        order.setCustomerClassName(rs.getString("customer_class_name"));
 
         order.setChannel(OrderChannel.valueOf(rs.getString("channel")));
 
@@ -232,6 +249,9 @@ public class OrderDAOImpl implements OrderDAO {
         order.setPaymentConfirmedBy(rs.wasNull() ? null : paymentConfirmedBy);
         if (rs.getTimestamp("payment_confirmed_at") != null) {
             order.setPaymentConfirmedAt(rs.getTimestamp("payment_confirmed_at").toLocalDateTime());
+        }
+        if (rs.getTimestamp("estimated_ready_at") != null) {
+            order.setEstimatedReadyAt(rs.getTimestamp("estimated_ready_at").toLocalDateTime());
         }
 
         order.setNote(rs.getString("note"));

@@ -3,11 +3,12 @@
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <jsp:include page="/WEB-INF/views/common/header.jsp" />
 <jsp:include page="/WEB-INF/views/common/nav.jsp" />
-<c:if test="${empty customerPhone}">
+<c:set var="needsInfoGate" value="${empty customerPhone or (customerIsEautStudent and empty customerStudentId)}" />
+<c:if test="${needsInfoGate}">
     <div style="position:fixed; inset:0; background:rgba(15,23,42,0.6); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px;">
         <div class="card" style="max-width:420px; width:100%; padding:28px;">
-            <h2 style="margin-bottom:8px;">Thêm số điện thoại để đặt hàng</h2>
-            <p class="hint" style="margin-bottom:20px;">Căng tin cần số điện thoại để liên hệ khi giao đơn — chỉ cần nhập một lần, tài khoản Google của bạn chưa có sẵn.</p>
+            <h2 style="margin-bottom:8px;">Thêm thông tin để đặt hàng</h2>
+            <p class="hint" style="margin-bottom:20px;">Tài khoản Google của bạn chưa có sẵn số điện thoại<c:if test="${customerIsEautStudent}"> và MSSV</c:if> — chỉ cần nhập một lần.</p>
             <c:if test="${not empty sessionScope.phoneError}">
                 <div class="alert alert-error"><c:out value="${sessionScope.phoneError}" /></div>
                 <c:remove var="phoneError" scope="session" />
@@ -16,8 +17,18 @@
                 <input type="hidden" name="redirect" value="${pageContext.request.contextPath}/checkout">
                 <div class="form-group">
                     <label for="phoneInput">Số điện thoại</label>
-                    <input type="tel" id="phoneInput" name="phone" placeholder="09xxxxxxxx" required autofocus>
+                    <input type="tel" id="phoneInput" name="phone" value="${customerPhone}" placeholder="09xxxxxxxx" required autofocus>
                 </div>
+                <c:if test="${customerIsEautStudent}">
+                    <div class="form-group">
+                        <label for="studentIdInput">Mã số sinh viên (MSSV)</label>
+                        <input type="text" id="studentIdInput" name="studentId" value="${customerStudentId}" placeholder="2023xxxx" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="classNameInput">Lớp / Khoa</label>
+                        <input type="text" id="classNameInput" name="className" value="${customerClassName}" placeholder="K14 CNTT">
+                    </div>
+                </c:if>
                 <button type="submit" class="btn btn-primary" style="width:100%;">Lưu &amp; tiếp tục đặt hàng</button>
             </form>
         </div>
@@ -29,6 +40,10 @@
 
         <c:if test="${not empty error}">
             <div class="alert alert-error"><c:out value="${error}" /></div>
+        </c:if>
+
+        <c:if test="${shopAcceptingOrders == false}">
+            <div class="alert alert-error">🚫 Căng tin đang tạm ngưng nhận đơn (quá tải hoặc ngoài giờ phục vụ). Vui lòng quay lại sau.</div>
         </c:if>
 
         <form method="post" action="${pageContext.request.contextPath}/checkout/place" id="checkoutForm">
@@ -107,7 +122,7 @@
                         <span>Tổng cộng</span>
                         <span id="sumTotal"><fmt:formatNumber value="${cart.subtotal}" type="number" groupingUsed="true" />₫</span>
                     </div>
-                    <button type="submit" class="btn btn-primary" style="width:100%; margin-top:16px;">Đặt hàng</button>
+                    <button type="submit" class="btn btn-primary" style="width:100%; margin-top:16px;" ${shopAcceptingOrders == false ? 'disabled' : ''}>Đặt hàng</button>
                 </div>
             </div>
         </form>

@@ -20,6 +20,7 @@ INSERT INTO permissions (permission_key, group_name, display_name, sort_order) V
   ('orders.action',          'Bán hàng',       'Duyệt / từ chối / hủy đơn',           110),
   ('orders.payment_confirm', 'Bán hàng',       'Xác nhận thanh toán VietQR',          120),
   ('sales.counter',          'Bán hàng',       'Bán hàng trực tiếp tại quầy',         130),
+  ('shop.status',            'Bán hàng',       'Bật/tắt nhận đơn toàn hệ thống',      105),
   ('wallet.topup',           'Tài chính',      'Nạp ví EAUT Pay cho khách hàng',      140),
   ('reports.view',           'Tài chính',      'Xem báo cáo doanh thu',               150);
 
@@ -36,12 +37,12 @@ INSERT INTO role_permissions (role_id, permission_key)
   SELECT r.role_id, p.permission_key FROM roles r, permissions p
   WHERE r.role_key = 'ADMIN' AND p.permission_key IN
     ('admin.dashboard','categories.manage','products.manage','buildings.manage',
-     'staff.manage','roles.manage','stock.import','wallet.topup','reports.view');
+     'staff.manage','roles.manage','stock.import','wallet.topup','reports.view','shop.status');
 
 INSERT INTO role_permissions (role_id, permission_key)
   SELECT r.role_id, p.permission_key FROM roles r, permissions p
   WHERE r.role_key = 'SALES_STAFF' AND p.permission_key IN
-    ('orders.queue','orders.action','orders.payment_confirm','sales.counter');
+    ('orders.queue','orders.action','orders.payment_confirm','sales.counter','shop.status');
 
 INSERT INTO role_permissions (role_id, permission_key)
   SELECT r.role_id, p.permission_key FROM roles r, permissions p

@@ -52,6 +52,12 @@ public class UserDAOImpl implements UserDAO {
             "UPDATE users SET loyalty_points = loyalty_points + ? WHERE user_id = ?";
     private static final String UPDATE_PHONE =
             "UPDATE users SET phone = ? WHERE user_id = ?";
+    private static final String UPDATE_STUDENT_INFO =
+            "UPDATE users SET student_id = ?, class_name = ? WHERE user_id = ?";
+    private static final String SET_ON_DUTY =
+            "UPDATE users SET on_duty = ? WHERE user_id = ?";
+    private static final String FIND_ON_DUTY_STAFF =
+            BASE_SELECT + "WHERE u.on_duty = TRUE AND r.is_customer_default = FALSE ORDER BY u.full_name";
 
     @Override
     public User findById(Connection conn, int userId) throws SQLException {
@@ -205,6 +211,37 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
+    @Override
+    public void updateStudentInfo(Connection conn, int userId, String studentId, String className) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(UPDATE_STUDENT_INFO)) {
+            ps.setString(1, studentId);
+            ps.setString(2, className);
+            ps.setInt(3, userId);
+            ps.executeUpdate();
+        }
+    }
+
+    @Override
+    public void setOnDuty(Connection conn, int userId, boolean onDuty) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(SET_ON_DUTY)) {
+            ps.setBoolean(1, onDuty);
+            ps.setInt(2, userId);
+            ps.executeUpdate();
+        }
+    }
+
+    @Override
+    public List<User> findOnDutyStaff(Connection conn) throws SQLException {
+        List<User> staff = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(FIND_ON_DUTY_STAFF);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                staff.add(mapRow(rs));
+            }
+        }
+        return staff;
+    }
+
     private User mapRow(ResultSet rs) throws SQLException {
         User user = new User();
         user.setUserId(rs.getInt("user_id"));
@@ -230,6 +267,9 @@ public class UserDAOImpl implements UserDAO {
         user.setWalletBalance(rs.getBigDecimal("wallet_balance"));
         user.setEautStudent(rs.getBoolean("is_eaut_student"));
         user.setLoyaltyPoints(rs.getInt("loyalty_points"));
+        user.setStudentId(rs.getString("student_id"));
+        user.setClassName(rs.getString("class_name"));
+        user.setOnDuty(rs.getBoolean("on_duty"));
         if (rs.getTimestamp("created_at") != null) {
             user.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
         }

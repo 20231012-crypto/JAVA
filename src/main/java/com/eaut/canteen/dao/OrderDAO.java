@@ -41,4 +41,7 @@ public interface OrderDAO {
 
     /** Order count per hour-of-day (0-23) for today, only hours with at least one order — backs the admin dashboard's peak-hour chart. */
     Map<Integer, Integer> countOrdersByHourToday(Connection conn) throws SQLException;
+
+    /** Set when an order is confirmed (see OrderActionServlet) — drives the KDS countdown timer on the sales Kanban board. */
+    void setEstimatedReadyAt(Connection conn, int orderId, java.time.LocalDateTime estimatedReadyAt) throws SQLException;
 }

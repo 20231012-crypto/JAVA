@@ -23,6 +23,9 @@ public class User {
     private BigDecimal walletBalance = BigDecimal.ZERO;
     private boolean eautStudent;
     private int loyaltyPoints;
+    private String studentId;
+    private String className;
+    private boolean onDuty;
     private LocalDateTime createdAt;
 
     /**
@@ -149,6 +152,33 @@ public class User {
 
     public void setLoyaltyPoints(int loyaltyPoints) {
         this.loyaltyPoints = loyaltyPoints;
+    }
+
+    /** MSSV — collected via the checkout info gate for @eaut.edu.vn customers; null for staff and non-student customers. */
+    public String getStudentId() {
+        return studentId;
+    }
+
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
+    }
+
+    /** Khoa/Lớp — collected alongside studentId. */
+    public String getClassName() {
+        return className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
+    }
+
+    /** Staff self-reported "đang trực" status, shown on the sales/store Kanban boards. */
+    public boolean isOnDuty() {
+        return onDuty;
+    }
+
+    public void setOnDuty(boolean onDuty) {
+        this.onDuty = onDuty;
     }
 
     public Map<String, Boolean> getPermissions() {

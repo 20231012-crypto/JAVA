@@ -7,6 +7,15 @@
     <div class="container">
         <h1>Thực đơn căng tin</h1>
 
+        <c:choose>
+            <c:when test="${shopAcceptingOrders == false}">
+                <div class="alert alert-error">🚫 Căng tin đang tạm ngưng nhận đơn — bạn vẫn xem được thực đơn nhưng chưa đặt hàng được lúc này.</div>
+            </c:when>
+            <c:otherwise>
+                <p class="hint" style="margin-bottom:12px;">⏱ Thời gian chờ ước tính hiện tại: khoảng <strong>${estimatedWaitMinutes} phút</strong></p>
+            </c:otherwise>
+        </c:choose>
+
         <div class="filter-bar">
             <a class="filter-chip ${empty selectedCategory ? 'active' : ''}" href="${pageContext.request.contextPath}/products">Tất cả</a>
             <c:forEach var="cat" items="${categories}">

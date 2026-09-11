@@ -8,9 +8,13 @@ import java.util.List;
 import com.eaut.canteen.dao.OrderDAO;
 import com.eaut.canteen.dao.OrderItemDAO;
 import com.eaut.canteen.dao.OrderStatusHistoryDAO;
+import com.eaut.canteen.dao.ShopStatusDAO;
+import com.eaut.canteen.dao.UserDAO;
 import com.eaut.canteen.dao.impl.OrderDAOImpl;
 import com.eaut.canteen.dao.impl.OrderItemDAOImpl;
 import com.eaut.canteen.dao.impl.OrderStatusHistoryDAOImpl;
+import com.eaut.canteen.dao.impl.ShopStatusDAOImpl;
+import com.eaut.canteen.dao.impl.UserDAOImpl;
 import com.eaut.canteen.model.Order;
 import com.eaut.canteen.model.OrderStatus;
 import com.eaut.canteen.model.PaymentMethod;
@@ -30,6 +34,8 @@ public class OrderQueueServlet extends HttpServlet {
     private static final OrderDAO orderDAO = new OrderDAOImpl();
     private static final OrderItemDAO orderItemDAO = new OrderItemDAOImpl();
     private static final OrderStatusHistoryDAO historyDAO = new OrderStatusHistoryDAOImpl();
+    private static final ShopStatusDAO shopStatusDAO = new ShopStatusDAOImpl();
+    private static final UserDAO userDAO = new UserDAOImpl();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -59,6 +65,8 @@ public class OrderQueueServlet extends HttpServlet {
             req.setAttribute("confirmedOrders", orderDAO.findByStatus(conn, OrderStatus.CONFIRMED));
             req.setAttribute("shippingOrders", orderDAO.findByStatus(conn, OrderStatus.SHIPPING));
             req.setAttribute("selectedStatus", "");
+            req.setAttribute("shopStatus", shopStatusDAO.get(conn));
+            req.setAttribute("onDutyStaff", userDAO.findOnDutyStaff(conn));
         } else {
             req.setAttribute("boardMode", false);
             List<Order> orders = "ALL".equals(statusParam)

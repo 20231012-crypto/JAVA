@@ -31,13 +31,13 @@ public class ProductDAOImpl implements ProductDAO {
             BASE_SELECT + "ORDER BY p.name";
 
     private static final String INSERT_PRODUCT =
-            "INSERT INTO products (category_id, name, description, price, unit, is_active) VALUES (?, ?, ?, ?, ?, ?)";
+            "INSERT INTO products (category_id, name, description, price, unit, is_active, avg_prep_minutes) VALUES (?, ?, ?, ?, ?, ?, ?)";
     private static final String INSERT_WAREHOUSE_STOCK =
             "INSERT INTO warehouse_stock (product_id, quantity) VALUES (?, 0)";
     private static final String INSERT_SHELF_STOCK =
             "INSERT INTO shelf_stock (product_id, quantity) VALUES (?, 0)";
     private static final String UPDATE =
-            "UPDATE products SET category_id = ?, name = ?, description = ?, price = ?, unit = ? WHERE product_id = ?";
+            "UPDATE products SET category_id = ?, name = ?, description = ?, price = ?, unit = ?, avg_prep_minutes = ? WHERE product_id = ?";
     private static final String UPDATE_IMAGE =
             "UPDATE products SET image_filename = ? WHERE product_id = ?";
     private static final String SET_ACTIVE =
@@ -97,6 +97,7 @@ public class ProductDAOImpl implements ProductDAO {
             ps.setBigDecimal(4, product.getPrice());
             ps.setString(5, product.getUnit());
             ps.setBoolean(6, true);
+            ps.setInt(7, product.getAvgPrepMinutes());
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 keys.next();
@@ -121,7 +122,8 @@ public class ProductDAOImpl implements ProductDAO {
             ps.setString(3, product.getDescription());
             ps.setBigDecimal(4, product.getPrice());
             ps.setString(5, product.getUnit());
-            ps.setInt(6, product.getProductId());
+            ps.setInt(6, product.getAvgPrepMinutes());
+            ps.setInt(7, product.getProductId());
             ps.executeUpdate();
         }
     }
@@ -155,6 +157,7 @@ public class ProductDAOImpl implements ProductDAO {
         product.setImageFilename(rs.getString("image_filename"));
         product.setUnit(rs.getString("unit"));
         product.setActive(rs.getBoolean("is_active"));
+        product.setAvgPrepMinutes(rs.getInt("avg_prep_minutes"));
         product.setShelfQuantity(rs.getInt("shelf_quantity"));
         product.setWarehouseQuantity(rs.getInt("warehouse_quantity"));
         return product;

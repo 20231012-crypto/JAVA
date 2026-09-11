@@ -85,3 +85,9 @@ Mỗi đơn có một mã ticket ngắn (`order_code`, ví dụ `A-142` cho đơ
 **Ví EAUT Pay & tích điểm** — không có liên kết ngân hàng thật, nên cả hai dùng chung một nguyên tắc: khách tự thao tác, con người xác nhận rồi mới cộng tiền/điểm thật.
 - Thanh toán hỗ trợ COD, VietQR, tiền mặt tại quầy, và **Ví EAUT Pay** (số dư nội bộ `users.wallet_balance`, sổ ghi `wallet_transactions`). Khách tự tạo yêu cầu nạp tiền tại `/wallet` (ra mã VietQR), Admin/nhân viên kiểm tra ngân hàng rồi xác nhận tại `/admin/wallet` mới thật sự cộng vào ví — không có gì tự động trừ khi có người bấm xác nhận.
 - **Tích điểm**: hoàn thành 1 đơn web được cộng `floor(tổng tiền / loyalty.vndPerPoint)` điểm (mặc định 10.000đ = 1 điểm, xem `OrderFulfillmentServlet`); đổi điểm lấy giảm giá ngay tại checkout, mỗi điểm trị giá `loyalty.redeemValuePerPoint` đ (mặc định 500đ — thấp hơn giá trị lúc tích, để chương trình có ý nghĩa thay vì tương đương giảm giá thẳng).
+
+**Bảng bếp (KDS) & vận hành ca trực** — xem `DESIGN.md` mục "Đối chiếu với hiện trạng codebase" để biết chi tiết phần nào dùng dữ liệu thật, phần nào (LED/loa, thẻ NFC, phân ca trước) cần phần cứng ngoài phạm vi web app.
+- Khách hàng @eaut.edu.vn nhập thêm MSSV/Lớp cùng lúc với số điện thoại (popup bắt buộc trước khi đặt hàng lần đầu) — hiển thị trên thẻ đơn ở bảng Kanban bán hàng.
+- Mỗi sản phẩm có thời gian chế biến trung bình (`products.avg_prep_minutes`, Admin chỉnh trong form sản phẩm); khi đơn được duyệt, hệ thống tính thời gian ra món dự kiến và hiển thị đồng hồ đếm ngược thật trên bảng bếp.
+- Admin/Nhân viên bán hàng (quyền `shop.status`) có thể tạm ngưng nhận đơn toàn hệ thống khi quá tải — chặn thật ở bước đặt hàng, không chỉ là UI.
+- Bất kỳ nhân viên nào cũng tự bật/tắt trạng thái "đang trực" (`users.on_duty`), hiển thị thành danh sách trên bảng Kanban.

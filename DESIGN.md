@@ -376,26 +376,35 @@ Việt).
 - KPI cards trên dashboard admin: doanh thu hôm nay, số đơn theo trạng thái, tồn kho sắp hết, biểu
   đồ lưu lượng đơn theo giờ (peak-hour chart) — số liệu thật từ `orders`/`shelf_stock`.
 - EAUT Smart ID (giảm giá tự động theo email @eaut.edu.vn) và tích điểm — xem README.
+- **MSSV/Khoa-lớp**: thu thập qua cùng popup bắt buộc với số điện thoại tại checkout (chỉ hỏi cho
+  tài khoản @eaut.edu.vn), lưu vào `users.student_id`/`class_name`, hiển thị trên thẻ đơn ở bảng
+  Kanban bán hàng (`o.customerName`/`o.customerStudentId`/`o.customerClassName`, join thật từ
+  `users` trong `OrderDAOImpl`).
+- **Đồng hồ đếm ngược thời gian ra món**: mỗi sản phẩm có `avg_prep_minutes` (Admin chỉnh trong
+  form sản phẩm, mặc định 10 phút); khi nhân viên bán hàng duyệt đơn, `estimated_ready_at` được
+  tính = thời điểm duyệt + phút chế biến lâu nhất trong các món của đơn (món nấu song song, không
+  cộng dồn). Countdown chạy client-side (JS, cập nhật mỗi giây) trên cột "Đã duyệt" của bảng Kanban.
+- **Mở đơn / Tạm ngưng nhận đơn toàn hệ thống**: nút gạt trên bảng Kanban bán hàng (quyền
+  `shop.status`, cấp cho Admin + Nhân viên bán hàng mặc định), chặn thật ở `CheckoutServlet` khi
+  khách cố đặt hàng lúc đang tạm ngưng.
+- **Nhân sự đang trực**: mỗi nhân viên tự bật/tắt trạng thái "đang trực" (`users.on_duty`), hiển
+  thị thành danh sách trên cả bảng Kanban bán hàng và cửa hàng — không phải quản lý ca đầy đủ
+  (không có khái niệm "trưởng ca" hay lịch phân ca trước), chỉ là ai đang có mặt ngay lúc này.
+- **Thời gian chờ dự kiến** ở trang thực đơn: công thức thật `5 + 2×(số đơn đã duyệt) +
+  3×(số đơn chờ duyệt)` phút, tính từ dữ liệu hàng đợi thật — không phải số đo trung bình lịch sử,
+  ghi rõ là ước tính trong code/UI.
 
-**Mô tả mục tiêu, CHƯA lên thật** (cần xác nhận trước khi xây — nhiều mục cần bảng dữ liệu mới,
-một số cần phần cứng không có sẵn):
-- MSSV/khoa lớp gắn theo mỗi khách hàng và hiển thị trên thẻ đơn KDS — tài khoản khách hiện chỉ có
-  tên/email từ Google, chưa thu thập MSSV/khoa lớp.
-- Đồng hồ đếm ngược thời gian ra món theo từng đơn (cần một mốc "thời gian ước tính" per món/đơn
-  chưa tồn tại) và mục tiêu "≤ 7 phút/suất" làm chỉ số theo dõi.
-- Rung thẻ / gửi thông báo đẩy về app sinh viên khi món sẵn sàng — cần thẻ vật lý NFC hoặc web
-  push notification, hiện chưa có.
+**Mô tả mục tiêu, CHƯA lên thật** (cần phần cứng không có sẵn, hoặc là tính năng khác hẳn mô hình
+nghiệp vụ hiện tại — giao hàng đến tòa nhà, không phải khách tự đến lấy tại quầy):
+- Rung thẻ vật lý / gửi thông báo đẩy (push notification) về điện thoại khi món sẵn sàng — cần thẻ
+  NFC vật lý hoặc Web Push, hiện chưa có; đơn "sẵn sàng" hiện chỉ hiện trên trang "Đơn hàng của
+  tôi" khi khách tự vào xem.
 - Màn hình LED số thứ tự tại quầy + loa gọi số — cần thiết bị phần cứng riêng, ngoài phạm vi web
   app.
-- Quản lý ca trực (trưởng ca, nhân sự đứng bếp, nút Mở đơn/Tạm ngưng do quá tải) — hiện không có
-  khái niệm "ca trực" hay trạng thái nhận-đơn-toàn-hệ-thống trong DB.
-- Nút bật/tắt tạm ngưng bán theo món khi hết nguyên liệu — gần với `products.is_active` đã có
-  (Admin bật/tắt sản phẩm), nhưng chưa có UI riêng dạng "công tắc nhanh" ngay trên thẻ Kanban/tồn
-  kho.
-- Thời gian chờ dự kiến hiển thị ở bộ lọc khách hàng (`<10 phút`) — cần công thức ước tính dựa trên
-  số đơn đang xếp hàng, chưa có.
-- Widget bàn còn trống tại nhà ăn — cần theo dõi sức chứa vật lý theo tòa nhà, chưa có khái niệm
-  này trong DB (mới chỉ có tòa nhà + phí ship, không có sức chứa chỗ ngồi).
+- "Trưởng ca" / phân ca trước (khác với "đang trực" tự báo ở trên) — cần khái niệm lịch ca làm
+  việc, hiện chưa có.
+- Widget bàn còn trống tại nhà ăn — cần theo dõi sức chứa vật lý theo tòa nhà và cơ chế check-in
+  chỗ ngồi, chưa có khái niệm này trong DB (mới chỉ có tòa nhà + phí ship, không phải chỗ ngồi
+  dùng bữa tại chỗ).
 
-Muốn xây tiếp phần nào ở trên, nói rõ để triển khai — phần này vẫn còn khối lượng công việc lớn
-(đặc biệt là ca trực, đếm ngược thời gian ra món, và MSSV/khoa lớp trên hồ sơ khách hàng).
+Muốn xây tiếp phần nào ở trên, nói rõ để triển khai.

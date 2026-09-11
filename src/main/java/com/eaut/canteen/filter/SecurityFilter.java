@@ -48,6 +48,7 @@ public class SecurityFilter implements Filter {
             new PathRule("/sales/orders/mark-paid", "orders.payment_confirm"),
             new PathRule("/sales/orders", "orders.queue"),
             new PathRule("/sales/counter-sale", "sales.counter"),
+            new PathRule("/sales/shop-status", "shop.status"),
             new PathRule("/store/transfers", "store.transfer"),
             new PathRule("/store/orders", "store.fulfillment"));
 

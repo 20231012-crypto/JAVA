@@ -89,6 +89,8 @@ public class ProductServlet extends HttpServlet {
         product.setPrice(new BigDecimal(req.getParameter("price")));
         product.setUnit(req.getParameter("unit"));
         product.setCategoryId(Integer.parseInt(req.getParameter("categoryId")));
+        String avgPrepMinutes = req.getParameter("avgPrepMinutes");
+        product.setAvgPrepMinutes(avgPrepMinutes == null || avgPrepMinutes.isBlank() ? 10 : Integer.parseInt(avgPrepMinutes));
 
         boolean isNew = idParam == null || idParam.isBlank();
         if (isNew) {

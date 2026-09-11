@@ -14,6 +14,48 @@
             </c:if>
         </div>
 
+        <c:if test="${boardMode}">
+            <div class="card" style="padding:14px 18px; margin:16px 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                <c:if test="${sessionScope.user.permissions['shop.status']}">
+                    <form method="post" action="${ctx}/sales/shop-status" style="display:flex; align-items:center; gap:10px;">
+                        <input type="hidden" name="redirect" value="/sales/orders">
+                        <c:choose>
+                            <c:when test="${shopStatus.acceptingOrders}">
+                                <span class="badge badge-completed">🟢 Đang mở nhận đơn</span>
+                                <input type="hidden" name="accepting" value="false">
+                                <button type="submit" class="btn btn-sm btn-danger">Tạm ngưng nhận đơn</button>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="badge badge-rejected">🔴 Đang tạm ngưng nhận đơn</span>
+                                <input type="hidden" name="accepting" value="true">
+                                <button type="submit" class="btn btn-sm btn-primary">Mở nhận đơn lại</button>
+                            </c:otherwise>
+                        </c:choose>
+                    </form>
+                </c:if>
+
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <span class="hint">Đang trực (${fn:length(onDutyStaff)}):</span>
+                    <c:forEach var="s" items="${onDutyStaff}">
+                        <span class="badge badge-confirmed"><c:out value="${s.fullName}" /></span>
+                    </c:forEach>
+                    <form method="post" action="${ctx}/duty/toggle">
+                        <input type="hidden" name="redirect" value="/sales/orders">
+                        <c:choose>
+                            <c:when test="${sessionScope.user.onDuty}">
+                                <input type="hidden" name="onDuty" value="false">
+                                <button type="submit" class="btn btn-sm btn-secondary">Kết thúc ca của tôi</button>
+                            </c:when>
+                            <c:otherwise>
+                                <input type="hidden" name="onDuty" value="true">
+                                <button type="submit" class="btn btn-sm btn-primary">Bắt đầu ca của tôi</button>
+                            </c:otherwise>
+                        </c:choose>
+                    </form>
+                </div>
+            </div>
+        </c:if>
+
         <div class="filter-bar">
             <a class="filter-chip ${empty selectedStatus ? 'active' : ''}" href="?">Bảng trực tiếp</a>
             <a class="filter-chip ${selectedStatus == 'PENDING' ? 'active' : ''}" href="?status=PENDING">Chờ xác nhận</a>
@@ -38,6 +80,13 @@
                                         <span class="kanban-ticket-code"><c:out value="${o.orderCode}" /></span>
                                         <span class="kanban-elapsed">⏱ ${o.elapsedDisplay}</span>
                                     </div>
+                                    <c:if test="${o.channel == 'ONLINE'}">
+                                        <div style="font-weight:600;">
+                                            <c:out value="${o.customerName}" />
+                                            <c:if test="${not empty o.customerStudentId}"> · MSSV <c:out value="${o.customerStudentId}" /></c:if>
+                                            <c:if test="${not empty o.customerClassName}"> · <c:out value="${o.customerClassName}" /></c:if>
+                                        </div>
+                                    </c:if>
                                     <div><c:out value="${o.channel == 'ONLINE' ? o.buildingName : 'Bán tại quầy'}" /> · <fmt:formatNumber value="${o.totalAmount}" type="number" groupingUsed="true" />₫</div>
                                     <div class="hint"><c:out value="${o.paymentMethod.displayName}" /> · <c:out value="${o.paymentStatus.displayName}" /></div>
                                     <div class="table-actions" style="margin-top:10px;">
@@ -68,7 +117,16 @@
                                         <span class="kanban-ticket-code"><c:out value="${o.orderCode}" /></span>
                                         <span class="kanban-elapsed">⏱ ${o.elapsedDisplay}</span>
                                     </div>
+                                    <c:if test="${o.channel == 'ONLINE'}">
+                                        <div style="font-weight:600;">
+                                            <c:out value="${o.customerName}" />
+                                            <c:if test="${not empty o.customerStudentId}"> · MSSV <c:out value="${o.customerStudentId}" /></c:if>
+                                        </div>
+                                    </c:if>
                                     <div><c:out value="${o.buildingName}" /> · <fmt:formatNumber value="${o.totalAmount}" type="number" groupingUsed="true" />₫</div>
+                                    <c:if test="${not empty o.estimatedReadyAtEpochMillis}">
+                                        <div class="countdown-timer" data-ready-at="${o.estimatedReadyAtEpochMillis}" style="margin-top:6px; font-weight:700; color:var(--color-info);"></div>
+                                    </c:if>
                                     <div class="table-actions" style="margin-top:10px;">
                                         <a class="btn btn-sm btn-secondary" href="${ctx}/sales/orders/detail?id=${o.orderId}">Xem</a>
                                         <form method="post" action="${ctx}/sales/orders/cancel" style="display:inline;">
@@ -139,6 +197,26 @@
     <script>
         // Simple polling refresh for a "live" board — no WebSocket/SSE infra needed for this scale.
         setTimeout(function () { window.location.reload(); }, 15000);
+
+        // KDS countdown timers — estimatedReadyAt is a fixed server timestamp (epoch ms); this
+        // just re-renders "còn X phút" client-side every second, no server round-trip needed.
+        function renderCountdowns() {
+            document.querySelectorAll(".countdown-timer").forEach(function (el) {
+                var readyAt = Number(el.getAttribute("data-ready-at"));
+                var remainingMs = readyAt - Date.now();
+                if (remainingMs <= 0) {
+                    el.textContent = "⏰ Đã quá giờ dự kiến";
+                    el.style.color = "var(--color-danger)";
+                } else {
+                    var totalSeconds = Math.floor(remainingMs / 1000);
+                    var minutes = Math.floor(totalSeconds / 60);
+                    var seconds = totalSeconds % 60;
+                    el.textContent = "🍳 Còn " + minutes + " phút " + (seconds < 10 ? "0" : "") + seconds + " giây";
+                }
+            });
+        }
+        renderCountdowns();
+        setInterval(renderCountdowns, 1000);
     </script>
 </c:if>
 <jsp:include page="/WEB-INF/views/common/footer.jsp" />

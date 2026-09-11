@@ -42,6 +42,11 @@
                 <input type="text" id="unit" name="unit" value="${product.unit}" placeholder="phần, ly, chai...">
             </div>
             <div class="form-group">
+                <label for="avgPrepMinutes">Thời gian chế biến trung bình (phút)</label>
+                <input type="number" id="avgPrepMinutes" name="avgPrepMinutes" min="1" max="120" value="${empty product.productId ? 10 : product.avgPrepMinutes}">
+                <span class="hint">Dùng để tính đồng hồ đếm ngược trên bảng bếp khi đơn được duyệt.</span>
+            </div>
+            <div class="form-group">
                 <label for="image">Ảnh sản phẩm</label>
                 <c:if test="${not empty product.imageFilename}">
                     <img src="${pageContext.request.contextPath}/images/${product.imageFilename}" alt="${product.name}"

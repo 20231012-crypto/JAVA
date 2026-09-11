@@ -17,6 +17,26 @@
             <c:remove var="actionError" scope="session" />
         </c:if>
 
+        <div class="card" style="padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span class="hint">Đang trực (${fn:length(onDutyStaff)}):</span>
+            <c:forEach var="s" items="${onDutyStaff}">
+                <span class="badge badge-confirmed"><c:out value="${s.fullName}" /></span>
+            </c:forEach>
+            <form method="post" action="${ctx}/duty/toggle">
+                <input type="hidden" name="redirect" value="/store/orders">
+                <c:choose>
+                    <c:when test="${sessionScope.user.onDuty}">
+                        <input type="hidden" name="onDuty" value="false">
+                        <button type="submit" class="btn btn-sm btn-secondary">Kết thúc ca của tôi</button>
+                    </c:when>
+                    <c:otherwise>
+                        <input type="hidden" name="onDuty" value="true">
+                        <button type="submit" class="btn btn-sm btn-primary">Bắt đầu ca của tôi</button>
+                    </c:otherwise>
+                </c:choose>
+            </form>
+        </div>
+
         <div class="kanban-board">
             <div class="kanban-column">
                 <div class="kanban-column-header"><h3>📦 Sẵn sàng lấy hàng</h3><span class="kanban-count">${fn:length(confirmedOrders)}</span></div>

@@ -91,6 +91,9 @@ CREATE TABLE users (
   wallet_balance  DECIMAL(12,0) NOT NULL DEFAULT 0,     -- EAUT Pay balance; only ever changed via wallet_transactions
   is_eaut_student BOOLEAN NOT NULL DEFAULT FALSE,       -- Smart ID marker (email domain @eaut.edu.vn at signup) -> automatic checkout discount
   loyalty_points  INT NOT NULL DEFAULT 0,               -- earned on completed online orders; only ever changed via loyalty_transactions
+  student_id      VARCHAR(20) NULL,                     -- MSSV, collected via the checkout info gate for @eaut.edu.vn customers
+  class_name      VARCHAR(50) NULL,                      -- Khoa/Lớp, collected alongside student_id
+  on_duty         BOOLEAN NOT NULL DEFAULT FALSE,        -- staff self-reported "đang trực" status shown on the Kanban boards
   created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -107,6 +110,7 @@ CREATE TABLE products (
   image_filename VARCHAR(255) NULL,
   unit           VARCHAR(20) NULL,
   is_active      BOOLEAN NOT NULL DEFAULT TRUE,
+  avg_prep_minutes INT NOT NULL DEFAULT 10,              -- backs the KDS countdown timer (orders.estimated_ready_at)
   created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -176,6 +180,7 @@ CREATE TABLE orders (
   payment_status        VARCHAR(10) NOT NULL DEFAULT 'UNPAID' CHECK (payment_status IN ('UNPAID','PAID')),
   payment_confirmed_by  INT NULL REFERENCES users(user_id) ON DELETE SET NULL,
   payment_confirmed_at  TIMESTAMP NULL,
+  estimated_ready_at    TIMESTAMP NULL, -- set when confirmed; drives the KDS countdown timer
   note                  VARCHAR(255) NULL,
   created_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -251,6 +256,16 @@ CREATE TABLE loyalty_transactions (
   note            VARCHAR(255) NULL,
   created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Single-row switch: Admin/sales staff can pause new orders when the kitchen is overloaded
+-- ("Mở đơn / Tạm ngưng nhận đơn" in the kitchen dashboard's top bar).
+CREATE TABLE shop_status (
+  status_id           INT PRIMARY KEY DEFAULT 1 CHECK (status_id = 1),
+  is_accepting_orders BOOLEAN NOT NULL DEFAULT TRUE,
+  updated_by          INT NULL REFERENCES users(user_id) ON DELETE SET NULL,
+  updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+INSERT INTO shop_status (status_id, is_accepting_orders) VALUES (1, TRUE);
 
 CREATE INDEX idx_history_order     ON order_status_history(order_id);
 CREATE INDEX idx_orders_customer   ON orders(customer_id);

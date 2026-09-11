@@ -9,16 +9,19 @@ import java.util.Set;
 import com.eaut.canteen.dao.OrderDAO;
 import com.eaut.canteen.dao.OrderItemDAO;
 import com.eaut.canteen.dao.OrderStatusHistoryDAO;
+import com.eaut.canteen.dao.ProductDAO;
 import com.eaut.canteen.dao.ShelfStockDAO;
 import com.eaut.canteen.dao.impl.OrderDAOImpl;
 import com.eaut.canteen.dao.impl.OrderItemDAOImpl;
 import com.eaut.canteen.dao.impl.OrderStatusHistoryDAOImpl;
+import com.eaut.canteen.dao.impl.ProductDAOImpl;
 import com.eaut.canteen.dao.impl.ShelfStockDAOImpl;
 import com.eaut.canteen.model.Order;
 import com.eaut.canteen.model.OrderItem;
 import com.eaut.canteen.model.OrderStatus;
 import com.eaut.canteen.model.PaymentMethod;
 import com.eaut.canteen.model.PaymentStatus;
+import com.eaut.canteen.model.Product;
 import com.eaut.canteen.model.User;
 import com.eaut.canteen.util.DBConnection;
 
@@ -37,6 +40,7 @@ public class OrderActionServlet extends HttpServlet {
     private static final OrderItemDAO orderItemDAO = new OrderItemDAOImpl();
     private static final ShelfStockDAO shelfStockDAO = new ShelfStockDAOImpl();
     private static final OrderStatusHistoryDAO historyDAO = new OrderStatusHistoryDAOImpl();
+    private static final ProductDAO productDAO = new ProductDAOImpl();
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -92,6 +96,21 @@ public class OrderActionServlet extends HttpServlet {
         if (updated == 0) {
             return false;
         }
+
+        // KDS countdown timer: estimate ready-at as now + the slowest item in the order (dishes
+        // cook in parallel at a real kitchen, not sequentially, so max — not sum — of prep times).
+        int maxPrepMinutes = 0;
+        for (OrderItem item : orderItemDAO.findByOrderId(conn, order.getOrderId())) {
+            Product product = productDAO.findById(conn, item.getProductId());
+            if (product != null) {
+                maxPrepMinutes = Math.max(maxPrepMinutes, product.getAvgPrepMinutes());
+            }
+        }
+        if (maxPrepMinutes == 0) {
+            maxPrepMinutes = 10; // fallback only if the order's products couldn't be looked up at all
+        }
+        orderDAO.setEstimatedReadyAt(conn, order.getOrderId(), java.time.LocalDateTime.now().plusMinutes(maxPrepMinutes));
+
         historyDAO.insert(conn, order.getOrderId(), OrderStatus.PENDING, OrderStatus.CONFIRMED, staff.getUserId(),
                 note == null || note.isBlank() ? "Nhân viên bán hàng xác nhận đơn" : note);
         return true;

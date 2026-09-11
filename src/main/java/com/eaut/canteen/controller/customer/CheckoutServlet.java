@@ -13,6 +13,7 @@ import com.eaut.canteen.dao.OrderDAO;
 import com.eaut.canteen.dao.OrderItemDAO;
 import com.eaut.canteen.dao.OrderStatusHistoryDAO;
 import com.eaut.canteen.dao.ShelfStockDAO;
+import com.eaut.canteen.dao.ShopStatusDAO;
 import com.eaut.canteen.dao.UserDAO;
 import com.eaut.canteen.dao.WalletDAO;
 import com.eaut.canteen.dao.impl.BuildingDAOImpl;
@@ -21,6 +22,7 @@ import com.eaut.canteen.dao.impl.OrderDAOImpl;
 import com.eaut.canteen.dao.impl.OrderItemDAOImpl;
 import com.eaut.canteen.dao.impl.OrderStatusHistoryDAOImpl;
 import com.eaut.canteen.dao.impl.ShelfStockDAOImpl;
+import com.eaut.canteen.dao.impl.ShopStatusDAOImpl;
 import com.eaut.canteen.dao.impl.UserDAOImpl;
 import com.eaut.canteen.dao.impl.WalletDAOImpl;
 import com.eaut.canteen.model.Building;
@@ -61,6 +63,7 @@ public class CheckoutServlet extends HttpServlet {
     private final UserDAO userDAO = new UserDAOImpl();
     private final WalletDAO walletDAO = new WalletDAOImpl();
     private final LoyaltyDAO loyaltyDAO = new LoyaltyDAOImpl();
+    private final ShopStatusDAO shopStatusDAO = new ShopStatusDAOImpl();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -86,6 +89,10 @@ public class CheckoutServlet extends HttpServlet {
             req.setAttribute("loyaltyPoints", fresh.getLoyaltyPoints());
             req.setAttribute("redeemValuePerPoint", redeemValuePerPoint());
             req.setAttribute("customerPhone", fresh.getPhone());
+            req.setAttribute("customerStudentId", fresh.getStudentId());
+            req.setAttribute("customerClassName", fresh.getClassName());
+            req.setAttribute("customerIsEautStudent", fresh.isEautStudent());
+            req.setAttribute("shopAcceptingOrders", shopStatusDAO.get(conn).isAcceptingOrders());
             req.getRequestDispatcher("/WEB-INF/views/customer/checkout.jsp").forward(req, resp);
         } catch (SQLException e) {
             throw new ServletException(e);
@@ -113,11 +120,20 @@ public class CheckoutServlet extends HttpServlet {
             // another tab since login.
             User customer = userDAO.findById(conn, sessionCustomer.getUserId());
 
-            // Server-side backstop for the phone-number gate on checkout.jsp — that gate is a
-            // blocking modal in normal use, but nothing stops a request built by hand from
-            // skipping it.
-            if (customer.getPhone() == null || customer.getPhone().isBlank()) {
+            // Server-side backstop for the checkout info gate (phone, + MSSV/lớp for EAUT
+            // students) — that gate is a blocking modal in normal use, but nothing stops a
+            // request built by hand from skipping it.
+            boolean missingPhone = customer.getPhone() == null || customer.getPhone().isBlank();
+            boolean missingStudentInfo = customer.isEautStudent()
+                    && (customer.getStudentId() == null || customer.getStudentId().isBlank());
+            if (missingPhone || missingStudentInfo) {
                 resp.sendRedirect(req.getContextPath() + "/checkout");
+                return;
+            }
+
+            if (!shopStatusDAO.get(conn).isAcceptingOrders()) {
+                req.setAttribute("error", "Căng tin đang tạm ngưng nhận đơn (quá tải hoặc ngoài giờ phục vụ). Vui lòng thử lại sau.");
+                forwardToCheckout(req, resp, conn, cart, customer);
                 return;
             }
 
@@ -265,6 +281,10 @@ public class CheckoutServlet extends HttpServlet {
         req.setAttribute("loyaltyPoints", customer.getLoyaltyPoints());
         req.setAttribute("redeemValuePerPoint", redeemValuePerPoint());
         req.setAttribute("customerPhone", customer.getPhone());
+        req.setAttribute("customerStudentId", customer.getStudentId());
+        req.setAttribute("customerClassName", customer.getClassName());
+        req.setAttribute("customerIsEautStudent", customer.isEautStudent());
+        req.setAttribute("shopAcceptingOrders", shopStatusDAO.get(conn).isAcceptingOrders());
         req.getRequestDispatcher("/WEB-INF/views/customer/checkout.jsp").forward(req, resp);
     }
 

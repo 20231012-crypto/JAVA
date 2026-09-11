@@ -41,4 +41,13 @@ public interface UserDAO {
 
     /** Sets a customer's contact phone — Google sign-up never collects one, so this is how the checkout phone-number gate (see AccountServlet) fills it in. */
     void updatePhone(Connection conn, int userId, String phone) throws SQLException;
+
+    /** Sets MSSV/Khoa-lớp — collected via the same checkout info gate as phone, only for EAUT-student customers. */
+    void updateStudentInfo(Connection conn, int userId, String studentId, String className) throws SQLException;
+
+    /** Staff self-toggles their own "đang trực" status — see DutyServlet. */
+    void setOnDuty(Connection conn, int userId, boolean onDuty) throws SQLException;
+
+    /** Every non-customer user currently on duty, for the "Nhân sự đang trực" roster on the Kanban boards. */
+    List<User> findOnDutyStaff(Connection conn) throws SQLException;
 }

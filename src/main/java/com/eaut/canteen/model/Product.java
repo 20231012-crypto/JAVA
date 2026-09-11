@@ -13,6 +13,7 @@ public class Product {
     private String imageFilename;
     private String unit;
     private boolean active;
+    private int avgPrepMinutes = 10;
     /** Populated only by DAO methods that join shelf_stock (e.g. catalog listing). */
     private int shelfQuantity;
     /** Populated only by DAO methods that join warehouse_stock (e.g. admin listing). */
@@ -88,6 +89,15 @@ public class Product {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    /** Backs the KDS countdown timer (orders.estimated_ready_at) — admin-editable per product, default 10. */
+    public int getAvgPrepMinutes() {
+        return avgPrepMinutes;
+    }
+
+    public void setAvgPrepMinutes(int avgPrepMinutes) {
+        this.avgPrepMinutes = avgPrepMinutes;
     }
 
     public int getShelfQuantity() {
