@@ -85,6 +85,7 @@ public class CheckoutServlet extends HttpServlet {
             req.setAttribute("walletBalance", fresh.getWalletBalance());
             req.setAttribute("loyaltyPoints", fresh.getLoyaltyPoints());
             req.setAttribute("redeemValuePerPoint", redeemValuePerPoint());
+            req.setAttribute("customerPhone", fresh.getPhone());
             req.getRequestDispatcher("/WEB-INF/views/customer/checkout.jsp").forward(req, resp);
         } catch (SQLException e) {
             throw new ServletException(e);
@@ -107,16 +108,25 @@ public class CheckoutServlet extends HttpServlet {
         boolean wantsRedeemPoints = req.getParameter("useLoyaltyPoints") != null;
 
         try (Connection conn = DBConnection.getConnection()) {
-            Building building = buildingDAO.findById(conn, buildingId);
-            if (building == null) {
-                req.setAttribute("error", "Vui lòng chọn tòa nhà nhận hàng hợp lệ.");
-                forwardToCheckout(req, resp, conn, cart, sessionCustomer);
+            // Re-read the customer's live wallet/points/phone rather than trusting the session
+            // copy — stale if a top-up/previous purchase/the phone-number gate happened in
+            // another tab since login.
+            User customer = userDAO.findById(conn, sessionCustomer.getUserId());
+
+            // Server-side backstop for the phone-number gate on checkout.jsp — that gate is a
+            // blocking modal in normal use, but nothing stops a request built by hand from
+            // skipping it.
+            if (customer.getPhone() == null || customer.getPhone().isBlank()) {
+                resp.sendRedirect(req.getContextPath() + "/checkout");
                 return;
             }
 
-            // Re-read the customer's live wallet/points rather than trusting the session copy —
-            // stale if a top-up/previous purchase happened in another tab since login.
-            User customer = userDAO.findById(conn, sessionCustomer.getUserId());
+            Building building = buildingDAO.findById(conn, buildingId);
+            if (building == null) {
+                req.setAttribute("error", "Vui lòng chọn tòa nhà nhận hàng hợp lệ.");
+                forwardToCheckout(req, resp, conn, cart, customer);
+                return;
+            }
 
             BigDecimal subtotal = cart.getSubtotal();
             BigDecimal shippingFee = building.getShippingFee();
@@ -254,6 +264,7 @@ public class CheckoutServlet extends HttpServlet {
         req.setAttribute("walletBalance", customer.getWalletBalance());
         req.setAttribute("loyaltyPoints", customer.getLoyaltyPoints());
         req.setAttribute("redeemValuePerPoint", redeemValuePerPoint());
+        req.setAttribute("customerPhone", customer.getPhone());
         req.getRequestDispatcher("/WEB-INF/views/customer/checkout.jsp").forward(req, resp);
     }
 

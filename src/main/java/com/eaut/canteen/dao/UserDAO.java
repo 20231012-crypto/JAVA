@@ -38,4 +38,7 @@ public interface UserDAO {
 
     /** Adjusts users.loyalty_points — see LoyaltyDAO for the ledger read side. */
     void adjustLoyaltyPoints(Connection conn, int userId, int delta) throws SQLException;
+
+    /** Sets a customer's contact phone — Google sign-up never collects one, so this is how the checkout phone-number gate (see AccountServlet) fills it in. */
+    void updatePhone(Connection conn, int userId, String phone) throws SQLException;
 }

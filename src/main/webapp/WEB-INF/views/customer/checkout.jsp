@@ -3,6 +3,26 @@
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <jsp:include page="/WEB-INF/views/common/header.jsp" />
 <jsp:include page="/WEB-INF/views/common/nav.jsp" />
+<c:if test="${empty customerPhone}">
+    <div style="position:fixed; inset:0; background:rgba(15,23,42,0.6); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px;">
+        <div class="card" style="max-width:420px; width:100%; padding:28px;">
+            <h2 style="margin-bottom:8px;">Thêm số điện thoại để đặt hàng</h2>
+            <p class="hint" style="margin-bottom:20px;">Căng tin cần số điện thoại để liên hệ khi giao đơn — chỉ cần nhập một lần, tài khoản Google của bạn chưa có sẵn.</p>
+            <c:if test="${not empty sessionScope.phoneError}">
+                <div class="alert alert-error"><c:out value="${sessionScope.phoneError}" /></div>
+                <c:remove var="phoneError" scope="session" />
+            </c:if>
+            <form method="post" action="${pageContext.request.contextPath}/account/phone">
+                <input type="hidden" name="redirect" value="${pageContext.request.contextPath}/checkout">
+                <div class="form-group">
+                    <label for="phoneInput">Số điện thoại</label>
+                    <input type="tel" id="phoneInput" name="phone" placeholder="09xxxxxxxx" required autofocus>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">Lưu &amp; tiếp tục đặt hàng</button>
+            </form>
+        </div>
+    </div>
+</c:if>
 <main class="page-content">
     <div class="container">
         <h1>Thanh toán</h1>

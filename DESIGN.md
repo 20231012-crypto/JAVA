@@ -240,15 +240,162 @@ The design system adopts a roundedness factor of `2` (`0.5rem` base, up to `1rem
 
 ---
 
-## Implementation status in this codebase
+# Kiến trúc chi tiết 2 màn hình & Design System (bản báo cáo đề tài)
 
-This spec is applied at the token level in [`src/main/webapp/assets/css/style.css`](src/main/webapp/assets/css/style.css)
-(`:root` custom properties) rather than reproduced component-by-component:
+> Bản mô tả đầy đủ do người dùng cung cấp để dùng làm tài liệu báo cáo đề tài và quy chuẩn triển
+> khai lập trình frontend. Giữ nguyên văn để trích dẫn trong báo cáo; xem mục "Đối chiếu với
+> hiện trạng codebase" ở cuối để biết phần nào đã lên thật, phần nào còn là mô tả mục tiêu.
 
-- **Applied**: primary/secondary/tertiary colors, neutral palette, semantic feedback colors,
-  Plus Jakarta Sans + Inter typefaces, the 12px/16px/pill radius scale, blue-tinted card shadows,
-  48px primary button height, pill category chips (`.filter-chip`), food cards (`.product-card`).
-- **Not implemented** (out of scope so far — flag if you want these built): glassmorphic
-  backdrop-blur sticky header, the specific Level 2/3 hover-lift elevation transitions, and the
-  NFC top-up shortcut on the wallet bar (EAUT Pay top-up is VietQR-based instead — see README's
-  "Ví EAUT Pay & tích điểm" section, there is no real bank/NFC integration).
+## PHẦN 1: MÔ TẢ CHI TIẾT 2 MÀN HÌNH
+
+### 1. Màn hình Khách hàng (EAUT Canteen - Cổng Đặt Món Khách Hàng)
+
+**Mục tiêu**: Tối ưu trải nghiệm đặt món nhanh cho sinh viên, giảng viên giờ nghỉ giữa tiết; giải
+quyết bài toán ùn tắc và xếp hàng dài tại quầy.
+
+**Bố cục & Các phân khu chính**:
+
+- **Header & Thanh định danh trường học**:
+  - Logo EAUT: Huy hiệu Đại học Công nghệ Đông Á đặt trang trọng góc trái cùng tên hệ thống "EAUT
+    Smart Canteen".
+  - Thanh tìm kiếm nhanh: Gợi ý từ khóa "Cơm sườn", "Trà đào", "Combo tiết kiệm".
+  - Widget thẻ sinh viên (EAUT Smart ID): Hiển thị avatar, tên sinh viên, số dư ví điện tử nội bộ
+    tích hợp và thông báo nhận món.
+- **Hero Banner & Khung giờ phục vụ (Service Status)**:
+  - Banner khuyến mãi liên kết thẻ sinh viên (-10%).
+  - Huy hiệu trạng thái thời gian thực: Đang phục vụ: Ca trưa (10:30 - 13:30) kèm số bàn còn trống
+    tại nhà ăn Tòa A.
+- **Thanh điều hướng danh mục & Bộ lọc (Filter Chips)**:
+  - Danh mục món: Cơm suất, Bún/Phở, Đồ uống giải khát, Ăn vặt, Món chay.
+  - Bộ lọc tiện ích: Phân khúc giá sinh viên (<25k, 25k–40k, >40k), thời gian chờ dự kiến (<10
+    phút) và trạng thái còn món.
+- **Lưới thực đơn món ăn (Menu Grid - Bento/Card)**:
+  - Ảnh món ăn sắc nét tỉ lệ 4:3 hoặc 16:9 bo góc.
+  - Huy hiệu phụ: Bán chạy (Best-seller), Calo / Giá trị dinh dưỡng (giúp sinh viên theo dõi sức
+    khỏe).
+  - Tên món, đơn giá niêm yết rõ ràng và nút "Thêm vào khay" (+).
+- **Khay đồ ăn & Bảng thanh toán nhanh (Cart Sidebar)**:
+  - Danh sách món đã chọn, điều chỉnh số lượng (+/-) và ô ghi chú (VD: "ít cơm, không hành").
+  - Lựa chọn điểm nhận món: Quầy Căng tin Tầng 1 Tòa A hoặc Quầy Express Thư viện.
+  - Phương thức thanh toán: Ví EAUT Pay, Quét mã VietQR/MoMo, hoặc Trả tiền mặt tại quầy.
+  - Sau khi thanh toán: Xuất Số thứ tự điện tử (Queue Ticket) kèm mã QR nhận đồ.
+
+### 2. Màn hình Quản trị & Điều hành bếp (EAUT Canteen - Quản Trị & Điều Hành Bếp)
+
+**Mục tiêu**: Hỗ trợ quản lý ca trực, điều phối bếp theo thời gian thực (KDS - Kitchen Display
+System), chống thất thoát và dự báo nguyên liệu.
+
+**Bố cục & Các phân khu chính**:
+
+- **Top Bar & Quản trị ca trực**:
+  - Logo EAUT kết hợp nhãn "Trung tâm điều hành Căng tin".
+  - Bảng hiển thị ca trực: Tên trưởng ca, nhân sự đứng bếp, đồng hồ thời gian thực và nút chuyển
+    đổi chế độ nhận đơn (Mở đơn / Tạm ngưng do quá tải).
+- **Hàng thẻ chỉ số nhanh (KPI Summary Cards)**:
+  - Tổng doanh thu trong ngày/ca (kèm % tăng giảm so với hôm qua).
+  - Số lượng đơn đã phục vụ / Đang chế biến.
+  - Thời gian ra món trung bình (Mục tiêu: ≤ 7 phút/suất).
+  - Món đắt khách nhất hôm nay.
+- **Hệ thống điều phối bếp thời gian thực (KDS - 3 Cột Kanban trực quan)**:
+  - Cột 1 - Đơn mới chờ làm (Màu vàng/cam): Thẻ đơn gồm Mã đơn, Tên & MSSV khách, các món cần chế
+    biến, ghi chú đặc biệt và thời gian chờ tích lũy. Nút thao tác: "Bắt đầu nấu".
+  - Cột 2 - Đang chế biến (Màu xanh dương): Đếm ngược thời gian ra món (Timer). Nút thao tác: "Sẵn
+    sàng nhận món" (kích hoạt rung thẻ/gửi thông báo về app sinh viên).
+  - Cột 3 - Mời nhận phần ăn (Màu xanh lá): Hiển thị số thứ tự to rõ tại ô quầy trả đồ, nút "Xác
+    nhận đã lấy".
+- **Bảng quản lý định lượng suất ăn & Cảnh báo tồn kho**:
+  - Theo dõi thanh tiến độ số suất còn lại của từng món (VD: Cơm gà: 45/50 suất - Sắp hết). Hỗ trợ
+    nút gạt bật/tắt tạm ngưng bán ngay khi hết nguyên liệu.
+- **Biểu đồ lưu lượng giờ cao điểm (Peak Hours Traffic)**:
+  - Biểu đồ nhiệt hoặc cột mô tả mật độ đơn từ 11:00 đến 13:00 giúp bếp chủ động chiên/nấu trước
+    các món thông dụng.
+
+## PHẦN 2: BỘ QUY TẮC THIẾT KẾ (DESIGN SYSTEM)
+
+### 1. Hệ màu sắc (Color Palette)
+
+- **Màu thương hiệu chính (Primary - Brand)**:
+  - EAUT Navy Blue: `#0B3C88` (lấy từ logo đại học — chuẩn mực, công nghệ, học đường).
+  - Primary Container / Light: `#EFF4FF` hoặc `#E0ECFF` (nền thẻ nhấn, badge chọn).
+- **Màu phụ trợ kích thích vị giác (Accent / Secondary)**:
+  - Warm Amber / Orange: `#E65100` hoặc `#F57C00` (nút CTA đặt món, tag giảm giá, badge "Món bán
+    chạy").
+- **Màu nền và bề mặt (Surfaces & Background)**:
+  - Background: `#F8F9FF` (nền xám trắng ngả lam nhẹ, sạch sẽ, hiện đại).
+  - Card Surface: `#FFFFFF` với border mảnh `1px solid #E2E8F0` hoặc đổ bóng mờ
+    `box-shadow: 0 2px 8px rgba(11, 60, 136, 0.05)`.
+- **Màu quy ước trạng thái vận hành (Semantic / KDS Status)**:
+  - Chờ xử lý / Đơn mới: nền vàng kem `#FEF3C7`, chữ vàng sẫm `#B45309`.
+  - Đang nấu: nền lam nhạt `#DBEAFE`, chữ lam sẫm `#1D4ED8`.
+  - Đã xong / Sẵn sàng: nền xanh ngọc nhạt `#D1FAE5`, chữ xanh lá `#047857`.
+  - Hết món / Cảnh báo: nền đỏ nhạt `#FEE2E2`, chữ đỏ sẫm `#B91C1C`.
+
+### 2. Kiểu chữ & Thứ bậc nội dung (Typography)
+
+Font khuyến nghị: **Plus Jakarta Sans** hoặc **Inter** (không chân, hiện đại, không lỗi dấu tiếng
+Việt).
+
+| Cấp | Kích thước | Độ đậm | Dùng cho |
+|---|---|---|---|
+| Page Title (H1) | 24–28px | Bold (700) | Tiêu đề trang |
+| Section/Card Title (H2/H3) | 16–18px | SemiBold (600) | Tên món ăn, tên cụm chức năng |
+| Body Text | 14px | Regular (400) | Mô tả, thành phần dinh dưỡng, ghi chú |
+| Caption / Micro-copy | 12px | Medium (500) | Mã đơn, thời gian chờ, calo |
+| Numbers / Metrics | 18–32px | Bold (700) | KPI, giá tiền, số thứ tự — cần nổi bật để quét nhanh |
+
+### 3. Quy tắc không gian & Bố cục (Layout & Spacing)
+
+- **8-point Grid**: lề và đệm luôn là bội số của 8 (8px, 16px, 24px, 32px).
+- **Corner Radius**: Nút & Tag/Badge = 8px hoặc pill; Thẻ món ăn & Thẻ Kanban = 12–16px.
+- **Card-based Encapsulation**: mỗi đối tượng (1 món ăn, 1 đơn KDS, 1 nhóm nút) nằm gọn trong một
+  khối thẻ có viền phân cấp rõ ràng — không để văn bản tràn lan.
+
+### 4. Quy tắc trải nghiệm tương tác (UX Best Practices)
+
+- **"3 cú nhấp chuột" cho sinh viên**: Tìm món → Chọn số lượng → Thanh toán & Lấy vé. Không qua
+  nhiều bước xác nhận rườm rà.
+- **Glanceability cho bếp**: nút thao tác của nhân viên bếp cao tối thiểu 44–48px để bấm trên màn
+  hình cảm ứng POS/KDS mà không bấm nhầm.
+
+---
+
+## Đối chiếu với hiện trạng codebase
+
+**Đã lên thật** (dùng dữ liệu thật từ DB, không phải placeholder):
+- Màu sắc: `--color-institutional: #0B3C88`, `--color-institutional-soft: #EFF4FF`,
+  `--color-accent: #F57C00` (hover `#E65100`), `--color-bg: #F8F9FF`, 4 màu semantic KDS
+  (pending/confirmed/shipping/completed) đúng cặp nền/chữ ở trên — xem `style.css`.
+- Typography: Plus Jakarta Sans (tiêu đề) + Inter (nội dung), body 14px, số liệu/giá/mã đơn in
+  đậm theo thang 18–32px.
+- Radius: nút/badge 8px hoặc pill, thẻ/Kanban 12–16px. Nút thao tác cao tối thiểu 48px.
+- Bento menu grid, filter chips (danh mục + khoảng giá + còn món), khay đồ ăn/giỏ hàng, chọn tòa
+  nhà nhận hàng, 3 phương thức thanh toán (COD/VietQR/Ví EAUT Pay), mã số thứ tự điện tử
+  (`order_code`, vd `A-142`) sau khi đặt hàng.
+- Bảng Kanban 3 cột cho nhân viên bán hàng (chờ duyệt/đã duyệt/đang giao) và nhân viên cửa hàng
+  (sẵn sàng lấy/đang giao), tự làm mới 15 giây, dùng đúng trạng thái đơn thật trong DB.
+- KPI cards trên dashboard admin: doanh thu hôm nay, số đơn theo trạng thái, tồn kho sắp hết, biểu
+  đồ lưu lượng đơn theo giờ (peak-hour chart) — số liệu thật từ `orders`/`shelf_stock`.
+- EAUT Smart ID (giảm giá tự động theo email @eaut.edu.vn) và tích điểm — xem README.
+
+**Mô tả mục tiêu, CHƯA lên thật** (cần xác nhận trước khi xây — nhiều mục cần bảng dữ liệu mới,
+một số cần phần cứng không có sẵn):
+- MSSV/khoa lớp gắn theo mỗi khách hàng và hiển thị trên thẻ đơn KDS — tài khoản khách hiện chỉ có
+  tên/email từ Google, chưa thu thập MSSV/khoa lớp.
+- Đồng hồ đếm ngược thời gian ra món theo từng đơn (cần một mốc "thời gian ước tính" per món/đơn
+  chưa tồn tại) và mục tiêu "≤ 7 phút/suất" làm chỉ số theo dõi.
+- Rung thẻ / gửi thông báo đẩy về app sinh viên khi món sẵn sàng — cần thẻ vật lý NFC hoặc web
+  push notification, hiện chưa có.
+- Màn hình LED số thứ tự tại quầy + loa gọi số — cần thiết bị phần cứng riêng, ngoài phạm vi web
+  app.
+- Quản lý ca trực (trưởng ca, nhân sự đứng bếp, nút Mở đơn/Tạm ngưng do quá tải) — hiện không có
+  khái niệm "ca trực" hay trạng thái nhận-đơn-toàn-hệ-thống trong DB.
+- Nút bật/tắt tạm ngưng bán theo món khi hết nguyên liệu — gần với `products.is_active` đã có
+  (Admin bật/tắt sản phẩm), nhưng chưa có UI riêng dạng "công tắc nhanh" ngay trên thẻ Kanban/tồn
+  kho.
+- Thời gian chờ dự kiến hiển thị ở bộ lọc khách hàng (`<10 phút`) — cần công thức ước tính dựa trên
+  số đơn đang xếp hàng, chưa có.
+- Widget bàn còn trống tại nhà ăn — cần theo dõi sức chứa vật lý theo tòa nhà, chưa có khái niệm
+  này trong DB (mới chỉ có tòa nhà + phí ship, không có sức chứa chỗ ngồi).
+
+Muốn xây tiếp phần nào ở trên, nói rõ để triển khai — phần này vẫn còn khối lượng công việc lớn
+(đặc biệt là ca trực, đếm ngược thời gian ra món, và MSSV/khoa lớp trên hồ sơ khách hàng).

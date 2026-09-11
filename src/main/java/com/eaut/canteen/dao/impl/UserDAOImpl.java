@@ -50,6 +50,8 @@ public class UserDAOImpl implements UserDAO {
             "UPDATE users SET wallet_balance = wallet_balance + ? WHERE user_id = ?";
     private static final String ADJUST_LOYALTY =
             "UPDATE users SET loyalty_points = loyalty_points + ? WHERE user_id = ?";
+    private static final String UPDATE_PHONE =
+            "UPDATE users SET phone = ? WHERE user_id = ?";
 
     @Override
     public User findById(Connection conn, int userId) throws SQLException {
@@ -189,6 +191,15 @@ public class UserDAOImpl implements UserDAO {
     public void adjustLoyaltyPoints(Connection conn, int userId, int delta) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(ADJUST_LOYALTY)) {
             ps.setInt(1, delta);
+            ps.setInt(2, userId);
+            ps.executeUpdate();
+        }
+    }
+
+    @Override
+    public void updatePhone(Connection conn, int userId, String phone) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(UPDATE_PHONE)) {
+            ps.setString(1, phone);
             ps.setInt(2, userId);
             ps.executeUpdate();
         }

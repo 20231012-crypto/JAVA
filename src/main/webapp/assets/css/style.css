@@ -6,44 +6,49 @@
    header/nav/branding — kept as two separate roles so a page can be "mostly blue chrome, orange
    buttons" as in the reference design, rather than one hue doing both jobs. */
 :root {
-    --color-bg: #F8FAFC;
+    --color-bg: #F8F9FF;
     --color-surface: #ffffff;
 
     --color-institutional: #0B3C88;
     --color-institutional-dark: #0A3475;
-    --color-institutional-soft: #E4ECF9;
+    --color-institutional-soft: #EFF4FF;
 
-    --color-accent: #F97316;
-    --color-accent-dark: #EA580C;
-    --color-accent-soft: #FFEDD5;
+    --color-accent: #F57C00;
+    --color-accent-dark: #E65100;
+    --color-accent-soft: #FFF3E0;
 
     --color-text: #0F172A;
     --color-text-muted: #64748B;
     --color-border: #E2E8F0;
 
-    --color-danger: #EF4444;
+    /* KDS/order-status semantic pairs — exact bg/text values from the design spec (DESIGN.md
+       "Màu quy ước trạng thái vận hành"): Chờ xử lý=warning, Đang nấu=info, Sẵn sàng=success,
+       Hết món/Cảnh báo=danger. Text tones are deliberately darker than a typical Tailwind-500
+       shade for AA contrast on their light backgrounds. */
+    --color-danger: #B91C1C;
     --color-danger-soft: #FEE2E2;
-    --color-warning: #F59E0B;
+    --color-warning: #B45309;
     --color-warning-soft: #FEF3C7;
-    --color-info: #0891B2;
-    --color-info-soft: #CFFAFE;
-    --color-success: #10B981;
+    --color-info: #1D4ED8;
+    --color-info-soft: #DBEAFE;
+    --color-success: #047857;
     --color-success-soft: #D1FAE5;
     --color-neutral: #64748B;
     --color-neutral-soft: #F1F5F9;
 
-    /* EAUT Smart ID / EAUT Pay / loyalty points — DESIGN.md's tertiary amber is explicitly "for
-       ratings, meal recommendations, combo perks, and student loyalty points/wallet incentives",
-       so it's reused here rather than inventing a fifth hue. */
+    /* EAUT Smart ID / EAUT Pay / loyalty points — kept distinct from --color-warning even though
+       they're visually similar ambers, since one is a brand accent and the other a status color
+       that a future palette change might tune independently. */
     --color-gold: #F59E0B;
     --color-gold-soft: #FEF3C7;
 
     --radius-container: 24px;
     --radius-card: 16px;
     --radius-input: 12px;
+    --radius-btn: 8px;
     --radius-pill: 999px;
 
-    --shadow-card: 0 1px 3px 0 rgba(11, 60, 136, 0.06), 0 1px 2px -1px rgba(11, 60, 136, 0.06);
+    --shadow-card: 0 2px 8px rgba(11, 60, 136, 0.05);
     --shadow-container: 0 10px 15px -3px rgba(11, 60, 136, 0.08), 0 4px 6px -4px rgba(11, 60, 136, 0.04);
 }
 
@@ -56,13 +61,28 @@
 
 body {
     font-family: "Inter", sans-serif;
+    font-size: 14px;
     background-color: var(--color-bg);
     color: var(--color-text);
     padding: 18px;
     line-height: 1.5;
 }
 
-h1, h2, h3, h4, .logo, .stat-value, .kanban-ticket-code, .hero-banner h1 {
+/* Typography scale from DESIGN.md ("Kiểu chữ & Thứ bậc nội dung"): H1 24-28px/700, H2-H3
+   16-18px/600, numbers/metrics (KPI, price, ticket codes) 18-32px/700. */
+h1, .logo {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+h2, h3, h4 {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.stat-value, .kanban-ticket-code, .hero-banner h1 {
     font-family: "Plus Jakarta Sans", sans-serif;
     font-weight: 700;
 }
@@ -81,8 +101,6 @@ img {
 }
 
 .container {
-    max-width: 1200px;
-    margin: 0 auto;
     background: var(--color-surface);
     border-radius: var(--radius-container);
     padding: 20px;
@@ -90,8 +108,7 @@ img {
 }
 
 .page-content {
-    max-width: 1200px;
-    margin: 20px auto 0;
+    margin-top: 20px;
 }
 
 /* ===== Header / nav ===== */
@@ -105,8 +122,6 @@ img {
     border-radius: var(--radius-container);
     padding: 16px 24px;
     box-shadow: var(--shadow-container);
-    max-width: 1200px;
-    margin: 0 auto;
 }
 
 .site-header .logo {
@@ -169,7 +184,7 @@ img {
     min-height: 48px;
     padding: 11px 20px;
     border: none;
-    border-radius: var(--radius-input);
+    border-radius: var(--radius-btn);
     font-family: inherit;
     font-size: 1rem;
     font-weight: 600;
@@ -353,6 +368,7 @@ img {
 .product-card .product-price {
     color: var(--color-institutional);
     font-weight: 700;
+    font-size: 18px;
     font-family: "Plus Jakarta Sans", sans-serif;
 }
 
@@ -403,6 +419,13 @@ img {
     display: flex;
     justify-content: space-between;
     padding: 6px 0;
+}
+
+/* The [hidden] boolean attribute is otherwise overridden by the class rule above — same (0,1,0)
+   specificity, but this is an author-stylesheet rule beating a user-agent default, which always
+   wins regardless of source order. This rule outranks it (0,2,0) so el.hidden = true actually hides it. */
+.order-summary .summary-row[hidden] {
+    display: none;
 }
 
 .order-summary .summary-total {
@@ -507,8 +530,8 @@ img {
 }
 
 .badge-pending   { background-color: var(--color-warning-soft); color: var(--color-warning); }
-.badge-confirmed { background-color: var(--color-accent-soft);  color: var(--color-accent-dark); }
-.badge-shipping  { background-color: var(--color-info-soft);    color: var(--color-info); }
+.badge-confirmed { background-color: var(--color-info-soft);    color: var(--color-info); }
+.badge-shipping  { background-color: var(--color-accent-soft);  color: var(--color-accent-dark); }
 .badge-completed { background-color: var(--color-success-soft); color: var(--color-success); }
 .badge-rejected  { background-color: var(--color-danger-soft);  color: var(--color-danger); }
 .badge-cancelled { background-color: var(--color-neutral-soft); color: var(--color-neutral); }
@@ -526,8 +549,7 @@ img {
 
 /* ===== Footer ===== */
 .site-footer {
-    max-width: 1200px;
-    margin: 32px auto 0;
+    margin-top: 32px;
     padding: 20px;
     text-align: center;
     color: var(--color-text-muted);
@@ -536,9 +558,8 @@ img {
 
 /* ===== Auth pages (login/register) ===== */
 .auth-container {
-    max-width: 1000px;
     width: 100%;
-    margin: 40px auto;
+    margin-top: 40px;
     display: flex;
     background: var(--color-surface);
     border-radius: var(--radius-container);
@@ -606,7 +627,7 @@ img {
 
     .auth-container {
         flex-direction: column;
-        margin: 16px auto;
+        margin: 16px 0;
     }
 
     .auth-image {
@@ -704,8 +725,7 @@ img {
     border-radius: var(--radius-container);
     padding: 32px;
     color: #ffffff;
-    margin: 20px auto 0;
-    max-width: 1200px;
+    margin-top: 20px;
     display: grid;
     grid-template-columns: 1.3fr 1fr;
     gap: 24px;
@@ -847,7 +867,7 @@ img {
 .kanban-ticket-code {
     font-weight: 700;
     color: var(--color-institutional);
-    font-size: 1.05rem;
+    font-size: 18px;
 }
 
 .kanban-elapsed {

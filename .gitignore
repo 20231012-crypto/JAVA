@@ -11,6 +11,7 @@ src/main/resources/app.properties
 
 # Claude Code runtime state (session-local, not project content)
 .claude/scheduled_tasks.lock
+.playwright-mcp/
 
 # IDE metadata
 .classpath
