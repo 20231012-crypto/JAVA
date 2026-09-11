@@ -15,9 +15,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
 
+    <!-- Favicon: EAUT crest -->
+    <link rel="icon" type="image/jpeg" href="${pageContext.request.contextPath}/assets/images/brand/eaut-logo.jpg">
+
     <!-- Installable webapp (Add to Home Screen) -->
     <link rel="manifest" href="${pageContext.request.contextPath}/manifest.json">
-    <meta name="theme-color" content="#00A082">
+    <meta name="theme-color" content="#1E4FA3">
     <link rel="apple-touch-icon" href="${pageContext.request.contextPath}/assets/icons/apple-touch-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">

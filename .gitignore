@@ -9,6 +9,9 @@ src/main/resources/db.properties
 src/main/resources/app.properties
 .env
 
+# Claude Code runtime state (session-local, not project content)
+.claude/scheduled_tasks.lock
+
 # IDE metadata
 .classpath
 .project

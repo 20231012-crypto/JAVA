@@ -5,7 +5,7 @@
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 <header class="site-header">
     <a class="logo" href="${ctx}/products">
-        <img src="${ctx}/assets/images/brand/eaut-logo.png" alt="EAUT" style="height:32px; vertical-align:middle; margin-right:8px;"
+        <img src="${ctx}/assets/images/brand/eaut-logo.jpg" alt="EAUT" style="height:32px; vertical-align:middle; margin-right:8px;"
              onerror="this.style.display='none'">
         Căng tin EAUT
     </a>
