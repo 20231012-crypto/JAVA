@@ -20,3 +20,12 @@ google.clientId=YOUR_CLIENT_ID.apps.googleusercontent.com
 # customer whose email ended in @eaut.edu.vn at signup (see GoogleAuthServlet). Optional —
 # CheckoutServlet defaults to 10 if this key is absent.
 smartId.discountPercent=10
+
+# Tích điểm (loyalty points): customers earn floor(order total / vndPerPoint) points when an
+# ONLINE order they placed is marked COMPLETED (see OrderFulfillmentServlet), and can redeem
+# points at checkout for redeemValuePerPoint đồng off each (see CheckoutServlet). Both optional —
+# default to the values below if absent. Note redeemValuePerPoint * vndPerPoint's implied "give
+# back rate" is intentionally less than 100% (500 vs 10000 here = 5%) — a real loyalty program
+# that paid back 1:1 what it cost to earn would just be a price cut with extra steps.
+loyalty.vndPerPoint=10000
+loyalty.redeemValuePerPoint=500

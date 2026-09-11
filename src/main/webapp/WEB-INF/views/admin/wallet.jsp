@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <jsp:include page="/WEB-INF/views/common/header.jsp" />
 <jsp:include page="/WEB-INF/views/common/nav.jsp" />
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
@@ -11,6 +12,37 @@
 
         <c:if test="${not empty error}">
             <div class="alert alert-error"><c:out value="${error}" /></div>
+        </c:if>
+        <c:if test="${not empty sessionScope.actionError}">
+            <div class="alert alert-error"><c:out value="${sessionScope.actionError}" /></div>
+            <c:remove var="actionError" scope="session" />
+        </c:if>
+
+        <c:if test="${not empty pendingRequests}">
+            <h2 style="margin-bottom:12px;">Yêu cầu nạp tiền chờ xác nhận (${fn:length(pendingRequests)})</h2>
+            <table class="data-table" style="margin-bottom:24px;">
+                <thead><tr><th>Thời gian</th><th>Khách hàng</th><th>Số tiền</th><th>Nội dung CK</th><th></th></tr></thead>
+                <tbody>
+                    <c:forEach var="r" items="${pendingRequests}">
+                        <tr>
+                            <td><c:out value="${r.createdAtDisplay}" /></td>
+                            <td><c:out value="${r.customerName}" /></td>
+                            <td><fmt:formatNumber value="${r.amount}" type="number" groupingUsed="true" />đ</td>
+                            <td><strong><c:out value="${r.transferNote}" /></strong></td>
+                            <td class="table-actions">
+                                <form method="post" action="${ctx}/admin/wallet/topup-requests/confirm">
+                                    <input type="hidden" name="requestId" value="${r.requestId}">
+                                    <button type="submit" class="btn btn-sm btn-primary">Đã nhận tiền, cộng ví</button>
+                                </form>
+                                <form method="post" action="${ctx}/admin/wallet/topup-requests/reject">
+                                    <input type="hidden" name="requestId" value="${r.requestId}">
+                                    <button type="submit" class="btn btn-sm btn-danger">Từ chối</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </c:forEach>
+                </tbody>
+            </table>
         </c:if>
 
         <form method="get" action="${ctx}/admin/wallet" style="display:flex; gap:10px; margin-bottom:24px;">

@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import com.eaut.canteen.dao.BuildingDAO;
+import com.eaut.canteen.dao.LoyaltyDAO;
 import com.eaut.canteen.dao.OrderDAO;
 import com.eaut.canteen.dao.OrderItemDAO;
 import com.eaut.canteen.dao.OrderStatusHistoryDAO;
@@ -15,6 +16,7 @@ import com.eaut.canteen.dao.ShelfStockDAO;
 import com.eaut.canteen.dao.UserDAO;
 import com.eaut.canteen.dao.WalletDAO;
 import com.eaut.canteen.dao.impl.BuildingDAOImpl;
+import com.eaut.canteen.dao.impl.LoyaltyDAOImpl;
 import com.eaut.canteen.dao.impl.OrderDAOImpl;
 import com.eaut.canteen.dao.impl.OrderItemDAOImpl;
 import com.eaut.canteen.dao.impl.OrderStatusHistoryDAOImpl;
@@ -24,6 +26,8 @@ import com.eaut.canteen.dao.impl.WalletDAOImpl;
 import com.eaut.canteen.model.Building;
 import com.eaut.canteen.model.Cart;
 import com.eaut.canteen.model.CartItem;
+import com.eaut.canteen.model.LoyaltyTransaction;
+import com.eaut.canteen.model.LoyaltyTransactionType;
 import com.eaut.canteen.model.Order;
 import com.eaut.canteen.model.OrderChannel;
 import com.eaut.canteen.model.OrderItem;
@@ -47,6 +51,7 @@ import jakarta.servlet.http.HttpSession;
 public class CheckoutServlet extends HttpServlet {
 
     private static final BigDecimal DEFAULT_SMART_ID_DISCOUNT_PERCENT = BigDecimal.TEN;
+    private static final BigDecimal DEFAULT_REDEEM_VALUE_PER_POINT = BigDecimal.valueOf(500);
 
     private final BuildingDAO buildingDAO = new BuildingDAOImpl();
     private final OrderDAO orderDAO = new OrderDAOImpl();
@@ -55,6 +60,7 @@ public class CheckoutServlet extends HttpServlet {
     private final OrderStatusHistoryDAO historyDAO = new OrderStatusHistoryDAOImpl();
     private final UserDAO userDAO = new UserDAOImpl();
     private final WalletDAO walletDAO = new WalletDAOImpl();
+    private final LoyaltyDAO loyaltyDAO = new LoyaltyDAOImpl();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -67,14 +73,18 @@ public class CheckoutServlet extends HttpServlet {
 
         User customer = (User) req.getSession().getAttribute("user");
         try (Connection conn = DBConnection.getConnection()) {
+            // Re-read rather than trust the session copy — wallet/points can change in another tab.
+            User fresh = userDAO.findById(conn, customer.getUserId());
             List<Building> buildings = buildingDAO.findAllActive(conn);
             req.setAttribute("pageTitle", "Thanh toán");
             req.setAttribute("cart", cart);
             req.setAttribute("buildings", buildings);
-            if (customer.isEautStudent()) {
+            if (fresh.isEautStudent()) {
                 req.setAttribute("smartIdDiscount", smartIdDiscount(cart.getSubtotal()));
             }
-            req.setAttribute("walletBalance", customer.getWalletBalance());
+            req.setAttribute("walletBalance", fresh.getWalletBalance());
+            req.setAttribute("loyaltyPoints", fresh.getLoyaltyPoints());
+            req.setAttribute("redeemValuePerPoint", redeemValuePerPoint());
             req.getRequestDispatcher("/WEB-INF/views/customer/checkout.jsp").forward(req, resp);
         } catch (SQLException e) {
             throw new ServletException(e);
@@ -90,28 +100,37 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
 
-        User customer = (User) req.getSession().getAttribute("user");
+        User sessionCustomer = (User) req.getSession().getAttribute("user");
         int buildingId = Integer.parseInt(req.getParameter("buildingId"));
         String note = req.getParameter("note");
         PaymentMethod paymentMethod = parsePaymentMethod(req.getParameter("paymentMethod"));
+        boolean wantsRedeemPoints = req.getParameter("useLoyaltyPoints") != null;
 
         try (Connection conn = DBConnection.getConnection()) {
             Building building = buildingDAO.findById(conn, buildingId);
             if (building == null) {
                 req.setAttribute("error", "Vui lòng chọn tòa nhà nhận hàng hợp lệ.");
-                forwardToCheckout(req, resp, conn, cart, customer);
+                forwardToCheckout(req, resp, conn, cart, sessionCustomer);
                 return;
             }
 
+            // Re-read the customer's live wallet/points rather than trusting the session copy —
+            // stale if a top-up/previous purchase happened in another tab since login.
+            User customer = userDAO.findById(conn, sessionCustomer.getUserId());
+
             BigDecimal subtotal = cart.getSubtotal();
             BigDecimal shippingFee = building.getShippingFee();
-            BigDecimal discount = customer.isEautStudent() ? smartIdDiscount(subtotal) : BigDecimal.ZERO;
-            BigDecimal total = subtotal.add(shippingFee).subtract(discount);
+            BigDecimal smartIdDiscount = customer.isEautStudent() ? smartIdDiscount(subtotal) : BigDecimal.ZERO;
+            BigDecimal payableBeforeLoyalty = subtotal.add(shippingFee).subtract(smartIdDiscount);
 
-            // Re-read the customer's live balance rather than trusting the session copy — it can
-            // be stale if a top-up/previous purchase happened in another tab since login.
-            User freshCustomer = paymentMethod == PaymentMethod.WALLET ? userDAO.findById(conn, customer.getUserId()) : null;
-            if (paymentMethod == PaymentMethod.WALLET && freshCustomer.getWalletBalance().compareTo(total) < 0) {
+            BigDecimal redeemValue = redeemValuePerPoint();
+            int maxRedeemable = payableBeforeLoyalty.divide(redeemValue, 0, RoundingMode.DOWN).intValue();
+            int pointsUsed = wantsRedeemPoints ? Math.min(customer.getLoyaltyPoints(), maxRedeemable) : 0;
+            BigDecimal loyaltyDiscount = redeemValue.multiply(BigDecimal.valueOf(pointsUsed));
+
+            BigDecimal total = payableBeforeLoyalty.subtract(loyaltyDiscount);
+
+            if (paymentMethod == PaymentMethod.WALLET && customer.getWalletBalance().compareTo(total) < 0) {
                 req.setAttribute("error", "Số dư ví EAUT Pay không đủ để thanh toán đơn này.");
                 forwardToCheckout(req, resp, conn, cart, customer);
                 return;
@@ -125,7 +144,9 @@ public class CheckoutServlet extends HttpServlet {
                 order.setChannel(OrderChannel.ONLINE);
                 order.setSubtotal(subtotal);
                 order.setShippingFee(shippingFee);
-                order.setDiscountAmount(discount);
+                order.setDiscountAmount(smartIdDiscount);
+                order.setLoyaltyPointsUsed(pointsUsed);
+                order.setLoyaltyDiscountAmount(loyaltyDiscount);
                 order.setTotalAmount(total);
                 order.setOrderStatus(OrderStatus.PENDING);
                 order.setPaymentMethod(paymentMethod);
@@ -133,6 +154,17 @@ public class CheckoutServlet extends HttpServlet {
                 order.setNote(note);
 
                 int orderId = orderDAO.insert(conn, order);
+
+                if (pointsUsed > 0) {
+                    userDAO.adjustLoyaltyPoints(conn, customer.getUserId(), -pointsUsed);
+                    LoyaltyTransaction ltx = new LoyaltyTransaction();
+                    ltx.setUserId(customer.getUserId());
+                    ltx.setPoints(-pointsUsed);
+                    ltx.setType(LoyaltyTransactionType.REDEEM);
+                    ltx.setOrderId(orderId);
+                    ltx.setNote("Đổi điểm cho đơn " + order.getOrderCode());
+                    loyaltyDAO.insert(conn, ltx);
+                }
 
                 if (paymentMethod == PaymentMethod.WALLET) {
                     userDAO.adjustWalletBalance(conn, customer.getUserId(), total.negate());
@@ -167,11 +199,11 @@ public class CheckoutServlet extends HttpServlet {
 
                 conn.commit();
                 cart.clear();
-                // The session's wallet balance is now stale after a WALLET payment; refresh it so
-                // the header badge (see nav.jsp) doesn't show a pre-payment number until re-login.
-                if (paymentMethod == PaymentMethod.WALLET) {
-                    customer.setWalletBalance(customer.getWalletBalance().subtract(total));
-                }
+                // The session's wallet/points are now stale after this order; refresh both so the
+                // header badge (see nav.jsp) doesn't show pre-order numbers until re-login.
+                sessionCustomer.setWalletBalance(customer.getWalletBalance().subtract(
+                        paymentMethod == PaymentMethod.WALLET ? total : BigDecimal.ZERO));
+                sessionCustomer.setLoyaltyPoints(customer.getLoyaltyPoints() - pointsUsed);
                 resp.sendRedirect(req.getContextPath() + "/orders/detail?id=" + orderId);
             } catch (SQLException e) {
                 conn.rollback();
@@ -203,6 +235,14 @@ public class CheckoutServlet extends HttpServlet {
         return subtotal.multiply(percent).divide(BigDecimal.valueOf(100), 0, RoundingMode.DOWN);
     }
 
+    /** Tích điểm redemption rate — see AppConfig "loyalty.redeemValuePerPoint" (default 500đ/point). */
+    private BigDecimal redeemValuePerPoint() {
+        String configured = AppConfig.get("loyalty.redeemValuePerPoint");
+        return configured == null || configured.isBlank()
+                ? DEFAULT_REDEEM_VALUE_PER_POINT
+                : new BigDecimal(configured.trim());
+    }
+
     private void forwardToCheckout(HttpServletRequest req, HttpServletResponse resp, Connection conn, Cart cart, User customer)
             throws SQLException, ServletException, IOException {
         req.setAttribute("pageTitle", "Thanh toán");
@@ -212,6 +252,8 @@ public class CheckoutServlet extends HttpServlet {
             req.setAttribute("smartIdDiscount", smartIdDiscount(cart.getSubtotal()));
         }
         req.setAttribute("walletBalance", customer.getWalletBalance());
+        req.setAttribute("loyaltyPoints", customer.getLoyaltyPoints());
+        req.setAttribute("redeemValuePerPoint", redeemValuePerPoint());
         req.getRequestDispatcher("/WEB-INF/views/customer/checkout.jsp").forward(req, resp);
     }
 

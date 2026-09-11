@@ -25,6 +25,9 @@
                 <c:if test="${order.discountAmount > 0}">
                     <div class="summary-row" style="color:var(--color-gold);"><span>🪪 Giảm giá Smart ID</span><span>-<fmt:formatNumber value="${order.discountAmount}" type="number" groupingUsed="true" />₫</span></div>
                 </c:if>
+                <c:if test="${order.loyaltyPointsUsed > 0}">
+                    <div class="summary-row" style="color:var(--color-gold);"><span>🎁 Điểm tích luỹ (${order.loyaltyPointsUsed} điểm)</span><span>-<fmt:formatNumber value="${order.loyaltyDiscountAmount}" type="number" groupingUsed="true" />₫</span></div>
+                </c:if>
                 <div class="summary-row summary-total"><span>Tổng cộng</span><span><fmt:formatNumber value="${order.totalAmount}" type="number" groupingUsed="true" />₫</span></div>
 
                 <c:if test="${not empty qrImageUrl}">

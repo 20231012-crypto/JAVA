@@ -1,39 +1,50 @@
 /* ===== Design tokens ===== */
-/* EAUT brand palette: blue/white (school colors). --color-accent is the one brand blue used for
-   links, primary buttons, and active nav — --color-info is a separate cyan so the "SHIPPING"
-   status badge doesn't visually collide with brand-blue chrome around it. */
+/* EAUT brand system ("Smart Campus Dining System" — see DESIGN.md): institutional royal blue for
+   header/nav/branding chrome, vivid orange for primary conversion actions (order/checkout/save),
+   amber tertiary for loyalty/wallet-incentive accents. --color-accent is the orange used by
+   .btn-primary and most call-to-actions; --color-institutional is the blue used specifically for
+   header/nav/branding — kept as two separate roles so a page can be "mostly blue chrome, orange
+   buttons" as in the reference design, rather than one hue doing both jobs. */
 :root {
-    --color-bg: #F1F5FB;
+    --color-bg: #F8FAFC;
     --color-surface: #ffffff;
-    --color-accent: #1E4FA3;
-    --color-accent-dark: #163B7D;
-    --color-accent-soft: #E8F0FC;
-    --color-text: #1f2937;
-    --color-text-muted: #6b7280;
-    --color-border: #e2e8f0;
-    --color-danger: #DC2626;
+
+    --color-institutional: #0B3C88;
+    --color-institutional-dark: #0A3475;
+    --color-institutional-soft: #E4ECF9;
+
+    --color-accent: #F97316;
+    --color-accent-dark: #EA580C;
+    --color-accent-soft: #FFEDD5;
+
+    --color-text: #0F172A;
+    --color-text-muted: #64748B;
+    --color-border: #E2E8F0;
+
+    --color-danger: #EF4444;
     --color-danger-soft: #FEE2E2;
-    --color-warning: #D97706;
+    --color-warning: #F59E0B;
     --color-warning-soft: #FEF3C7;
     --color-info: #0891B2;
     --color-info-soft: #CFFAFE;
-    --color-success: #16A34A;
-    --color-success-soft: #DCFCE7;
-    --color-neutral: #6B7280;
-    --color-neutral-soft: #F3F4F6;
+    --color-success: #10B981;
+    --color-success-soft: #D1FAE5;
+    --color-neutral: #64748B;
+    --color-neutral-soft: #F1F5F9;
 
-    /* EAUT Smart ID / EAUT Pay accent — kept distinct from brand blue so wallet/discount UI reads
-       as its own thing at a glance (see checkout.jsp, admin/wallet.jsp). */
-    --color-gold: #B7791F;
-    --color-gold-soft: #FEF3E0;
+    /* EAUT Smart ID / EAUT Pay / loyalty points — DESIGN.md's tertiary amber is explicitly "for
+       ratings, meal recommendations, combo perks, and student loyalty points/wallet incentives",
+       so it's reused here rather than inventing a fifth hue. */
+    --color-gold: #F59E0B;
+    --color-gold-soft: #FEF3C7;
 
     --radius-container: 24px;
     --radius-card: 16px;
-    --radius-input: 8px;
+    --radius-input: 12px;
     --radius-pill: 999px;
 
-    --shadow-card: 0 2px 4px rgba(30, 79, 163, 0.08);
-    --shadow-container: 0 4px 6px rgba(30, 79, 163, 0.08);
+    --shadow-card: 0 1px 3px 0 rgba(11, 60, 136, 0.06), 0 1px 2px -1px rgba(11, 60, 136, 0.06);
+    --shadow-container: 0 10px 15px -3px rgba(11, 60, 136, 0.08), 0 4px 6px -4px rgba(11, 60, 136, 0.04);
 }
 
 /* ===== Reset & base ===== */
@@ -44,15 +55,20 @@
 }
 
 body {
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
     background-color: var(--color-bg);
     color: var(--color-text);
     padding: 18px;
     line-height: 1.5;
 }
 
+h1, h2, h3, h4, .logo, .stat-value, .kanban-ticket-code, .hero-banner h1 {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-weight: 700;
+}
+
 a {
-    color: var(--color-accent);
+    color: var(--color-institutional);
     text-decoration: none;
 }
 
@@ -96,7 +112,7 @@ img {
 .site-header .logo {
     font-size: 1.4rem;
     font-weight: 700;
-    color: var(--color-accent);
+    color: var(--color-institutional);
 }
 
 .site-nav {
@@ -116,13 +132,13 @@ img {
 
 .site-nav a:hover,
 .site-nav a.active {
-    background-color: var(--color-accent-soft);
-    color: var(--color-accent);
+    background-color: var(--color-institutional-soft);
+    color: var(--color-institutional);
     text-decoration: none;
 }
 
 .user-info {
-    background-color: var(--color-accent-soft);
+    background-color: var(--color-institutional-soft);
     border-radius: var(--radius-pill);
     padding: 6px 14px 6px 6px;
     display: flex;
@@ -135,7 +151,7 @@ img {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: var(--color-accent);
+    background: var(--color-institutional);
     color: #fff;
     display: flex;
     align-items: center;
@@ -150,12 +166,13 @@ img {
     align-items: center;
     justify-content: center;
     gap: 8px;
+    min-height: 48px;
     padding: 11px 20px;
     border: none;
     border-radius: var(--radius-input);
     font-family: inherit;
     font-size: 1rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: background-color 0.2s, transform 0.05s;
     white-space: nowrap;
@@ -176,12 +193,12 @@ img {
 }
 
 .btn-secondary {
-    background-color: var(--color-accent-soft);
-    color: var(--color-accent-dark);
+    background-color: var(--color-institutional-soft);
+    color: var(--color-institutional-dark);
 }
 
 .btn-secondary:hover {
-    background-color: #d3f0e6;
+    background-color: #d3e0f5;
     text-decoration: none;
 }
 
@@ -196,6 +213,7 @@ img {
 }
 
 .btn-sm {
+    min-height: 32px;
     padding: 6px 12px;
     font-size: 0.85rem;
 }
@@ -240,7 +258,8 @@ img {
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: var(--color-accent);
+    border-color: var(--color-institutional);
+    box-shadow: 0 0 0 3px rgba(11, 60, 136, 0.15);
 }
 
 .error-message {
@@ -250,7 +269,7 @@ img {
 }
 
 .success-message {
-    color: var(--color-accent);
+    color: var(--color-success);
     font-size: 0.9rem;
     margin-top: 4px;
 }
@@ -290,14 +309,14 @@ img {
 }
 
 .filter-chip:hover {
-    background-color: var(--color-accent-soft);
+    background-color: var(--color-institutional-soft);
     text-decoration: none;
 }
 
 .filter-chip.active {
-    background-color: var(--color-accent-soft);
-    border-color: var(--color-accent);
-    color: var(--color-accent-dark);
+    background-color: var(--color-institutional);
+    border-color: var(--color-institutional);
+    color: #ffffff;
     font-weight: 600;
 }
 
@@ -332,15 +351,16 @@ img {
 }
 
 .product-card .product-price {
-    color: var(--color-accent);
-    font-weight: 600;
+    color: var(--color-institutional);
+    font-weight: 700;
+    font-family: "Plus Jakarta Sans", sans-serif;
 }
 
 .product-image-placeholder {
     width: 100%;
     height: 160px;
-    background-color: var(--color-accent-soft);
-    color: var(--color-accent-dark);
+    background-color: var(--color-institutional-soft);
+    color: var(--color-institutional-dark);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -374,7 +394,7 @@ img {
 }
 
 .order-summary {
-    background-color: var(--color-accent-soft);
+    background-color: var(--color-institutional-soft);
     border-radius: var(--radius-card);
     padding: 20px;
 }
@@ -427,14 +447,14 @@ img {
 }
 
 .stat-tile {
-    background-color: var(--color-accent-soft);
+    background-color: var(--color-institutional-soft);
     border-radius: var(--radius-card);
     padding: 18px 20px;
 }
 
 .stat-tile .stat-label {
     font-size: 0.85rem;
-    color: var(--color-accent-dark);
+    color: var(--color-institutional-dark);
     font-weight: 500;
 }
 
@@ -463,8 +483,8 @@ img {
 }
 
 .data-table th {
-    background-color: var(--color-accent-soft);
-    color: var(--color-accent-dark);
+    background-color: var(--color-institutional-soft);
+    color: var(--color-institutional-dark);
     font-weight: 600;
 }
 
@@ -528,7 +548,7 @@ img {
 
 .auth-image {
     flex: 1;
-    background-color: var(--color-accent-soft);
+    background-color: var(--color-institutional-soft);
     padding: 40px;
     display: flex;
     flex-direction: column;
@@ -538,7 +558,7 @@ img {
 }
 
 .auth-image h2 {
-    color: var(--color-accent);
+    color: var(--color-institutional);
     margin-bottom: 16px;
     font-size: 1.8rem;
 }
@@ -643,7 +663,7 @@ img {
 }
 
 .login-choice-card:hover {
-    border-color: var(--color-accent);
+    border-color: var(--color-institutional);
     transform: translateY(-2px);
     text-decoration: none;
 }
@@ -652,8 +672,8 @@ img {
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    background: var(--color-accent-soft);
-    color: var(--color-accent);
+    background: var(--color-institutional-soft);
+    color: var(--color-institutional);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -680,7 +700,7 @@ img {
 
 /* ===== Hero banner (customer catalog landing) ===== */
 .hero-banner {
-    background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-dark) 100%);
+    background: linear-gradient(135deg, var(--color-institutional) 0%, var(--color-institutional-dark) 100%);
     border-radius: var(--radius-container);
     padding: 32px;
     color: #ffffff;
@@ -802,7 +822,7 @@ img {
     padding: 2px 10px;
     font-size: 0.8rem;
     font-weight: 700;
-    color: var(--color-accent);
+    color: var(--color-institutional);
 }
 
 .kanban-card {
@@ -826,7 +846,7 @@ img {
 
 .kanban-ticket-code {
     font-weight: 700;
-    color: var(--color-accent);
+    color: var(--color-institutional);
     font-size: 1.05rem;
 }
 

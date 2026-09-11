@@ -28,6 +28,9 @@ Cloudinary...) — ngoài phạm vi tài liệu này.
 4. **Không chạy `sql/schema.sql`/`sql/seed.sql`** (bản MySQL) lên Neon — hai cú pháp không tương
    thích (ENUM/AUTO_INCREMENT/ENGINE=... là MySQL-only). Bản MySQL vẫn dùng được cho dev local theo
    README nếu bạn chạy Tomcat trên máy mình.
+5. Đã chạy `schema.postgres.sql` từ trước rồi (database đang hoạt động) và chỉ cần thêm tính năng
+   mới (tích điểm, nạp ví qua VietQR)? Chạy riêng `sql/migrations/002_loyalty_and_wallet_topup.postgres.sql`
+   — file này chỉ ADD COLUMN/CREATE TABLE, không đụng gì tới dữ liệu đang có.
 
 ## Bước 2 — Deploy trên Render
 
@@ -50,6 +53,8 @@ Cloudinary...) — ngoài phạm vi tài liệu này.
    | `VIETQR_ACCOUNTNO` | `0000000000` | |
    | `VIETQR_ACCOUNTNAME` | `CANTEEN EAUT` | |
    | `SMARTID_DISCOUNTPERCENT` | `10` | Tuỳ chọn — % giảm giá tự động cho tài khoản @eaut.edu.vn, mặc định 10 nếu bỏ trống |
+   | `LOYALTY_VNDPERPOINT` | `10000` | Tuỳ chọn — chi bao nhiêu đ được 1 điểm tích luỹ, mặc định 10000 |
+   | `LOYALTY_REDEEMVALUEPERPOINT` | `500` | Tuỳ chọn — 1 điểm đổi được bao nhiêu đ giảm giá, mặc định 500 |
 
 6. Bấm **Create Web Service** → Render tự build Docker image và deploy.
 7. Sau khi deploy xong, Render cấp một URL dạng `https://<ten-service>.onrender.com`.
@@ -62,6 +67,11 @@ Vào Google Cloud Console → APIs & Services → Credentials → OAuth Client I
 - **Authorized redirect URIs**: `https://<ten-service>.onrender.com/auth/google`
 
 (Vẫn giữ nguyên các URL `localhost:8080` cũ nếu còn test local.)
+
+**Bỏ qua bước này thì đăng nhập Google sẽ báo lỗi `Error 400: redirect_uri_mismatch`** — đây không
+phải lỗi code, Google từ chối vì URL chưa được khai báo. URL trong bước 3 phải khớp **tuyệt đối
+từng ký tự** với URL thật của service (đổi domain là phải cập nhật lại, kể cả khi Render đổi tên
+service).
 
 ## Kiểm tra sau khi deploy
 

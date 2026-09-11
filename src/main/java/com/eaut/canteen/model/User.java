@@ -22,6 +22,7 @@ public class User {
     private Integer buildingId;
     private BigDecimal walletBalance = BigDecimal.ZERO;
     private boolean eautStudent;
+    private int loyaltyPoints;
     private LocalDateTime createdAt;
 
     /**
@@ -139,6 +140,15 @@ public class User {
 
     public void setEautStudent(boolean eautStudent) {
         this.eautStudent = eautStudent;
+    }
+
+    /** Tích điểm balance, earned on completed online orders — see AppConfig "loyalty.vndPerPoint" / "loyalty.redeemValuePerPoint". */
+    public int getLoyaltyPoints() {
+        return loyaltyPoints;
+    }
+
+    public void setLoyaltyPoints(int loyaltyPoints) {
+        this.loyaltyPoints = loyaltyPoints;
     }
 
     public Map<String, Boolean> getPermissions() {

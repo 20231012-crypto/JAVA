@@ -10,6 +10,8 @@ import com.eaut.canteen.dao.WalletDAO;
 import com.eaut.canteen.dao.impl.UserDAOImpl;
 import com.eaut.canteen.dao.impl.WalletDAOImpl;
 import com.eaut.canteen.model.User;
+import com.eaut.canteen.model.WalletTopupRequest;
+import com.eaut.canteen.model.WalletTopupStatus;
 import com.eaut.canteen.model.WalletTransaction;
 import com.eaut.canteen.model.WalletTransactionType;
 import com.eaut.canteen.util.DBConnection;
@@ -20,8 +22,13 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-/** Admin-only EAUT Pay top-up screen: find a customer by username or email, credit their wallet, see their ledger. */
-@WebServlet({"/admin/wallet", "/admin/wallet/topup"})
+/**
+ * Admin EAUT Pay screen: confirm/reject customers' self-service "nạp ví" requests (see customer
+ * WalletServlet) after checking the bank account by hand — there is no real bank API link, this
+ * confirmation step IS the trust boundary — plus a manual top-up by username/email lookup for
+ * cases with no bank transfer at all.
+ */
+@WebServlet({"/admin/wallet", "/admin/wallet/topup", "/admin/wallet/topup-requests/confirm", "/admin/wallet/topup-requests/reject"})
 public class WalletServlet extends HttpServlet {
 
     private static final UserDAO userDAO = new UserDAOImpl();
@@ -40,6 +47,15 @@ public class WalletServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        switch (req.getServletPath()) {
+            case "/admin/wallet/topup-requests/confirm" -> resolveTopupRequest(req, resp, WalletTopupStatus.CONFIRMED);
+            case "/admin/wallet/topup-requests/reject" -> resolveTopupRequest(req, resp, WalletTopupStatus.REJECTED);
+            default -> manualTopup(req, resp);
+        }
+    }
+
+    private void manualTopup(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
         int userId = Integer.parseInt(req.getParameter("userId"));
         String amountParam = req.getParameter("amount");
         User admin = (User) req.getSession().getAttribute("user");
@@ -55,14 +71,8 @@ public class WalletServlet extends HttpServlet {
 
             conn.setAutoCommit(false);
             try {
-                userDAO.adjustWalletBalance(conn, userId, amount);
-                WalletTransaction tx = new WalletTransaction();
-                tx.setUserId(userId);
-                tx.setAmount(amount);
-                tx.setType(WalletTransactionType.TOPUP);
-                tx.setCreatedBy(admin.getUserId());
-                tx.setNote("Admin " + admin.getUsername() + " nạp ví thủ công");
-                walletDAO.insert(conn, tx);
+                creditWallet(conn, userId, amount, admin.getUserId(),
+                        "Admin " + admin.getUsername() + " nạp ví thủ công", null);
                 conn.commit();
             } catch (SQLException e) {
                 conn.rollback();
@@ -77,6 +87,49 @@ public class WalletServlet extends HttpServlet {
         }
     }
 
+    private void resolveTopupRequest(HttpServletRequest req, HttpServletResponse resp, WalletTopupStatus resolution)
+            throws ServletException, IOException {
+        int requestId = Integer.parseInt(req.getParameter("requestId"));
+        User admin = (User) req.getSession().getAttribute("user");
+
+        try (Connection conn = DBConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                int updated = walletDAO.updateTopupRequestStatus(conn, requestId, resolution, admin.getUserId());
+                if (updated > 0 && resolution == WalletTopupStatus.CONFIRMED) {
+                    WalletTopupRequest request = walletDAO.findTopupRequestById(conn, requestId);
+                    creditWallet(conn, request.getUserId(), request.getAmount(), admin.getUserId(),
+                            "Xác nhận yêu cầu nạp " + request.getTransferNote(), null);
+                }
+                if (updated == 0) {
+                    req.getSession().setAttribute("actionError", "Yêu cầu này đã được xử lý trước đó.");
+                }
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            throw new ServletException(e);
+        }
+
+        resp.sendRedirect(req.getContextPath() + "/admin/wallet");
+    }
+
+    private void creditWallet(Connection conn, int userId, BigDecimal amount, int adminId, String note, Integer orderId) throws SQLException {
+        userDAO.adjustWalletBalance(conn, userId, amount);
+        WalletTransaction tx = new WalletTransaction();
+        tx.setUserId(userId);
+        tx.setAmount(amount);
+        tx.setType(WalletTransactionType.TOPUP);
+        tx.setCreatedBy(adminId);
+        tx.setOrderId(orderId);
+        tx.setNote(note);
+        walletDAO.insert(conn, tx);
+    }
+
     private BigDecimal parseAmount(String value) {
         try {
             return new BigDecimal(value.trim());
@@ -88,6 +141,7 @@ public class WalletServlet extends HttpServlet {
     private void showForm(HttpServletRequest req, HttpServletResponse resp, Connection conn, String query, String error)
             throws SQLException, ServletException, IOException {
         req.setAttribute("pageTitle", "Nạp ví EAUT Pay");
+        req.setAttribute("pendingRequests", walletDAO.findPendingTopupRequests(conn));
         if (error != null) {
             req.setAttribute("error", error);
         }

@@ -90,6 +90,7 @@ CREATE TABLE users (
   building_id     INT NULL REFERENCES buildings(building_id) ON DELETE SET NULL,
   wallet_balance  DECIMAL(12,0) NOT NULL DEFAULT 0,     -- EAUT Pay balance; only ever changed via wallet_transactions
   is_eaut_student BOOLEAN NOT NULL DEFAULT FALSE,       -- Smart ID marker (email domain @eaut.edu.vn at signup) -> automatic checkout discount
+  loyalty_points  INT NOT NULL DEFAULT 0,               -- earned on completed online orders; only ever changed via loyalty_transactions
   created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -166,6 +167,8 @@ CREATE TABLE orders (
   subtotal              DECIMAL(12,0) NOT NULL,
   shipping_fee          DECIMAL(12,0) NOT NULL DEFAULT 0,
   discount_amount       DECIMAL(12,0) NOT NULL DEFAULT 0, -- EAUT Smart ID automatic discount (see AppConfig smartId.discountPercent)
+  loyalty_points_used   INT NOT NULL DEFAULT 0,           -- points redeemed on this order (see AppConfig loyalty.redeemValuePerPoint)
+  loyalty_discount_amount DECIMAL(12,0) NOT NULL DEFAULT 0, -- đồng value of loyalty_points_used, tracked separately from discount_amount so the two show as distinct line items
   total_amount          DECIMAL(12,0) NOT NULL,
   order_status          VARCHAR(12) NOT NULL DEFAULT 'PENDING'
                           CHECK (order_status IN ('PENDING','CONFIRMED','REJECTED','SHIPPING','COMPLETED','CANCELLED')),
@@ -222,8 +225,37 @@ CREATE TABLE wallet_transactions (
   created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Self-service EAUT Pay top-up: customer requests an amount, gets a VietQR code (same trust model
+-- as VietQR order payments — there is no real bank API link, so a human still has to look at the
+-- bank account and confirm the transfer actually landed before the balance moves).
+CREATE TABLE wallet_topup_requests (
+  request_id    SERIAL PRIMARY KEY,
+  user_id       INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  amount        DECIMAL(12,0) NOT NULL,
+  status        VARCHAR(10) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING','CONFIRMED','REJECTED')),
+  confirmed_by  INT NULL REFERENCES users(user_id) ON DELETE SET NULL,
+  confirmed_at  TIMESTAMP NULL,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Loyalty/tích điểm: 1 point earned per AppConfig "loyalty.vndPerPoint" spent on a completed
+-- ONLINE order (see OrderFulfillmentServlet), redeemable at checkout for a discount (see
+-- AppConfig "loyalty.redeemValuePerPoint"). Ledgered the same way as wallet_transactions so
+-- users.loyalty_points is always reconstructable.
+CREATE TABLE loyalty_transactions (
+  transaction_id  SERIAL PRIMARY KEY,
+  user_id         INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  points          INT NOT NULL, -- positive = earn, negative = redeem
+  type            VARCHAR(10) NOT NULL CHECK (type IN ('EARN','REDEEM')),
+  order_id        INT NULL REFERENCES orders(order_id) ON DELETE SET NULL,
+  note            VARCHAR(255) NULL,
+  created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX idx_history_order     ON order_status_history(order_id);
 CREATE INDEX idx_orders_customer   ON orders(customer_id);
 CREATE INDEX idx_orders_status     ON orders(order_status);
 CREATE INDEX idx_products_category ON products(category_id);
 CREATE INDEX idx_wallet_tx_user    ON wallet_transactions(user_id);
+CREATE INDEX idx_topup_user        ON wallet_topup_requests(user_id);
+CREATE INDEX idx_loyalty_tx_user   ON loyalty_transactions(user_id);

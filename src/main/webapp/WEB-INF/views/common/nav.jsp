@@ -18,6 +18,7 @@
                 <c:if test="${not empty sessionScope.user}">
                     <a href="${ctx}/cart">Giỏ hàng</a>
                     <a href="${ctx}/orders">Đơn hàng của tôi</a>
+                    <a href="${ctx}/wallet">Ví của tôi</a>
                 </c:if>
             </c:when>
             <%-- Staff/admin: each link only shows if this user's role actually carries that

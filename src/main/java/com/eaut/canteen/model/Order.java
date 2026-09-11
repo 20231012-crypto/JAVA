@@ -19,6 +19,8 @@ public class Order {
     private BigDecimal subtotal;
     private BigDecimal shippingFee;
     private BigDecimal discountAmount = BigDecimal.ZERO;
+    private int loyaltyPointsUsed;
+    private BigDecimal loyaltyDiscountAmount = BigDecimal.ZERO;
     private BigDecimal totalAmount;
     private OrderStatus orderStatus;
     private PaymentMethod paymentMethod;
@@ -109,6 +111,24 @@ public class Order {
 
     public void setDiscountAmount(BigDecimal discountAmount) {
         this.discountAmount = discountAmount;
+    }
+
+    /** Points redeemed on this order (tích điểm) — see AppConfig "loyalty.redeemValuePerPoint". */
+    public int getLoyaltyPointsUsed() {
+        return loyaltyPointsUsed;
+    }
+
+    public void setLoyaltyPointsUsed(int loyaltyPointsUsed) {
+        this.loyaltyPointsUsed = loyaltyPointsUsed;
+    }
+
+    /** đồng value of loyaltyPointsUsed — tracked separately from discountAmount so the two show as distinct line items. */
+    public BigDecimal getLoyaltyDiscountAmount() {
+        return loyaltyDiscountAmount;
+    }
+
+    public void setLoyaltyDiscountAmount(BigDecimal loyaltyDiscountAmount) {
+        this.loyaltyDiscountAmount = loyaltyDiscountAmount;
     }
 
     public BigDecimal getTotalAmount() {

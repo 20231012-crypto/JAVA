@@ -48,6 +48,8 @@ public class UserDAOImpl implements UserDAO {
             "UPDATE users SET google_sub = ?, auth_provider = 'GOOGLE' WHERE user_id = ?";
     private static final String ADJUST_WALLET =
             "UPDATE users SET wallet_balance = wallet_balance + ? WHERE user_id = ?";
+    private static final String ADJUST_LOYALTY =
+            "UPDATE users SET loyalty_points = loyalty_points + ? WHERE user_id = ?";
 
     @Override
     public User findById(Connection conn, int userId) throws SQLException {
@@ -183,6 +185,15 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
+    @Override
+    public void adjustLoyaltyPoints(Connection conn, int userId, int delta) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(ADJUST_LOYALTY)) {
+            ps.setInt(1, delta);
+            ps.setInt(2, userId);
+            ps.executeUpdate();
+        }
+    }
+
     private User mapRow(ResultSet rs) throws SQLException {
         User user = new User();
         user.setUserId(rs.getInt("user_id"));
@@ -207,6 +218,7 @@ public class UserDAOImpl implements UserDAO {
         user.setBuildingId(rs.wasNull() ? null : buildingId);
         user.setWalletBalance(rs.getBigDecimal("wallet_balance"));
         user.setEautStudent(rs.getBoolean("is_eaut_student"));
+        user.setLoyaltyPoints(rs.getInt("loyalty_points"));
         if (rs.getTimestamp("created_at") != null) {
             user.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
         }

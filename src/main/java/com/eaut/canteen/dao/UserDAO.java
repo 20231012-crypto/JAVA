@@ -35,4 +35,7 @@ public interface UserDAO {
 
     /** Records a wallet top-up/payment/refund and adjusts users.wallet_balance in one call — see WalletDAO for the ledger read side. */
     void adjustWalletBalance(Connection conn, int userId, java.math.BigDecimal delta) throws SQLException;
+
+    /** Adjusts users.loyalty_points — see LoyaltyDAO for the ledger read side. */
+    void adjustLoyaltyPoints(Connection conn, int userId, int delta) throws SQLException;
 }

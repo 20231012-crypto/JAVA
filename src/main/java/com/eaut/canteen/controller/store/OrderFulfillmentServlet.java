@@ -1,17 +1,26 @@
 package com.eaut.canteen.controller.store;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import com.eaut.canteen.dao.LoyaltyDAO;
 import com.eaut.canteen.dao.OrderDAO;
 import com.eaut.canteen.dao.OrderStatusHistoryDAO;
+import com.eaut.canteen.dao.UserDAO;
+import com.eaut.canteen.dao.impl.LoyaltyDAOImpl;
 import com.eaut.canteen.dao.impl.OrderDAOImpl;
 import com.eaut.canteen.dao.impl.OrderStatusHistoryDAOImpl;
+import com.eaut.canteen.dao.impl.UserDAOImpl;
+import com.eaut.canteen.model.LoyaltyTransaction;
+import com.eaut.canteen.model.LoyaltyTransactionType;
 import com.eaut.canteen.model.Order;
 import com.eaut.canteen.model.OrderStatus;
 import com.eaut.canteen.model.PaymentMethod;
 import com.eaut.canteen.model.User;
+import com.eaut.canteen.util.AppConfig;
 import com.eaut.canteen.util.DBConnection;
 
 import jakarta.servlet.ServletException;
@@ -24,8 +33,12 @@ import jakarta.servlet.http.HttpServletResponse;
 @WebServlet({"/store/orders/pick", "/store/orders/complete"})
 public class OrderFulfillmentServlet extends HttpServlet {
 
+    private static final BigDecimal DEFAULT_VND_PER_POINT = BigDecimal.valueOf(10_000);
+
     private static final OrderDAO orderDAO = new OrderDAOImpl();
     private static final OrderStatusHistoryDAO historyDAO = new OrderStatusHistoryDAOImpl();
+    private static final UserDAO userDAO = new UserDAOImpl();
+    private static final LoyaltyDAO loyaltyDAO = new LoyaltyDAOImpl();
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -81,8 +94,34 @@ public class OrderFulfillmentServlet extends HttpServlet {
             orderDAO.markPaid(conn, orderId, staff.getUserId());
         }
 
+        // Tích điểm: only web orders with a known customer earn points — a COUNTER sale has no
+        // customer_id to credit, and points are only awarded once the order is actually delivered
+        // (not merely placed), same trust boundary as everything else "completed" implies here.
+        if (order.getCustomerId() != null) {
+            awardLoyaltyPoints(conn, order);
+        }
+
         historyDAO.insert(conn, orderId, OrderStatus.SHIPPING, OrderStatus.COMPLETED, staff.getUserId(),
                 "Giao hàng thành công");
         return true;
+    }
+
+    private void awardLoyaltyPoints(Connection conn, Order order) throws SQLException {
+        String configured = AppConfig.get("loyalty.vndPerPoint");
+        BigDecimal vndPerPoint = configured == null || configured.isBlank()
+                ? DEFAULT_VND_PER_POINT
+                : new BigDecimal(configured.trim());
+        int points = order.getTotalAmount().divide(vndPerPoint, 0, RoundingMode.DOWN).intValue();
+        if (points <= 0) {
+            return;
+        }
+        userDAO.adjustLoyaltyPoints(conn, order.getCustomerId(), points);
+        LoyaltyTransaction tx = new LoyaltyTransaction();
+        tx.setUserId(order.getCustomerId());
+        tx.setPoints(points);
+        tx.setType(LoyaltyTransactionType.EARN);
+        tx.setOrderId(order.getOrderId());
+        tx.setNote("Tích điểm từ đơn " + order.getOrderCode());
+        loyaltyDAO.insert(conn, tx);
     }
 }
