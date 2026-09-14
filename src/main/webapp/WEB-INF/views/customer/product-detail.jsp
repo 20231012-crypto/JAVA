@@ -39,21 +39,32 @@
                     <c:if test="${not empty product.unit}"> / <c:out value="${product.unit}" /></c:if>
                 </div>
 
-                <c:choose>
-                    <c:when test="${product.shelfQuantity > 0}">
-                        <form method="post" action="${pageContext.request.contextPath}/cart/add">
-                            <input type="hidden" name="productId" value="${product.productId}">
-                            <div class="qty-form" style="margin-bottom:16px;">
-                                <label for="quantity">Số lượng</label>
-                                <input type="number" id="quantity" name="quantity" value="1" min="1" max="${product.shelfQuantity}">
-                            </div>
-                            <button type="submit" class="btn btn-primary">Thêm vào giỏ hàng</button>
-                        </form>
-                    </c:when>
-                    <c:otherwise>
-                        <p class="out-of-stock">Sản phẩm tạm hết hàng.</p>
-                    </c:otherwise>
-                </c:choose>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <c:choose>
+                        <c:when test="${product.shelfQuantity > 0}">
+                            <form method="post" action="${pageContext.request.contextPath}/cart/add">
+                                <input type="hidden" name="productId" value="${product.productId}">
+                                <div class="qty-form" style="margin-bottom:16px;">
+                                    <label for="quantity">Số lượng</label>
+                                    <input type="number" id="quantity" name="quantity" value="1" min="1" max="${product.shelfQuantity}">
+                                </div>
+                                <button type="submit" class="btn btn-primary">Thêm vào giỏ hàng</button>
+                            </form>
+                        </c:when>
+                        <c:otherwise>
+                            <p class="out-of-stock">Sản phẩm tạm hết hàng.</p>
+                        </c:otherwise>
+                    </c:choose>
+                    <c:if test="${not empty sessionScope.user and sessionScope.user.role.customerDefault}">
+                        <button type="button" class="icon-btn favorite-btn ${product.favoritedByCurrentUser ? 'is-favorited' : ''}"
+                                data-favorite-toggle data-product-id="${product.productId}" aria-label="Yêu thích">
+                            <c:choose>
+                                <c:when test="${product.favoritedByCurrentUser}">♥</c:when>
+                                <c:otherwise>♡</c:otherwise>
+                            </c:choose>
+                        </button>
+                    </c:if>
+                </div>
             </div>
         </div>
     </div>

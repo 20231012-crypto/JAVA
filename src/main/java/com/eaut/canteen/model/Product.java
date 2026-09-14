@@ -25,6 +25,8 @@ public class Product {
     private int shelfQuantity;
     /** Populated only by DAO methods that join warehouse_stock (e.g. admin listing). */
     private int warehouseQuantity;
+    /** Not from the products table — set manually by the controller from FavoriteDAO for the current session's user, if logged in. */
+    private boolean favoritedByCurrentUser;
 
     public int getProductId() {
         return productId;
@@ -174,5 +176,13 @@ public class Product {
 
     public void setWarehouseQuantity(int warehouseQuantity) {
         this.warehouseQuantity = warehouseQuantity;
+    }
+
+    public boolean isFavoritedByCurrentUser() {
+        return favoritedByCurrentUser;
+    }
+
+    public void setFavoritedByCurrentUser(boolean favoritedByCurrentUser) {
+        this.favoritedByCurrentUser = favoritedByCurrentUser;
     }
 }

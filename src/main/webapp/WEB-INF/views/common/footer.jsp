@@ -12,6 +12,12 @@
 <div id="page-spinner" class="page-spinner-overlay" hidden>
     <div class="spinner"></div>
 </div>
+<div id="quick-view-modal" class="modal-overlay" hidden>
+    <div class="modal-content">
+        <button type="button" class="modal-close-btn" data-modal-close aria-label="Đóng">✕</button>
+        <div id="quick-view-content"></div>
+    </div>
+</div>
 
 <script src="${pageContext.request.contextPath}/assets/js/interactions.js" defer></script>
 </body>

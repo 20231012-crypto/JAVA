@@ -11,9 +11,15 @@
     document.addEventListener("DOMContentLoaded", function () {
         initScrollReveal();
         initQuickAddToCart();
+        initFavoriteToggle();
+        initQuickView();
         initSpinnerOnSubmit();
         initRecentActivityToast();
     });
+
+    function contextPath() {
+        return document.body.getAttribute("data-context-path") || "";
+    }
 
     function initScrollReveal() {
         var targets = document.querySelectorAll(".reveal-on-scroll");
@@ -35,44 +41,125 @@
         targets.forEach(function (el) { observer.observe(el); });
     }
 
+    // Delegated on document (not querySelectorAll+forEach at load time) because the quick-view
+    // modal injects its own copies of these buttons after the page has already loaded.
     function initQuickAddToCart() {
-        var buttons = document.querySelectorAll("[data-quick-add]");
-        if (!buttons.length) {
+        document.addEventListener("click", function (event) {
+            var btn = event.target.closest("[data-quick-add]");
+            if (!btn) {
+                return;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+            if (btn.classList.contains("is-loading")) {
+                return;
+            }
+            var productId = btn.getAttribute("data-product-id");
+            var card = btn.closest(".product-card");
+            var sourceImg = card ? card.querySelector(".product-card-media img, .product-card-media .product-image-placeholder") : null;
+            btn.classList.add("is-loading");
+
+            fetch(contextPath() + "/cart/add", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-Requested-With": "fetch"
+                },
+                body: "productId=" + encodeURIComponent(productId) + "&quantity=1"
+            })
+                .then(function (resp) { return resp.ok ? resp.json() : Promise.reject(); })
+                .then(function (data) {
+                    if (sourceImg) {
+                        flyToCart(sourceImg);
+                    }
+                    updateCartBadge(data.count);
+                    showToast((btn.getAttribute("data-product-name") || "Món") + " đã thêm vào giỏ hàng", "success");
+                })
+                .catch(function () {
+                    showToast("Không thêm được vào giỏ hàng, vui lòng thử lại.", "error");
+                })
+                .finally(function () {
+                    btn.classList.remove("is-loading");
+                });
+        });
+    }
+
+    function initFavoriteToggle() {
+        document.addEventListener("click", function (event) {
+            var btn = event.target.closest("[data-favorite-toggle]");
+            if (!btn) {
+                return;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+            if (btn.classList.contains("is-loading")) {
+                return;
+            }
+            var productId = btn.getAttribute("data-product-id");
+            btn.classList.add("is-loading");
+
+            fetch(contextPath() + "/favorites/toggle", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: "productId=" + encodeURIComponent(productId)
+            })
+                .then(function (resp) { return resp.ok ? resp.json() : Promise.reject(); })
+                .then(function (data) {
+                    // A product usually appears twice on the catalog page (its own card, and
+                    // possibly the quick-view modal open on top of it) — keep every instance in sync.
+                    document.querySelectorAll('[data-favorite-toggle][data-product-id="' + productId + '"]').forEach(function (el) {
+                        el.textContent = data.favorited ? "♥" : "♡";
+                        el.classList.toggle("is-favorited", data.favorited);
+                    });
+                })
+                .catch(function () {
+                    showToast("Không thực hiện được, vui lòng thử lại.", "error");
+                })
+                .finally(function () {
+                    btn.classList.remove("is-loading");
+                });
+        });
+    }
+
+    function initQuickView() {
+        var modal = document.getElementById("quick-view-modal");
+        var content = document.getElementById("quick-view-content");
+        if (!modal || !content) {
             return;
         }
-        var contextPath = document.body.getAttribute("data-context-path") || "";
-        buttons.forEach(function (btn) {
-            btn.addEventListener("click", function (event) {
+
+        function open(productId) {
+            content.innerHTML = "";
+            modal.hidden = false;
+            fetch(contextPath() + "/products/quick-view?id=" + encodeURIComponent(productId))
+                .then(function (resp) { return resp.ok ? resp.text() : Promise.reject(); })
+                .then(function (html) { content.innerHTML = html; })
+                .catch(function () {
+                    content.innerHTML = "<p>Không tải được thông tin món ăn.</p>";
+                });
+        }
+
+        function close() {
+            modal.hidden = true;
+        }
+
+        document.addEventListener("click", function (event) {
+            var trigger = event.target.closest("[data-quick-view]");
+            if (trigger) {
                 event.preventDefault();
                 event.stopPropagation();
-                if (btn.classList.contains("is-loading")) {
-                    return;
-                }
-                var productId = btn.getAttribute("data-product-id");
-                var sourceImg = btn.closest(".product-card").querySelector(".product-card-media img, .product-card-media .product-image-placeholder");
-                btn.classList.add("is-loading");
+                open(trigger.getAttribute("data-product-id"));
+                return;
+            }
+            if (event.target === modal || event.target.closest("[data-modal-close]")) {
+                close();
+            }
+        });
 
-                fetch(contextPath + "/cart/add", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded",
-                        "X-Requested-With": "fetch"
-                    },
-                    body: "productId=" + encodeURIComponent(productId) + "&quantity=1"
-                })
-                    .then(function (resp) { return resp.ok ? resp.json() : Promise.reject(); })
-                    .then(function (data) {
-                        flyToCart(sourceImg);
-                        updateCartBadge(data.count);
-                        showToast((btn.getAttribute("data-product-name") || "Món") + " đã thêm vào giỏ hàng", "success");
-                    })
-                    .catch(function () {
-                        showToast("Không thêm được vào giỏ hàng, vui lòng thử lại.", "error");
-                    })
-                    .finally(function () {
-                        btn.classList.remove("is-loading");
-                    });
-            });
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && !modal.hidden) {
+                close();
+            }
         });
     }
 
@@ -154,10 +241,9 @@
         if (!page) {
             return;
         }
-        var contextPath = document.body.getAttribute("data-context-path") || "";
 
         function poll() {
-            fetch(contextPath + "/products/recent-activity")
+            fetch(contextPath() + "/products/recent-activity")
                 .then(function (resp) { return resp.ok ? resp.json() : Promise.reject(); })
                 .then(function (items) {
                     if (!items || !items.length) {

@@ -269,6 +269,15 @@ CREATE TABLE shop_status (
 );
 INSERT INTO shop_status (status_id, is_accepting_orders) VALUES (1, TRUE);
 
+-- Wishlist / "yêu thích" — a customer can favorite a product; admin can see which products are
+-- favorited most (real counts, computed from this table, never fabricated).
+CREATE TABLE favorites (
+  user_id     INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  product_id  INT NOT NULL REFERENCES products(product_id) ON DELETE CASCADE,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id, product_id)
+);
+
 CREATE INDEX idx_history_order     ON order_status_history(order_id);
 CREATE INDEX idx_orders_customer   ON orders(customer_id);
 CREATE INDEX idx_orders_status     ON orders(order_status);

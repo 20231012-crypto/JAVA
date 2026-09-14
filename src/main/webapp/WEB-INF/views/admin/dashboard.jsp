@@ -51,6 +51,30 @@
             </div>
         </div>
 
+        <div class="card" style="padding:20px; margin-bottom:24px;">
+            <h2 style="font-size:1rem;">Món được yêu thích nhiều nhất</h2>
+            <c:choose>
+                <c:when test="${empty mostFavorited}">
+                    <p class="hint">Chưa có món nào được khách yêu thích.</p>
+                </c:when>
+                <c:otherwise>
+                    <table class="cart-table" style="margin-top:12px;">
+                        <thead>
+                            <tr><th>Món</th><th>Lượt yêu thích</th></tr>
+                        </thead>
+                        <tbody>
+                            <c:forEach var="f" items="${mostFavorited}">
+                                <tr>
+                                    <td><c:out value="${f.productName}" /></td>
+                                    <td>♥ ${f.favoriteCount}</td>
+                                </tr>
+                            </c:forEach>
+                        </tbody>
+                    </table>
+                </c:otherwise>
+            </c:choose>
+        </div>
+
         <div class="stat-grid">
             <div class="stat-tile">
                 <div class="stat-label">Sản phẩm</div>

@@ -66,6 +66,18 @@
                                         <div class="product-image-placeholder"><c:out value="${p.name}" /></div>
                                     </c:otherwise>
                                 </c:choose>
+                                <div class="card-hover-actions">
+                                    <c:if test="${not empty sessionScope.user and sessionScope.user.role.customerDefault}">
+                                        <button type="button" class="icon-btn favorite-btn ${p.favoritedByCurrentUser ? 'is-favorited' : ''}"
+                                                data-favorite-toggle data-product-id="${p.productId}" aria-label="Yêu thích ${p.name}">
+                                            <c:choose>
+                                                <c:when test="${p.favoritedByCurrentUser}">♥</c:when>
+                                                <c:otherwise>♡</c:otherwise>
+                                            </c:choose>
+                                        </button>
+                                    </c:if>
+                                    <button type="button" class="icon-btn quickview-btn" data-quick-view data-product-id="${p.productId}" aria-label="Xem nhanh ${p.name}">👁</button>
+                                </div>
                             </a>
                             <a class="card-body" href="${pageContext.request.contextPath}/products/detail?id=${p.productId}">
                                 <div class="product-name"><c:out value="${p.name}" /></div>

@@ -9,11 +9,13 @@ import java.util.Map;
 
 import com.eaut.canteen.dao.BuildingDAO;
 import com.eaut.canteen.dao.CategoryDAO;
+import com.eaut.canteen.dao.FavoriteDAO;
 import com.eaut.canteen.dao.OrderDAO;
 import com.eaut.canteen.dao.ProductDAO;
 import com.eaut.canteen.dao.UserDAO;
 import com.eaut.canteen.dao.impl.BuildingDAOImpl;
 import com.eaut.canteen.dao.impl.CategoryDAOImpl;
+import com.eaut.canteen.dao.impl.FavoriteDAOImpl;
 import com.eaut.canteen.dao.impl.OrderDAOImpl;
 import com.eaut.canteen.dao.impl.ProductDAOImpl;
 import com.eaut.canteen.dao.impl.UserDAOImpl;
@@ -35,6 +37,7 @@ public class AdminDashboardServlet extends HttpServlet {
     private static final BuildingDAO buildingDAO = new BuildingDAOImpl();
     private static final UserDAO userDAO = new UserDAOImpl();
     private static final OrderDAO orderDAO = new OrderDAOImpl();
+    private static final FavoriteDAO favoriteDAO = new FavoriteDAOImpl();
 
     /** One bar per hour in this range — outside typical canteen operating hours the chart would be empty anyway. */
     private static final int CHART_START_HOUR = 6;
@@ -62,6 +65,8 @@ public class AdminDashboardServlet extends HttpServlet {
             Map<Integer, Integer> countsByHour = orderDAO.countOrdersByHourToday(conn);
             req.setAttribute("hourlyChart", buildHourlyChart(countsByHour));
             req.setAttribute("peakHourLabel", peakHourLabel(countsByHour));
+
+            req.setAttribute("mostFavorited", favoriteDAO.findMostFavorited(conn, 5));
 
             req.getRequestDispatcher("/WEB-INF/views/admin/dashboard.jsp").forward(req, resp);
         } catch (SQLException e) {
