@@ -122,6 +122,9 @@ img {
     border-radius: var(--radius-container);
     padding: 16px 24px;
     box-shadow: var(--shadow-container);
+    position: sticky;
+    top: 12px;
+    z-index: 30;
 }
 
 .site-header .logo {
@@ -928,14 +931,16 @@ img {
    block stacked above the grid, so they never sit on top of (or get scrolled under) the menu. */
 .catalog-layout {
     display: grid;
-    grid-template-columns: 200px minmax(0, 1fr) 200px;
+    grid-template-columns: 170px minmax(0, 1fr) 170px;
     gap: 16px;
     align-items: start;
 }
 
 .catalog-sidebar {
+    /* Sticks just below the sticky header (top: 12px + ~64px header + gap) instead of at the
+       very top of the viewport, so it settles under the header rather than behind it. */
     position: sticky;
-    top: 12px;
+    top: 100px;
     display: flex;
     flex-direction: column;
     gap: 12px;
