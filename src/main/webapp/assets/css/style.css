@@ -923,47 +923,62 @@ img {
     margin-top: 28px;
 }
 
-/* ===== Hero banner stack (catalog landing) ===== */
-/* Sticky: stays visible above the scrolling menu grid instead of scrolling away with it. */
-.hero-banner-stack {
-    position: sticky;
-    top: 12px;
-    z-index: 20;
-    margin-bottom: 20px;
+/* ===== Catalog layout: banner sidebars + menu (catalog landing) ===== */
+/* Menu stays the focus in the center column; banners are narrow side columns instead of a
+   block stacked above the grid, so they never sit on top of (or get scrolled under) the menu. */
+.catalog-layout {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr) 200px;
+    gap: 16px;
+    align-items: start;
 }
 
-.hero-banner-grid {
+.catalog-sidebar {
+    position: sticky;
+    top: 12px;
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
-.hero-banner-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+.catalog-main {
+    min-width: 0;
 }
 
-.hero-banner-grid .hero-banner {
+.hero-banner-compact {
+    grid-template-columns: 1fr;
+    padding: 16px;
     margin-top: 0;
 }
 
-.hero-banner-secondary {
-    padding: 20px;
+.hero-banner-compact h1 {
+    font-size: 1rem;
+    margin-bottom: 10px;
 }
 
-.hero-banner-secondary h1 {
-    font-size: 1.15rem;
+.hero-banner-compact .hero-banner-eyebrow {
+    font-size: 0.68rem;
+    padding: 3px 10px;
+    margin-bottom: 8px;
 }
 
-.hero-banner-secondary p {
-    font-size: 0.85rem;
-    margin-bottom: 12px;
+.hero-banner-compact .hero-info-pills {
+    flex-direction: column;
 }
 
-@media screen and (max-width: 640px) {
-    .hero-banner-row {
+@media screen and (max-width: 1024px) {
+    .catalog-layout {
         grid-template-columns: 1fr;
+    }
+
+    .catalog-sidebar {
+        position: static;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .catalog-sidebar .hero-banner-compact {
+        flex: 1 1 220px;
     }
 }
 
