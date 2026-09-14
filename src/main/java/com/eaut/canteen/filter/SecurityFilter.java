@@ -34,6 +34,7 @@ public class SecurityFilter implements Filter {
 
     private static final List<PathRule> RULES = List.of(
             new PathRule("/admin/buildings", "buildings.manage"),
+            new PathRule("/admin/banners", "banners.manage"),
             new PathRule("/admin/categories", "categories.manage"),
             new PathRule("/admin/products", "products.manage"),
             new PathRule("/admin/staff", "staff.manage"),
@@ -97,7 +98,8 @@ public class SecurityFilter implements Filter {
                 || path.equals("/manifest.json") || path.equals("/sw.js")
                 || isUnderPrefix(path, "/products")
                 || isUnderPrefix(path, "/assets")
-                || isUnderPrefix(path, "/images");
+                || isUnderPrefix(path, "/images")
+                || path.equals("/banner-image");
     }
 
     private boolean isUnderPrefix(String path, String prefix) {

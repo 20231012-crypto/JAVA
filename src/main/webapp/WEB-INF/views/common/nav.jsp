@@ -35,6 +35,7 @@
                 <c:if test="${sessionScope.user.permissions['categories.manage']}"><a href="${ctx}/admin/categories">Danh mục</a></c:if>
                 <c:if test="${sessionScope.user.permissions['products.manage']}"><a href="${ctx}/admin/products">Sản phẩm</a></c:if>
                 <c:if test="${sessionScope.user.permissions['buildings.manage']}"><a href="${ctx}/admin/buildings">Tòa nhà</a></c:if>
+                <c:if test="${sessionScope.user.permissions['banners.manage']}"><a href="${ctx}/admin/banners">Banner</a></c:if>
                 <c:if test="${sessionScope.user.permissions['stock.import']}"><a href="${ctx}/admin/stock-imports">Nhập hàng</a></c:if>
                 <c:if test="${sessionScope.user.permissions['staff.manage']}"><a href="${ctx}/admin/staff">Nhân viên</a></c:if>
                 <c:if test="${sessionScope.user.permissions['roles.manage']}"><a href="${ctx}/admin/roles">Vai trò &amp; phân quyền</a></c:if>

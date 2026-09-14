@@ -1321,3 +1321,93 @@ img {
         gap: 16px;
     }
 }
+
+/* ===== Catalog layout + admin-configured banners (auto-adjusts to whichever positions have an
+   active banner — see CatalogServlet headBanners/leftBanners/rightBanners/footerBanners) ===== */
+.catalog-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    align-items: start;
+}
+
+.catalog-layout.has-left {
+    grid-template-columns: 220px 1fr;
+}
+
+.catalog-layout.has-right {
+    grid-template-columns: 1fr 220px;
+}
+
+.catalog-layout.has-left.has-right {
+    grid-template-columns: 220px 1fr 220px;
+}
+
+.catalog-sidebar {
+    position: sticky;
+    top: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.catalog-main {
+    min-width: 0;
+}
+
+.cms-banner-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+}
+
+.cms-banner-row .cms-banner {
+    flex: 1 1 260px;
+}
+
+.cms-banner {
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    background: var(--color-institutional-soft);
+    box-shadow: var(--shadow-card);
+}
+
+.cms-banner-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+.cms-banner-image {
+    width: 100%;
+    display: block;
+    object-fit: cover;
+    max-height: 220px;
+}
+
+.cms-banner-title {
+    padding: 12px 14px 2px;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.cms-banner-subtitle {
+    padding: 0 14px 14px;
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+}
+
+@media screen and (max-width: 860px) {
+    .catalog-layout.has-left,
+    .catalog-layout.has-right,
+    .catalog-layout.has-left.has-right {
+        grid-template-columns: 1fr;
+    }
+
+    .catalog-sidebar {
+        position: static;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+}

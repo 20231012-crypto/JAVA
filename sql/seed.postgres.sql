@@ -11,6 +11,7 @@ INSERT INTO permissions (permission_key, group_name, display_name, sort_order) V
   ('categories.manage',      'Quản trị',       'Quản lý danh mục',                    20),
   ('products.manage',        'Quản trị',       'Quản lý sản phẩm',                    30),
   ('buildings.manage',       'Quản trị',       'Quản lý tòa nhà & phí ship',           40),
+  ('banners.manage',         'Quản trị',       'Quản lý banner trang chủ',             45),
   ('staff.manage',           'Quản trị',       'Quản lý tài khoản nhân viên',          50),
   ('roles.manage',           'Quản trị',       'Quản lý vai trò & phân quyền',         60),
   ('stock.import',           'Kho & vận hành', 'Nhập hàng vào kho',                    70),
@@ -36,7 +37,7 @@ INSERT INTO roles (role_key, display_name, is_system, is_customer_default) VALUE
 INSERT INTO role_permissions (role_id, permission_key)
   SELECT r.role_id, p.permission_key FROM roles r, permissions p
   WHERE r.role_key = 'ADMIN' AND p.permission_key IN
-    ('admin.dashboard','categories.manage','products.manage','buildings.manage',
+    ('admin.dashboard','categories.manage','products.manage','buildings.manage','banners.manage',
      'staff.manage','roles.manage','stock.import','wallet.topup','reports.view','shop.status');
 
 INSERT INTO role_permissions (role_id, permission_key)

@@ -397,12 +397,25 @@ Việt).
   (`WEB-INF/seed-images/`, `ImageServlet` fallback về đây khi không có trong thư mục upload —
   sống sót qua mọi lần Render redeploy, khác với ảnh admin tự upload runtime), gán cho 20 sản phẩm
   mới + cập nhật ảnh cho "Trà đào cam sả" có sẵn (`sql/migrations/005_dish_catalog_images.postgres.sql`).
-- **Chuyển động UI/UX**: hover phóng to ảnh + hiện nút "Thêm giỏ hàng" trên thẻ sản phẩm; thêm vào
-  giỏ hàng qua fetch (không tải lại trang) kèm hiệu ứng bay vào icon giỏ + số trên badge nảy lên;
-  scroll-reveal fade-in cho lưới sản phẩm; banner carousel tự động chuyển 3 slide dùng dữ liệu thật
-  (thời gian chờ, trạng thái nhận đơn, ưu đãi Ví/Smart ID — không phải nội dung khuyến mãi giả);
-  toast "vừa có người đặt món này" đọc thật từ `order_items` gần nhất (không phải social-proof giả
-  lập); spinner khi submit đơn hàng. Xem `assets/js/interactions.js`.
+- **Chuyển động UI/UX**: hover phóng to ảnh + nút "Thêm giỏ hàng" luôn hiện trên thẻ sản phẩm;
+  thêm vào giỏ hàng qua fetch (không tải lại trang) kèm hiệu ứng bay vào icon giỏ + số trên badge
+  nảy lên; scroll-reveal fade-in cho lưới sản phẩm; header + banner đầu trang cùng dính (sticky)
+  khi cuộn, chỉ vùng thực đơn cuộn; toast "vừa có người đặt món này" đọc thật từ `order_items`
+  gần nhất (không phải social-proof giả lập); spinner khi submit đơn hàng. Xem `assets/js/interactions.js`.
+- **Khuyến mãi thật + thanh "Đã bán X/Y"**: Admin tự đặt giá gốc/giá sale thật cho từng sản phẩm
+  (`products.original_price`), badge giảm giá + giá gạch ngang chỉ hiện khi có KM thật đang bật.
+  X trong thanh tiến độ tính live từ `order_items` đã hoàn thành, Y là mục tiêu Admin đặt
+  (`products.promo_target_quantity`) — không có số liệu bịa.
+- **Yêu thích (wishlist) + xem nhanh**: khách bấm ♥ để yêu thích món (bảng `favorites`), 👁 mở
+  popup xem nhanh thay vì chuyển trang. Admin xem được món nào được yêu thích nhiều nhất
+  (đếm thật từ `favorites`, không ước lượng).
+- **Danh mục phân cấp + mega-menu**: 3 danh mục gốc tách thành 10 danh mục con
+  (`categories.parent_category_id`), menu "Danh mục sản phẩm" ở đầu trang xổ ra theo cột như
+  tham khảo — Admin tự thêm/sửa danh mục con và gán danh mục cha ngay tại `/admin/categories`.
+- **Banner tuỳ chỉnh theo vị trí**: Admin tự thêm banner cho 4 vị trí (đầu trang/cuối trang/trái/
+  phải) tại `/admin/banners`, ảnh lưu thẳng trong database (không qua thư mục upload — sống sót
+  qua mọi lần Render redeploy). Trang thực đơn tự giãn bố cục theo đúng những vị trí đang có
+  banner bật, không cố định trước khoảng trống nào.
 
 **Mô tả mục tiêu, CHƯA lên thật** (cần phần cứng không có sẵn, hoặc là tính năng khác hẳn mô hình
 nghiệp vụ hiện tại — giao hàng đến tòa nhà, không phải khách tự đến lấy tại quầy):

@@ -279,6 +279,21 @@ CREATE TABLE favorites (
   PRIMARY KEY (user_id, product_id)
 );
 
+-- Admin-configurable banners by position on the catalog page (HEAD/FOOTER/LEFT/RIGHT). Images
+-- stored as bytea directly here (not the ephemeral upload directory) so they survive redeploys.
+CREATE TABLE banners (
+  banner_id          SERIAL PRIMARY KEY,
+  position            VARCHAR(10) NOT NULL CHECK (position IN ('HEAD', 'FOOTER', 'LEFT', 'RIGHT')),
+  title               VARCHAR(150) NULL,
+  subtitle            VARCHAR(300) NULL,
+  link_url            VARCHAR(500) NULL,
+  image_data          BYTEA NULL,
+  image_content_type  VARCHAR(100) NULL,
+  sort_order          INT NOT NULL DEFAULT 0,
+  is_active           BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX idx_history_order     ON order_status_history(order_id);
 CREATE INDEX idx_orders_customer   ON orders(customer_id);
 CREATE INDEX idx_orders_status     ON orders(order_status);

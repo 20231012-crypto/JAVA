@@ -9,11 +9,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.eaut.canteen.dao.BannerDAO;
 import com.eaut.canteen.dao.CategoryDAO;
 import com.eaut.canteen.dao.FavoriteDAO;
 import com.eaut.canteen.dao.OrderDAO;
 import com.eaut.canteen.dao.ProductDAO;
 import com.eaut.canteen.dao.ShopStatusDAO;
+import com.eaut.canteen.dao.impl.BannerDAOImpl;
 import com.eaut.canteen.dao.impl.CategoryDAOImpl;
 import com.eaut.canteen.dao.impl.FavoriteDAOImpl;
 import com.eaut.canteen.dao.impl.OrderDAOImpl;
@@ -41,6 +43,7 @@ public class CatalogServlet extends HttpServlet {
     private final OrderDAO orderDAO = new OrderDAOImpl();
     private final ShopStatusDAO shopStatusDAO = new ShopStatusDAOImpl();
     private final FavoriteDAO favoriteDAO = new FavoriteDAOImpl();
+    private final BannerDAO bannerDAO = new BannerDAOImpl();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -114,6 +117,14 @@ public class CatalogServlet extends HttpServlet {
         req.setAttribute("products", products);
         req.setAttribute("shopAcceptingOrders", shopStatusDAO.get(conn).isAcceptingOrders());
         req.setAttribute("estimatedWaitMinutes", estimatedWaitMinutes(conn));
+
+        // Layout auto-adjusts to whichever positions actually have an active banner — see
+        // catalog.jsp/style.css .catalog-layout — instead of always reserving the space.
+        req.setAttribute("headBanners", bannerDAO.findActiveByPosition(conn, "HEAD"));
+        req.setAttribute("leftBanners", bannerDAO.findActiveByPosition(conn, "LEFT"));
+        req.setAttribute("rightBanners", bannerDAO.findActiveByPosition(conn, "RIGHT"));
+        req.setAttribute("footerBanners", bannerDAO.findActiveByPosition(conn, "FOOTER"));
+
         req.getRequestDispatcher("/WEB-INF/views/customer/catalog.jsp").forward(req, resp);
     }
 

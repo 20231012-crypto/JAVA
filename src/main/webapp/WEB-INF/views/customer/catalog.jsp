@@ -27,6 +27,18 @@
             </div>
         </div>
 
+        <%-- Admin-configured banners: layout auto-adjusts to whichever positions actually have an
+             active banner (.catalog-layout / has-left / has-right below) instead of always
+             reserving empty space for a position nobody configured. --%>
+        <c:if test="${not empty headBanners}">
+            <div class="cms-banner-row">
+                <c:forEach var="b" items="${headBanners}">
+                    <c:set var="bannerRef" value="${b}" scope="request" />
+                    <jsp:include page="/WEB-INF/views/customer/_cms-banner.jsp" />
+                </c:forEach>
+            </div>
+        </c:if>
+
         <c:if test="${shopAcceptingOrders == false}">
             <div class="alert alert-error">🚫 Căng tin đang tạm ngưng nhận đơn — bạn vẫn xem được thực đơn nhưng chưa đặt hàng được lúc này.</div>
         </c:if>
@@ -43,72 +55,103 @@
             </c:forEach>
         </div>
 
-        <c:choose>
-            <c:when test="${empty products}">
-                <div class="empty-state">
-                    <h2>Chưa có món nào</h2>
-                    <p>Vui lòng quay lại sau.</p>
-                </div>
-            </c:when>
-            <c:otherwise>
-                <div class="card-grid">
-                    <c:forEach var="p" items="${products}" varStatus="loop">
-                        <div class="card product-card reveal-on-scroll" style="transition-delay:${(loop.index % 6) * 40}ms">
-                            <a class="product-card-media" href="${pageContext.request.contextPath}/products/detail?id=${p.productId}">
-                                <c:if test="${p.onPromo}">
-                                    <span class="discount-badge">-${p.discountPercent}%</span>
-                                </c:if>
-                                <c:choose>
-                                    <c:when test="${not empty p.imageFilename}">
-                                        <img src="${pageContext.request.contextPath}/images/${p.imageFilename}" alt="${p.name}" loading="lazy">
-                                    </c:when>
-                                    <c:otherwise>
-                                        <div class="product-image-placeholder"><c:out value="${p.name}" /></div>
-                                    </c:otherwise>
-                                </c:choose>
-                                <div class="card-hover-actions">
-                                    <c:if test="${not empty sessionScope.user and sessionScope.user.role.customerDefault}">
-                                        <button type="button" class="icon-btn favorite-btn ${p.favoritedByCurrentUser ? 'is-favorited' : ''}"
-                                                data-favorite-toggle data-product-id="${p.productId}" aria-label="Yêu thích ${p.name}">
-                                            <c:choose>
-                                                <c:when test="${p.favoritedByCurrentUser}">♥</c:when>
-                                                <c:otherwise>♡</c:otherwise>
-                                            </c:choose>
-                                        </button>
-                                    </c:if>
-                                    <button type="button" class="icon-btn quickview-btn" data-quick-view data-product-id="${p.productId}" aria-label="Xem nhanh ${p.name}">👁</button>
-                                </div>
-                            </a>
-                            <a class="card-body" href="${pageContext.request.contextPath}/products/detail?id=${p.productId}">
-                                <div class="product-name"><c:out value="${p.name}" /></div>
-                                <c:if test="${p.showSoldProgress}">
-                                    <div class="sold-progress">
-                                        <div class="sold-progress-bar"><div class="sold-progress-fill" style="width:${p.soldProgressPercent}%"></div></div>
-                                        <div class="sold-progress-label">
-                                            <span>Đã bán: ${p.soldQuantity}/${p.promoTargetQuantity}</span>
-                                            <span>${p.soldProgressPercent}%</span>
-                                        </div>
-                                    </div>
-                                </c:if>
-                                <div class="product-price">
-                                    <c:if test="${p.onPromo}">
-                                        <span class="price-original"><fmt:formatNumber value="${p.originalPrice}" type="number" groupingUsed="true" />₫</span>
-                                    </c:if>
-                                    <span class="price-current"><fmt:formatNumber value="${p.price}" type="number" groupingUsed="true" />₫</span>
-                                </div>
-                                <c:if test="${p.shelfQuantity <= 0}">
-                                    <div class="out-of-stock">Tạm hết hàng</div>
-                                </c:if>
-                            </a>
-                            <c:if test="${not empty sessionScope.user and sessionScope.user.role.customerDefault and p.shelfQuantity > 0 and shopAcceptingOrders != false}">
-                                <button type="button" class="quick-add-btn quick-add-btn-block" data-quick-add data-product-id="${p.productId}" data-product-name="${p.name}"
-                                        aria-label="Thêm ${p.name} vào giỏ hàng">Thêm vào giỏ</button>
-                            </c:if>
-                        </div>
+        <div class="catalog-layout ${not empty leftBanners ? 'has-left' : ''} ${not empty rightBanners ? 'has-right' : ''}">
+            <c:if test="${not empty leftBanners}">
+                <aside class="catalog-sidebar">
+                    <c:forEach var="b" items="${leftBanners}">
+                        <c:set var="bannerRef" value="${b}" scope="request" />
+                        <jsp:include page="/WEB-INF/views/customer/_cms-banner.jsp" />
                     </c:forEach>
-                </div>
-            </c:otherwise>
-        </c:choose>
+                </aside>
+            </c:if>
+
+            <div class="catalog-main">
+                <c:choose>
+                    <c:when test="${empty products}">
+                        <div class="empty-state">
+                            <h2>Chưa có món nào</h2>
+                            <p>Vui lòng quay lại sau.</p>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="card-grid">
+                            <c:forEach var="p" items="${products}" varStatus="loop">
+                                <div class="card product-card reveal-on-scroll" style="transition-delay:${(loop.index % 6) * 40}ms">
+                                    <a class="product-card-media" href="${pageContext.request.contextPath}/products/detail?id=${p.productId}">
+                                        <c:if test="${p.onPromo}">
+                                            <span class="discount-badge">-${p.discountPercent}%</span>
+                                        </c:if>
+                                        <c:choose>
+                                            <c:when test="${not empty p.imageFilename}">
+                                                <img src="${pageContext.request.contextPath}/images/${p.imageFilename}" alt="${p.name}" loading="lazy">
+                                            </c:when>
+                                            <c:otherwise>
+                                                <div class="product-image-placeholder"><c:out value="${p.name}" /></div>
+                                            </c:otherwise>
+                                        </c:choose>
+                                        <div class="card-hover-actions">
+                                            <c:if test="${not empty sessionScope.user and sessionScope.user.role.customerDefault}">
+                                                <button type="button" class="icon-btn favorite-btn ${p.favoritedByCurrentUser ? 'is-favorited' : ''}"
+                                                        data-favorite-toggle data-product-id="${p.productId}" aria-label="Yêu thích ${p.name}">
+                                                    <c:choose>
+                                                        <c:when test="${p.favoritedByCurrentUser}">♥</c:when>
+                                                        <c:otherwise>♡</c:otherwise>
+                                                    </c:choose>
+                                                </button>
+                                            </c:if>
+                                            <button type="button" class="icon-btn quickview-btn" data-quick-view data-product-id="${p.productId}" aria-label="Xem nhanh ${p.name}">👁</button>
+                                        </div>
+                                    </a>
+                                    <a class="card-body" href="${pageContext.request.contextPath}/products/detail?id=${p.productId}">
+                                        <div class="product-name"><c:out value="${p.name}" /></div>
+                                        <c:if test="${p.showSoldProgress}">
+                                            <div class="sold-progress">
+                                                <div class="sold-progress-bar"><div class="sold-progress-fill" style="width:${p.soldProgressPercent}%"></div></div>
+                                                <div class="sold-progress-label">
+                                                    <span>Đã bán: ${p.soldQuantity}/${p.promoTargetQuantity}</span>
+                                                    <span>${p.soldProgressPercent}%</span>
+                                                </div>
+                                            </div>
+                                        </c:if>
+                                        <div class="product-price">
+                                            <c:if test="${p.onPromo}">
+                                                <span class="price-original"><fmt:formatNumber value="${p.originalPrice}" type="number" groupingUsed="true" />₫</span>
+                                            </c:if>
+                                            <span class="price-current"><fmt:formatNumber value="${p.price}" type="number" groupingUsed="true" />₫</span>
+                                        </div>
+                                        <c:if test="${p.shelfQuantity <= 0}">
+                                            <div class="out-of-stock">Tạm hết hàng</div>
+                                        </c:if>
+                                    </a>
+                                    <c:if test="${not empty sessionScope.user and sessionScope.user.role.customerDefault and p.shelfQuantity > 0 and shopAcceptingOrders != false}">
+                                        <button type="button" class="quick-add-btn quick-add-btn-block" data-quick-add data-product-id="${p.productId}" data-product-name="${p.name}"
+                                                aria-label="Thêm ${p.name} vào giỏ hàng">Thêm vào giỏ</button>
+                                    </c:if>
+                                </div>
+                            </c:forEach>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
+            </div>
+
+            <c:if test="${not empty rightBanners}">
+                <aside class="catalog-sidebar">
+                    <c:forEach var="b" items="${rightBanners}">
+                        <c:set var="bannerRef" value="${b}" scope="request" />
+                        <jsp:include page="/WEB-INF/views/customer/_cms-banner.jsp" />
+                    </c:forEach>
+                </aside>
+            </c:if>
+        </div>
+
+        <c:if test="${not empty footerBanners}">
+            <div class="cms-banner-row">
+                <c:forEach var="b" items="${footerBanners}">
+                    <c:set var="bannerRef" value="${b}" scope="request" />
+                    <jsp:include page="/WEB-INF/views/customer/_cms-banner.jsp" />
+                </c:forEach>
+            </div>
+        </c:if>
     </div>
 </main>
 <jsp:include page="/WEB-INF/views/common/footer.jsp" />
