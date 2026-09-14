@@ -1,6 +1,7 @@
 package com.eaut.canteen.model;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class Product {
 
@@ -10,6 +11,12 @@ public class Product {
     private String name;
     private String description;
     private BigDecimal price;
+    /** "Was" price shown crossed out when set and greater than price; NULL = no promo. Admin-set, never fabricated. */
+    private BigDecimal originalPrice;
+    /** Real "Đã bán X/Y" progress target (Y); NULL = no progress bar shown. Admin-set. */
+    private Integer promoTargetQuantity;
+    /** X in "Đã bán X/Y" — real completed-order quantity, populated by DAO methods that join it (catalog/admin listing). */
+    private int soldQuantity;
     private String imageFilename;
     private String unit;
     private boolean active;
@@ -65,6 +72,55 @@ public class Product {
 
     public void setPrice(BigDecimal price) {
         this.price = price;
+    }
+
+    public BigDecimal getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(BigDecimal originalPrice) {
+        this.originalPrice = originalPrice;
+    }
+
+    public Integer getPromoTargetQuantity() {
+        return promoTargetQuantity;
+    }
+
+    public void setPromoTargetQuantity(Integer promoTargetQuantity) {
+        this.promoTargetQuantity = promoTargetQuantity;
+    }
+
+    public int getSoldQuantity() {
+        return soldQuantity;
+    }
+
+    public void setSoldQuantity(int soldQuantity) {
+        this.soldQuantity = soldQuantity;
+    }
+
+    public boolean isOnPromo() {
+        return originalPrice != null && originalPrice.compareTo(price) > 0;
+    }
+
+    public int getDiscountPercent() {
+        if (!isOnPromo()) {
+            return 0;
+        }
+        return originalPrice.subtract(price)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(originalPrice, 0, RoundingMode.HALF_UP)
+                .intValue();
+    }
+
+    public boolean isShowSoldProgress() {
+        return promoTargetQuantity != null && promoTargetQuantity > 0;
+    }
+
+    public int getSoldProgressPercent() {
+        if (!isShowSoldProgress()) {
+            return 0;
+        }
+        return Math.min(100, (int) Math.round(soldQuantity * 100.0 / promoTargetQuantity));
     }
 
     public String getImageFilename() {

@@ -55,6 +55,9 @@
                     <c:forEach var="p" items="${products}" varStatus="loop">
                         <div class="card product-card reveal-on-scroll" style="transition-delay:${(loop.index % 6) * 40}ms">
                             <a class="product-card-media" href="${pageContext.request.contextPath}/products/detail?id=${p.productId}">
+                                <c:if test="${p.onPromo}">
+                                    <span class="discount-badge">-${p.discountPercent}%</span>
+                                </c:if>
                                 <c:choose>
                                     <c:when test="${not empty p.imageFilename}">
                                         <img src="${pageContext.request.contextPath}/images/${p.imageFilename}" alt="${p.name}" loading="lazy">
@@ -66,8 +69,20 @@
                             </a>
                             <a class="card-body" href="${pageContext.request.contextPath}/products/detail?id=${p.productId}">
                                 <div class="product-name"><c:out value="${p.name}" /></div>
+                                <c:if test="${p.showSoldProgress}">
+                                    <div class="sold-progress">
+                                        <div class="sold-progress-bar"><div class="sold-progress-fill" style="width:${p.soldProgressPercent}%"></div></div>
+                                        <div class="sold-progress-label">
+                                            <span>Đã bán: ${p.soldQuantity}/${p.promoTargetQuantity}</span>
+                                            <span>${p.soldProgressPercent}%</span>
+                                        </div>
+                                    </div>
+                                </c:if>
                                 <div class="product-price">
-                                    <fmt:formatNumber value="${p.price}" type="number" groupingUsed="true" />₫
+                                    <c:if test="${p.onPromo}">
+                                        <span class="price-original"><fmt:formatNumber value="${p.originalPrice}" type="number" groupingUsed="true" />₫</span>
+                                    </c:if>
+                                    <span class="price-current"><fmt:formatNumber value="${p.price}" type="number" groupingUsed="true" />₫</span>
                                 </div>
                                 <c:if test="${p.shelfQuantity <= 0}">
                                     <div class="out-of-stock">Tạm hết hàng</div>

@@ -375,10 +375,60 @@ img {
 }
 
 .product-card .product-price {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+.price-current {
     color: var(--color-institutional);
     font-weight: 700;
     font-size: 18px;
-    font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+.price-original {
+    color: var(--color-text-muted);
+    font-size: 0.82rem;
+    text-decoration: line-through;
+}
+
+.discount-badge {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    background: var(--color-danger);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: var(--radius-pill);
+    z-index: 2;
+}
+
+.sold-progress {
+    margin-bottom: 8px;
+}
+
+.sold-progress-bar {
+    height: 6px;
+    background: var(--color-institutional-soft);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+}
+
+.sold-progress-fill {
+    height: 100%;
+    background: var(--color-success);
+    border-radius: var(--radius-pill);
+}
+
+.sold-progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    margin-top: 4px;
 }
 
 .product-image-placeholder {

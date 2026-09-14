@@ -22,8 +22,20 @@
                 <span class="badge badge-confirmed"><c:out value="${product.categoryName}" /></span>
                 <h1 style="margin:12px 0 8px;"><c:out value="${product.name}" /></h1>
                 <p style="color:var(--color-text-muted); margin-bottom:16px;"><c:out value="${product.description}" /></p>
-                <div class="product-price" style="font-size:1.5rem; margin-bottom:16px;">
-                    <fmt:formatNumber value="${product.price}" type="number" groupingUsed="true" />₫
+                <c:if test="${product.showSoldProgress}">
+                    <div class="sold-progress" style="max-width:280px;">
+                        <div class="sold-progress-bar"><div class="sold-progress-fill" style="width:${product.soldProgressPercent}%"></div></div>
+                        <div class="sold-progress-label">
+                            <span>Đã bán: ${product.soldQuantity}/${product.promoTargetQuantity}</span>
+                            <span>${product.soldProgressPercent}%</span>
+                        </div>
+                    </div>
+                </c:if>
+                <div class="product-price" style="margin-bottom:16px;">
+                    <c:if test="${product.onPromo}">
+                        <span class="price-original" style="font-size:1.1rem;"><fmt:formatNumber value="${product.originalPrice}" type="number" groupingUsed="true" />₫</span>
+                    </c:if>
+                    <span class="price-current" style="font-size:1.5rem;"><fmt:formatNumber value="${product.price}" type="number" groupingUsed="true" />₫</span>
                     <c:if test="${not empty product.unit}"> / <c:out value="${product.unit}" /></c:if>
                 </div>
 

@@ -107,6 +107,8 @@ CREATE TABLE products (
   name           VARCHAR(150) NOT NULL,
   description    VARCHAR(500) NULL,
   price          DECIMAL(12,0) NOT NULL,
+  original_price DECIMAL(12,0) NULL,                     -- "was" price shown crossed out when set and > price; NULL/unset = no promo
+  promo_target_quantity INT NULL,                        -- real "Đã bán X/Y" progress target; X computed live from COMPLETED order_items
   image_filename VARCHAR(255) NULL,
   unit           VARCHAR(20) NULL,
   is_active      BOOLEAN NOT NULL DEFAULT TRUE,

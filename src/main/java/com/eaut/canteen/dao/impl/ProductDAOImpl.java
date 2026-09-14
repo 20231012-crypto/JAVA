@@ -15,11 +15,17 @@ public class ProductDAOImpl implements ProductDAO {
 
     private static final String BASE_SELECT =
             "SELECT p.*, c.name AS category_name, " +
-            "COALESCE(s.quantity, 0) AS shelf_quantity, COALESCE(w.quantity, 0) AS warehouse_quantity " +
+            "COALESCE(s.quantity, 0) AS shelf_quantity, COALESCE(w.quantity, 0) AS warehouse_quantity, " +
+            "COALESCE(sold.sold_qty, 0) AS sold_quantity " +
             "FROM products p " +
             "JOIN categories c ON p.category_id = c.category_id " +
             "LEFT JOIN shelf_stock s ON p.product_id = s.product_id " +
-            "LEFT JOIN warehouse_stock w ON p.product_id = w.product_id ";
+            "LEFT JOIN warehouse_stock w ON p.product_id = w.product_id " +
+            "LEFT JOIN (" +
+            "  SELECT oi.product_id, SUM(oi.quantity) AS sold_qty FROM order_items oi " +
+            "  JOIN orders o ON oi.order_id = o.order_id " +
+            "  WHERE o.order_status = 'COMPLETED' GROUP BY oi.product_id" +
+            ") sold ON sold.product_id = p.product_id ";
 
     private static final String FIND_ALL_ACTIVE =
             BASE_SELECT + "WHERE p.is_active = TRUE ORDER BY p.name";
@@ -31,13 +37,15 @@ public class ProductDAOImpl implements ProductDAO {
             BASE_SELECT + "ORDER BY p.name";
 
     private static final String INSERT_PRODUCT =
-            "INSERT INTO products (category_id, name, description, price, unit, is_active, avg_prep_minutes) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            "INSERT INTO products (category_id, name, description, price, original_price, promo_target_quantity, unit, is_active, avg_prep_minutes) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String INSERT_WAREHOUSE_STOCK =
             "INSERT INTO warehouse_stock (product_id, quantity) VALUES (?, 0)";
     private static final String INSERT_SHELF_STOCK =
             "INSERT INTO shelf_stock (product_id, quantity) VALUES (?, 0)";
     private static final String UPDATE =
-            "UPDATE products SET category_id = ?, name = ?, description = ?, price = ?, unit = ?, avg_prep_minutes = ? WHERE product_id = ?";
+            "UPDATE products SET category_id = ?, name = ?, description = ?, price = ?, original_price = ?, " +
+            "promo_target_quantity = ?, unit = ?, avg_prep_minutes = ? WHERE product_id = ?";
     private static final String UPDATE_IMAGE =
             "UPDATE products SET image_filename = ? WHERE product_id = ?";
     private static final String SET_ACTIVE =
@@ -95,9 +103,11 @@ public class ProductDAOImpl implements ProductDAO {
             ps.setString(2, product.getName());
             ps.setString(3, product.getDescription());
             ps.setBigDecimal(4, product.getPrice());
-            ps.setString(5, product.getUnit());
-            ps.setBoolean(6, true);
-            ps.setInt(7, product.getAvgPrepMinutes());
+            setNullableBigDecimal(ps, 5, product.getOriginalPrice());
+            setNullableInt(ps, 6, product.getPromoTargetQuantity());
+            ps.setString(7, product.getUnit());
+            ps.setBoolean(8, true);
+            ps.setInt(9, product.getAvgPrepMinutes());
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 keys.next();
@@ -121,10 +131,28 @@ public class ProductDAOImpl implements ProductDAO {
             ps.setString(2, product.getName());
             ps.setString(3, product.getDescription());
             ps.setBigDecimal(4, product.getPrice());
-            ps.setString(5, product.getUnit());
-            ps.setInt(6, product.getAvgPrepMinutes());
-            ps.setInt(7, product.getProductId());
+            setNullableBigDecimal(ps, 5, product.getOriginalPrice());
+            setNullableInt(ps, 6, product.getPromoTargetQuantity());
+            ps.setString(7, product.getUnit());
+            ps.setInt(8, product.getAvgPrepMinutes());
+            ps.setInt(9, product.getProductId());
             ps.executeUpdate();
+        }
+    }
+
+    private void setNullableBigDecimal(PreparedStatement ps, int index, java.math.BigDecimal value) throws SQLException {
+        if (value == null) {
+            ps.setNull(index, java.sql.Types.DECIMAL);
+        } else {
+            ps.setBigDecimal(index, value);
+        }
+    }
+
+    private void setNullableInt(PreparedStatement ps, int index, Integer value) throws SQLException {
+        if (value == null) {
+            ps.setNull(index, java.sql.Types.INTEGER);
+        } else {
+            ps.setInt(index, value);
         }
     }
 
@@ -154,12 +182,16 @@ public class ProductDAOImpl implements ProductDAO {
         product.setName(rs.getString("name"));
         product.setDescription(rs.getString("description"));
         product.setPrice(rs.getBigDecimal("price"));
+        product.setOriginalPrice(rs.getBigDecimal("original_price"));
+        int promoTarget = rs.getInt("promo_target_quantity");
+        product.setPromoTargetQuantity(rs.wasNull() ? null : promoTarget);
         product.setImageFilename(rs.getString("image_filename"));
         product.setUnit(rs.getString("unit"));
         product.setActive(rs.getBoolean("is_active"));
         product.setAvgPrepMinutes(rs.getInt("avg_prep_minutes"));
         product.setShelfQuantity(rs.getInt("shelf_quantity"));
         product.setWarehouseQuantity(rs.getInt("warehouse_quantity"));
+        product.setSoldQuantity(rs.getInt("sold_quantity"));
         return product;
     }
 }

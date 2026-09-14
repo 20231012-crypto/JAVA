@@ -34,8 +34,19 @@
                 <textarea id="description" name="description" rows="3">${product.description}</textarea>
             </div>
             <div class="form-group">
-                <label for="price">Giá bán (₫)</label>
+                <label for="price">Giá bán hiện tại (₫)</label>
                 <input type="number" id="price" name="price" min="0" step="1000" value="${product.price}" required>
+                <span class="hint">Giá thực tế tính tiền cho khách — luôn là giá này, kể cả khi có khuyến mãi bên dưới.</span>
+            </div>
+            <div class="form-group">
+                <label for="originalPrice">Giá gốc trước khuyến mãi (₫, để trống nếu không có KM)</label>
+                <input type="number" id="originalPrice" name="originalPrice" min="0" step="1000" value="${product.originalPrice}">
+                <span class="hint">Chỉ khi giá này lớn hơn giá bán, sản phẩm mới hiện badge giảm giá + giá gạch ngang. Để trống hoặc xoá để tắt khuyến mãi.</span>
+            </div>
+            <div class="form-group">
+                <label for="promoTargetQuantity">Mục tiêu số lượng khuyến mãi (để trống nếu không cần thanh tiến độ)</label>
+                <input type="number" id="promoTargetQuantity" name="promoTargetQuantity" min="1" value="${product.promoTargetQuantity}">
+                <span class="hint">Hiện thanh "Đã bán X/Y" — X tự tính từ đơn hàng đã hoàn thành thật, Y là số bạn nhập ở đây.</span>
             </div>
             <div class="form-group">
                 <label for="unit">Đơn vị tính</label>

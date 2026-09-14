@@ -92,6 +92,11 @@ public class ProductServlet extends HttpServlet {
         String avgPrepMinutes = req.getParameter("avgPrepMinutes");
         product.setAvgPrepMinutes(avgPrepMinutes == null || avgPrepMinutes.isBlank() ? 10 : Integer.parseInt(avgPrepMinutes));
 
+        String originalPrice = req.getParameter("originalPrice");
+        product.setOriginalPrice(originalPrice == null || originalPrice.isBlank() ? null : new BigDecimal(originalPrice));
+        String promoTargetQuantity = req.getParameter("promoTargetQuantity");
+        product.setPromoTargetQuantity(promoTargetQuantity == null || promoTargetQuantity.isBlank() ? null : Integer.parseInt(promoTargetQuantity));
+
         boolean isNew = idParam == null || idParam.isBlank();
         if (isNew) {
             productDAO.insert(conn, product);
