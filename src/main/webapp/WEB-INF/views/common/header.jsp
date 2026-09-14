@@ -29,4 +29,4 @@
 
     <title><c:out value="${pageTitle}" /> - Căng tin EAUT</title>
 </head>
-<body>
+<body data-context-path="${pageContext.request.contextPath}">

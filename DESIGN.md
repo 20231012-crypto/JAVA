@@ -393,6 +393,16 @@ Việt).
 - **Thời gian chờ dự kiến** ở trang thực đơn: công thức thật `5 + 2×(số đơn đã duyệt) +
   3×(số đơn chờ duyệt)` phút, tính từ dữ liệu hàng đợi thật — không phải số đo trung bình lịch sử,
   ghi rõ là ước tính trong code/UI.
+- **Ảnh món ăn thật**: 21 món/nước thật (không phải ảnh placeholder) đóng gói ngay trong WAR
+  (`WEB-INF/seed-images/`, `ImageServlet` fallback về đây khi không có trong thư mục upload —
+  sống sót qua mọi lần Render redeploy, khác với ảnh admin tự upload runtime), gán cho 20 sản phẩm
+  mới + cập nhật ảnh cho "Trà đào cam sả" có sẵn (`sql/migrations/005_dish_catalog_images.postgres.sql`).
+- **Chuyển động UI/UX**: hover phóng to ảnh + hiện nút "Thêm giỏ hàng" trên thẻ sản phẩm; thêm vào
+  giỏ hàng qua fetch (không tải lại trang) kèm hiệu ứng bay vào icon giỏ + số trên badge nảy lên;
+  scroll-reveal fade-in cho lưới sản phẩm; banner carousel tự động chuyển 3 slide dùng dữ liệu thật
+  (thời gian chờ, trạng thái nhận đơn, ưu đãi Ví/Smart ID — không phải nội dung khuyến mãi giả);
+  toast "vừa có người đặt món này" đọc thật từ `order_items` gần nhất (không phải social-proof giả
+  lập); spinner khi submit đơn hàng. Xem `assets/js/interactions.js`.
 
 **Mô tả mục tiêu, CHƯA lên thật** (cần phần cứng không có sẵn, hoặc là tính năng khác hẳn mô hình
 nghiệp vụ hiện tại — giao hàng đến tòa nhà, không phải khách tự đến lấy tại quầy):
@@ -406,5 +416,11 @@ nghiệp vụ hiện tại — giao hàng đến tòa nhà, không phải khách
 - Widget bàn còn trống tại nhà ăn — cần theo dõi sức chứa vật lý theo tòa nhà và cơ chế check-in
   chỗ ngồi, chưa có khái niệm này trong DB (mới chỉ có tòa nhà + phí ship, không phải chỗ ngồi
   dùng bữa tại chỗ).
+- Vai trò Shipper tách riêng khỏi Nhân viên cửa hàng — theo yêu cầu, giữ nguyên hiện trạng
+  (nhân viên cửa hàng vẫn kiêm cả lấy hàng lẫn giao hàng), dù hạ tầng RBAC động đã sẵn sàng cho
+  việc này nếu sau này cần tách.
+- Banner/CMS đầy đủ do Admin quản lý (upload ảnh, đặt lịch hiển thị, bật/tắt hiệu ứng theo mùa) —
+  banner carousel hiện tại là 3 slide viết cứng dùng dữ liệu thật, chưa có bảng DB + màn quản trị
+  riêng cho admin tự thêm/sửa/xoá banner.
 
 Muốn xây tiếp phần nào ở trên, nói rõ để triển khai.

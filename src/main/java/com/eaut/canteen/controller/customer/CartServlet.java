@@ -49,6 +49,16 @@ public class CartServlet extends HttpServlet {
             throw new ServletException(e);
         }
 
+        // The catalog page's quick-add button calls this via fetch (for the fly-to-cart
+        // animation) instead of a normal form submit — it wants a small JSON count back,
+        // not a redirect to /cart. Plain form submits (no JS, or the cart page itself) are
+        // unaffected and still redirect as before.
+        if ("fetch".equals(req.getHeader("X-Requested-With"))) {
+            resp.setContentType("application/json;charset=UTF-8");
+            resp.getWriter().write("{\"count\":" + cart.getTotalItemCount() + "}");
+            return;
+        }
+
         resp.sendRedirect(req.getContextPath() + "/cart");
     }
 

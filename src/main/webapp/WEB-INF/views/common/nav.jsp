@@ -16,7 +16,10 @@
             <c:when test="${empty sessionScope.user or sessionScope.user.role.customerDefault}">
                 <a href="${ctx}/products">Thực đơn</a>
                 <c:if test="${not empty sessionScope.user}">
-                    <a href="${ctx}/cart">Giỏ hàng</a>
+                    <a href="${ctx}/cart" id="nav-cart-link" class="nav-cart-link">
+                        Giỏ hàng
+                        <span id="cart-badge" class="cart-badge" ${empty sessionScope.cart or sessionScope.cart.totalItemCount == 0 ? 'hidden' : ''}><c:out value="${sessionScope.cart.totalItemCount}" /></span>
+                    </a>
                     <a href="${ctx}/orders">Đơn hàng của tôi</a>
                     <a href="${ctx}/wallet">Ví của tôi</a>
                 </c:if>

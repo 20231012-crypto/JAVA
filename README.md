@@ -91,3 +91,5 @@ Mỗi đơn có một mã ticket ngắn (`order_code`, ví dụ `A-142` cho đơ
 - Mỗi sản phẩm có thời gian chế biến trung bình (`products.avg_prep_minutes`, Admin chỉnh trong form sản phẩm); khi đơn được duyệt, hệ thống tính thời gian ra món dự kiến và hiển thị đồng hồ đếm ngược thật trên bảng bếp.
 - Admin/Nhân viên bán hàng (quyền `shop.status`) có thể tạm ngưng nhận đơn toàn hệ thống khi quá tải — chặn thật ở bước đặt hàng, không chỉ là UI.
 - Bất kỳ nhân viên nào cũng tự bật/tắt trạng thái "đang trực" (`users.on_duty`), hiển thị thành danh sách trên bảng Kanban.
+
+**Thực đơn có ảnh thật & chuyển động UI** — 21 món/nước ăn thật (không phải placeholder) đóng gói ngay trong ứng dụng (`WEB-INF/seed-images/`) nên không mất khi Render redeploy. Trang thực đơn có banner carousel tự động, hiệu ứng hover/scroll-reveal, thêm vào giỏ hàng bằng fetch kèm hoạt ảnh bay vào giỏ, và toast "vừa có người đặt món này" đọc từ đơn hàng thật gần nhất — xem `assets/js/interactions.js` và mục tương ứng trong `DESIGN.md`.

@@ -46,7 +46,7 @@
             <div class="alert alert-error">🚫 Căng tin đang tạm ngưng nhận đơn (quá tải hoặc ngoài giờ phục vụ). Vui lòng quay lại sau.</div>
         </c:if>
 
-        <form method="post" action="${pageContext.request.contextPath}/checkout/place" id="checkoutForm">
+        <form method="post" action="${pageContext.request.contextPath}/checkout/place" id="checkoutForm" class="show-spinner-on-submit">
             <div class="checkout-layout">
                 <div>
                     <div class="form-group">

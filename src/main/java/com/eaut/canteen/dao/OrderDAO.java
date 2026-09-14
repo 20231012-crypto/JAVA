@@ -8,6 +8,7 @@ import java.util.Map;
 
 import com.eaut.canteen.model.Order;
 import com.eaut.canteen.model.OrderStatus;
+import com.eaut.canteen.model.RecentActivityItem;
 
 public interface OrderDAO {
 
@@ -44,4 +45,10 @@ public interface OrderDAO {
 
     /** Set when an order is confirmed (see OrderActionServlet) — drives the KDS countdown timer on the sales Kanban board. */
     void setEstimatedReadyAt(Connection conn, int orderId, java.time.LocalDateTime estimatedReadyAt) throws SQLException;
+
+    /**
+     * The most recent real order items placed (any status past PENDING), newest first — backs
+     * the catalog page's "vừa có người đặt món này" toast. Not fabricated: reads actual order_items.
+     */
+    List<RecentActivityItem> findRecentActivity(Connection conn, int limit) throws SQLException;
 }

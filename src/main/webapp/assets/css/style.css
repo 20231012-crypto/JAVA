@@ -881,3 +881,215 @@ img {
     font-size: 0.85rem;
     padding: 20px 0;
 }
+
+/* ===== Scroll-reveal (catalog grid) ===== */
+.reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.reveal-on-scroll.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reveal-on-scroll {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+}
+
+.section-title {
+    margin-top: 28px;
+}
+
+/* ===== Hero banner carousel (catalog landing) ===== */
+.hero-banner-carousel {
+    position: relative;
+    min-height: 220px;
+}
+
+.hero-banner-carousel .hero-slide {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    opacity: 0;
+    transform: translateX(12px);
+    pointer-events: none;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.hero-banner-carousel .hero-slide.is-active {
+    position: relative;
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+.hero-carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.hero-carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: none;
+    background: var(--color-institutional-soft);
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.hero-carousel-dot.is-active {
+    background: var(--color-institutional);
+    transform: scale(1.3);
+}
+
+/* ===== Product card hover motion + quick add ===== */
+.product-card-media {
+    position: relative;
+    overflow: hidden;
+}
+
+.product-card-media img {
+    transition: transform 0.35s ease;
+}
+
+.product-card:hover .product-card-media img {
+    transform: scale(1.08);
+}
+
+.quick-add-btn {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    background: var(--color-accent);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--radius-pill);
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s ease;
+}
+
+.product-card:hover .quick-add-btn,
+.product-card:focus-within .quick-add-btn {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.quick-add-btn:hover {
+    background: var(--color-accent-dark);
+}
+
+.quick-add-btn.is-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+@media (hover: none) {
+    /* Touch devices have no hover — the quick-add button must stay visible outright. */
+    .quick-add-btn {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* ===== Cart badge + fly-to-cart animation ===== */
+.nav-cart-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cart-badge {
+    background: var(--color-accent);
+    color: #ffffff;
+    border-radius: var(--radius-pill);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 1px 7px;
+    transition: transform 0.2s ease;
+}
+
+.nav-cart-link.cart-bump .cart-badge {
+    transform: scale(1.4);
+}
+
+.fly-to-cart-clone {
+    border-radius: var(--radius-input);
+    object-fit: cover;
+    transition: transform 0.55s cubic-bezier(0.3, 0, 0.7, 1), opacity 0.55s ease;
+    pointer-events: none;
+}
+
+/* ===== Toast notifications ===== */
+.toast-container {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    pointer-events: none;
+}
+
+.toast {
+    background: var(--color-text);
+    color: #ffffff;
+    padding: 10px 18px;
+    border-radius: var(--radius-pill);
+    font-size: 0.85rem;
+    box-shadow: var(--shadow-card);
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast-success { background: var(--color-success); }
+.toast-error { background: var(--color-danger); }
+.toast-info { background: var(--color-institutional); }
+
+/* ===== Loading spinner overlay (checkout submit) ===== */
+.page-spinner-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+}
+
+.page-spinner-overlay .spinner {
+    width: 42px;
+    height: 42px;
+    border: 4px solid var(--color-institutional-soft);
+    border-top-color: var(--color-institutional);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

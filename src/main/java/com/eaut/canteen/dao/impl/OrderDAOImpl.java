@@ -56,6 +56,14 @@ public class OrderDAOImpl implements OrderDAO {
             "WHERE DATE(created_at) = CURRENT_DATE GROUP BY hour_of_day ORDER BY hour_of_day";
     private static final String SET_ESTIMATED_READY_AT =
             "UPDATE orders SET estimated_ready_at = ? WHERE order_id = ?";
+    private static final String FIND_RECENT_ACTIVITY =
+            "SELECT p.name AS product_name, b.name AS building_name, o.created_at " +
+            "FROM order_items oi " +
+            "JOIN orders o ON oi.order_id = o.order_id " +
+            "JOIN products p ON oi.product_id = p.product_id " +
+            "LEFT JOIN buildings b ON o.building_id = b.building_id " +
+            "WHERE o.order_status NOT IN ('CANCELLED', 'REJECTED') " +
+            "ORDER BY o.created_at DESC LIMIT ?";
 
     @Override
     public int insert(Connection conn, Order order) throws SQLException {
@@ -205,6 +213,26 @@ public class OrderDAOImpl implements OrderDAO {
             ps.setInt(2, orderId);
             ps.executeUpdate();
         }
+    }
+
+    @Override
+    public List<com.eaut.canteen.model.RecentActivityItem> findRecentActivity(Connection conn, int limit) throws SQLException {
+        List<com.eaut.canteen.model.RecentActivityItem> items = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(FIND_RECENT_ACTIVITY)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    java.time.LocalDateTime createdAt = rs.getTimestamp("created_at").toLocalDateTime();
+                    int minutesAgo = (int) java.time.Duration.between(createdAt, java.time.LocalDateTime.now()).toMinutes();
+                    String buildingName = rs.getString("building_name");
+                    items.add(new com.eaut.canteen.model.RecentActivityItem(
+                            rs.getString("product_name"),
+                            buildingName != null ? buildingName : "quầy",
+                            Math.max(0, minutesAgo)));
+                }
+            }
+        }
+        return items;
     }
 
     private void setNullableInt(PreparedStatement ps, int index, Integer value) throws SQLException {
