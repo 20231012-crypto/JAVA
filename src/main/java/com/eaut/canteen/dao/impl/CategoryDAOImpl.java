@@ -18,9 +18,9 @@ public class CategoryDAOImpl implements CategoryDAO {
     private static final String FIND_ALL =
             "SELECT * FROM categories ORDER BY name";
     private static final String INSERT =
-            "INSERT INTO categories (name) VALUES (?)";
+            "INSERT INTO categories (name, parent_category_id) VALUES (?, ?)";
     private static final String UPDATE =
-            "UPDATE categories SET name = ? WHERE category_id = ?";
+            "UPDATE categories SET name = ?, parent_category_id = ? WHERE category_id = ?";
     private static final String SET_ACTIVE =
             "UPDATE categories SET is_active = ? WHERE category_id = ?";
 
@@ -42,6 +42,8 @@ public class CategoryDAOImpl implements CategoryDAO {
                 Category category = new Category();
                 category.setCategoryId(rs.getInt("category_id"));
                 category.setName(rs.getString("name"));
+                int parentId = rs.getInt("parent_category_id");
+                category.setParentCategoryId(rs.wasNull() ? null : parentId);
                 category.setActive(rs.getBoolean("is_active"));
                 categories.add(category);
             }
@@ -53,6 +55,7 @@ public class CategoryDAOImpl implements CategoryDAO {
     public void insert(Connection conn, Category category) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, category.getName());
+            setNullableInt(ps, 2, category.getParentCategoryId());
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 keys.next();
@@ -65,8 +68,17 @@ public class CategoryDAOImpl implements CategoryDAO {
     public void update(Connection conn, Category category) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(UPDATE)) {
             ps.setString(1, category.getName());
-            ps.setInt(2, category.getCategoryId());
+            setNullableInt(ps, 2, category.getParentCategoryId());
+            ps.setInt(3, category.getCategoryId());
             ps.executeUpdate();
+        }
+    }
+
+    private void setNullableInt(PreparedStatement ps, int index, Integer value) throws SQLException {
+        if (value == null) {
+            ps.setNull(index, java.sql.Types.INTEGER);
+        } else {
+            ps.setInt(index, value);
         }
     }
 

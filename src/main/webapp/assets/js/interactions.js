@@ -13,6 +13,7 @@
         initQuickAddToCart();
         initFavoriteToggle();
         initQuickView();
+        initMegaMenu();
         initSpinnerOnSubmit();
         initRecentActivityToast();
     });
@@ -203,6 +204,55 @@
         }
         badge.textContent = count;
         badge.hidden = !count || count <= 0;
+    }
+
+    function initMegaMenu() {
+        var trigger = document.querySelector("[data-mega-menu-toggle]");
+        var panel = document.getElementById("mega-menu-panel");
+        if (!trigger || !panel) {
+            return;
+        }
+        var loaded = false;
+
+        function open() {
+            panel.hidden = false;
+            if (loaded) {
+                return;
+            }
+            loaded = true;
+            fetch(contextPath() + "/products/category-menu")
+                .then(function (resp) { return resp.ok ? resp.text() : Promise.reject(); })
+                .then(function (html) { panel.innerHTML = html; })
+                .catch(function () {
+                    loaded = false;
+                    panel.innerHTML = "<p>Không tải được danh mục.</p>";
+                });
+        }
+
+        function close() {
+            panel.hidden = true;
+        }
+
+        trigger.addEventListener("click", function (event) {
+            event.stopPropagation();
+            if (panel.hidden) {
+                open();
+            } else {
+                close();
+            }
+        });
+
+        document.addEventListener("click", function (event) {
+            if (!panel.hidden && !panel.contains(event.target) && event.target !== trigger) {
+                close();
+            }
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && !panel.hidden) {
+                close();
+            }
+        });
     }
 
     function initSpinnerOnSubmit() {

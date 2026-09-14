@@ -35,9 +35,10 @@ CREATE TABLE buildings (
 );
 
 CREATE TABLE categories (
-  category_id   SERIAL PRIMARY KEY,
-  name          VARCHAR(100) NOT NULL,
-  is_active     BOOLEAN NOT NULL DEFAULT TRUE
+  category_id        SERIAL PRIMARY KEY,
+  name                VARCHAR(100) NOT NULL,
+  parent_category_id INT NULL REFERENCES categories(category_id) ON DELETE SET NULL, -- NULL = top-level group (mega-menu column header); set = a leaf sub-category products actually belong to
+  is_active           BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 -- ============================================================

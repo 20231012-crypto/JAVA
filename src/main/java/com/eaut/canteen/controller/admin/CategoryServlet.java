@@ -57,6 +57,8 @@ public class CategoryServlet extends HttpServlet {
         String idParam = req.getParameter("categoryId");
         Category category = new Category();
         category.setName(name.trim());
+        String parentIdParam = req.getParameter("parentCategoryId");
+        category.setParentCategoryId(parentIdParam == null || parentIdParam.isBlank() ? null : Integer.parseInt(parentIdParam));
 
         if (idParam == null || idParam.isBlank()) {
             categoryDAO.insert(conn, category);

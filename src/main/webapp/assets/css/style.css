@@ -1252,3 +1252,72 @@ img {
         grid-template-columns: 1fr;
     }
 }
+
+/* ===== Category mega-menu (nav) ===== */
+.mega-menu-trigger {
+    position: relative;
+}
+
+.mega-menu-btn {
+    background: var(--color-institutional-soft);
+    color: var(--color-institutional);
+    border: none;
+    padding: 8px 14px;
+    border-radius: var(--radius-btn);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.mega-menu-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    background: var(--color-surface);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-container);
+    padding: 20px;
+    z-index: 40;
+    min-width: 480px;
+}
+
+.mega-menu-columns {
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+}
+
+.mega-menu-column h3 {
+    font-size: 0.85rem;
+    color: var(--color-institutional);
+    margin-bottom: 10px;
+}
+
+.mega-menu-column ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mega-menu-column a {
+    color: var(--color-text);
+    font-size: 0.85rem;
+}
+
+.mega-menu-column a:hover {
+    color: var(--color-institutional);
+}
+
+@media screen and (max-width: 640px) {
+    .mega-menu-panel {
+        min-width: 280px;
+        left: -8px;
+    }
+
+    .mega-menu-columns {
+        gap: 16px;
+    }
+}

@@ -14,6 +14,10 @@
         <c:choose>
             <%-- Guest or logged-in customer: same shopper-facing menu either way. --%>
             <c:when test="${empty sessionScope.user or sessionScope.user.role.customerDefault}">
+                <div class="mega-menu-trigger">
+                    <button type="button" class="mega-menu-btn" data-mega-menu-toggle>Danh mục sản phẩm ▾</button>
+                    <div class="mega-menu-panel" id="mega-menu-panel" hidden></div>
+                </div>
                 <a href="${ctx}/products">Thực đơn</a>
                 <c:if test="${not empty sessionScope.user}">
                     <a href="${ctx}/cart" id="nav-cart-link" class="nav-cart-link">

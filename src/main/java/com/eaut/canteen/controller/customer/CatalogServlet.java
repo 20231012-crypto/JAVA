@@ -3,7 +3,10 @@ package com.eaut.canteen.controller.customer;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.eaut.canteen.dao.CategoryDAO;
@@ -30,7 +33,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-@WebServlet({"/products", "/products/detail", "/products/recent-activity", "/products/quick-view"})
+@WebServlet({"/products", "/products/detail", "/products/recent-activity", "/products/quick-view", "/products/category-menu"})
 public class CatalogServlet extends HttpServlet {
 
     private final CategoryDAO categoryDAO = new CategoryDAOImpl();
@@ -47,6 +50,7 @@ public class CatalogServlet extends HttpServlet {
                 case "/products/detail" -> showDetail(req, resp, conn);
                 case "/products/quick-view" -> showQuickView(req, resp, conn);
                 case "/products/recent-activity" -> showRecentActivity(resp, conn);
+                case "/products/category-menu" -> showCategoryMenu(req, resp, conn);
                 default -> showList(req, resp, conn);
             }
         } catch (SQLException e) {
@@ -89,7 +93,11 @@ public class CatalogServlet extends HttpServlet {
 
     private void showList(HttpServletRequest req, HttpServletResponse resp, Connection conn)
             throws SQLException, ServletException, IOException {
-        List<Category> categories = categoryDAO.findAllActive(conn);
+        // Filter chips only make sense for leaf categories — a top-level group (parent_category_id
+        // IS NULL) has no products directly under it, so filtering by one would just be empty.
+        List<Category> categories = categoryDAO.findAllActive(conn).stream()
+                .filter(c -> !c.isTopLevel())
+                .toList();
 
         String categoryParam = req.getParameter("category");
         List<Product> products;
@@ -171,5 +179,39 @@ public class CatalogServlet extends HttpServlet {
 
         req.setAttribute("product", product);
         req.getRequestDispatcher("/WEB-INF/views/customer/product-quick-view.jsp").forward(req, resp);
+    }
+
+    /**
+     * Bare fragment (no header/nav/footer) for the nav bar's "Danh mục sản phẩm" mega-menu —
+     * fetched once by JS on first hover/click and cached client-side, rather than every single
+     * page needing to look this up just because nav.jsp is included everywhere.
+     */
+    private void showCategoryMenu(HttpServletRequest req, HttpServletResponse resp, Connection conn)
+            throws SQLException, ServletException, IOException {
+        List<Category> all = categoryDAO.findAllActive(conn);
+        List<Category> topLevel = all.stream().filter(Category::isTopLevel).toList();
+        Map<Integer, List<Category>> childrenByParent = new LinkedHashMap<>();
+        for (Category category : all) {
+            if (!category.isTopLevel()) {
+                childrenByParent.computeIfAbsent(category.getParentCategoryId(), k -> new ArrayList<>()).add(category);
+            }
+        }
+        List<CategoryGroup> groups = new ArrayList<>();
+        for (Category parent : topLevel) {
+            groups.add(new CategoryGroup(parent, childrenByParent.getOrDefault(parent.getCategoryId(), List.of())));
+        }
+        req.setAttribute("categoryGroups", groups);
+        req.getRequestDispatcher("/WEB-INF/views/customer/category-menu.jsp").forward(req, resp);
+    }
+
+    /** One mega-menu column: a top-level group and its leaf sub-categories. */
+    public record CategoryGroup(Category parent, List<Category> children) {
+        public Category getParent() {
+            return parent;
+        }
+
+        public List<Category> getChildren() {
+            return children;
+        }
     }
 }
