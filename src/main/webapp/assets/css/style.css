@@ -341,6 +341,7 @@ img {
 /* ===== Cards & grids ===== */
 .card {
     background-color: var(--color-surface);
+    border: 1px solid var(--color-institutional-soft);
     border-radius: var(--radius-card);
     overflow: hidden;
     box-shadow: var(--shadow-card);
@@ -351,6 +352,11 @@ img {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 20px;
     margin-top: 20px;
+}
+
+.product-card {
+    display: flex;
+    flex-direction: column;
 }
 
 .product-card img {
@@ -926,87 +932,20 @@ img {
     margin-top: 28px;
 }
 
-/* ===== Catalog layout: banner sidebars + menu (catalog landing) ===== */
-/* Menu stays the focus in the center column; banners are narrow side columns instead of a
-   block stacked above the grid, so they never sit on top of (or get scrolled under) the menu.
-   Sidebar width scales with viewport (clamp) instead of a rigid pixel value, so it stays
-   proportionate from small laptops up through wide desktop monitors. */
-.catalog-layout {
-    display: grid;
-    grid-template-columns: clamp(160px, 15vw, 220px) minmax(0, 1fr) clamp(160px, 15vw, 220px);
-    gap: 16px;
-    align-items: start;
-}
-
-.catalog-sidebar {
-    /* Sticks just below the sticky header (top: 12px + ~64px header + gap) instead of at the
-       very top of the viewport, so it settles under the header rather than behind it. */
+/* ===== Hero banner (catalog landing) ===== */
+/* Back to a single full-width banner on top (sidebars turned out to overlap/feel cramped) —
+   sticky so it, like the header, stays in view while only the menu scrolls. */
+.hero-banner-top {
     position: sticky;
     top: 100px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.catalog-main {
-    min-width: 0;
-}
-
-.hero-banner-compact {
-    grid-template-columns: 1fr;
-    padding: 20px 16px;
-    margin-top: 0;
-    min-height: 260px;
-    display: flex;
-    flex-direction: column;
-}
-
-.hero-banner-compact > div {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-.hero-banner-compact h1 {
-    font-size: 1.05rem;
-    margin-bottom: 10px;
-}
-
-.hero-banner-compact .hero-banner-eyebrow {
-    font-size: 0.68rem;
-    padding: 3px 10px;
-    margin-bottom: 8px;
-    align-self: flex-start;
-}
-
-.hero-banner-compact .hero-info-pills {
-    flex-direction: column;
-    margin-top: auto;
-}
-
-/* Laptops and landscape tablets keep the 3-column layout (this is the range it needs to "fit"
-   most); only narrower tablets/phones fall back to a stacked single column. */
-@media screen and (max-width: 860px) {
-    .catalog-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .catalog-sidebar {
-        position: static;
-        flex-direction: row;
-        flex-wrap: wrap;
-    }
-
-    .catalog-sidebar .hero-banner-compact {
-        flex: 1 1 220px;
-        min-height: 180px;
-    }
+    z-index: 15;
 }
 
 /* ===== Product card hover motion + quick add ===== */
 .product-card-media {
     position: relative;
     overflow: hidden;
+    display: block;
 }
 
 .product-card-media img {
@@ -1017,27 +956,18 @@ img {
     transform: scale(1.08);
 }
 
+.card-body {
+    display: block;
+    color: var(--color-text);
+}
+
 .quick-add-btn {
-    position: absolute;
-    right: 8px;
-    bottom: 8px;
     background: var(--color-accent);
     color: #ffffff;
     border: none;
-    border-radius: var(--radius-pill);
-    padding: 6px 14px;
-    font-size: 0.78rem;
-    font-weight: 600;
     cursor: pointer;
-    opacity: 0;
-    transform: translateY(8px);
-    transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s ease;
-}
-
-.product-card:hover .quick-add-btn,
-.product-card:focus-within .quick-add-btn {
-    opacity: 1;
-    transform: translateY(0);
+    font-weight: 600;
+    transition: background 0.2s ease;
 }
 
 .quick-add-btn:hover {
@@ -1049,12 +979,12 @@ img {
     pointer-events: none;
 }
 
-@media (hover: none) {
-    /* Touch devices have no hover — the quick-add button must stay visible outright. */
-    .quick-add-btn {
-        opacity: 1;
-        transform: none;
-    }
+.quick-add-btn-block {
+    width: calc(100% - 32px);
+    margin: auto 16px 16px;
+    padding: 10px;
+    border-radius: var(--radius-btn);
+    font-size: 0.85rem;
 }
 
 /* ===== Cart badge + fly-to-cart animation ===== */

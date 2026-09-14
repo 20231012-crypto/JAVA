@@ -49,7 +49,7 @@
                     return;
                 }
                 var productId = btn.getAttribute("data-product-id");
-                var sourceImg = btn.closest(".product-card-media").querySelector("img, .product-image-placeholder");
+                var sourceImg = btn.closest(".product-card").querySelector(".product-card-media img, .product-card-media .product-image-placeholder");
                 btn.classList.add("is-loading");
 
                 fetch(contextPath + "/cart/add", {
