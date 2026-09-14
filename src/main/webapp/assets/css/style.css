@@ -1096,6 +1096,14 @@ img {
     z-index: 10001;
 }
 
+/* An author-stylesheet `display` on the same element beats the browser's default
+   [hidden]{display:none} regardless of selector specificity (author origin always outranks
+   user-agent origin) — without this override the overlay above ignores the `hidden` attribute
+   entirely and blocks the whole page on every load. */
+.page-spinner-overlay[hidden] {
+    display: none;
+}
+
 .page-spinner-overlay .spinner {
     width: 42px;
     height: 42px;

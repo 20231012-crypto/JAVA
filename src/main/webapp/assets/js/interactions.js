@@ -119,14 +119,30 @@
     }
 
     function initSpinnerOnSubmit() {
-        var forms = document.querySelectorAll("form.show-spinner-on-submit");
         var overlay = document.getElementById("page-spinner");
-        if (!forms.length || !overlay) {
+        if (!overlay) {
+            return;
+        }
+
+        // Bfcache safety net: if the browser restores this exact page (e.g. the user hits
+        // "Back" right after submitting) it can restore the DOM as it was the instant we
+        // navigated away — spinner still showing, blocking every click on a page that isn't
+        // actually loading anything. Always force it hidden whenever this page becomes visible,
+        // whether that's a fresh load or a bfcache restore.
+        window.addEventListener("pageshow", function () {
+            overlay.hidden = true;
+        });
+
+        var forms = document.querySelectorAll("form.show-spinner-on-submit");
+        if (!forms.length) {
             return;
         }
         forms.forEach(function (form) {
             form.addEventListener("submit", function () {
                 overlay.hidden = false;
+                // Safety net for a submit that never actually navigates away (e.g. a network
+                // error) — never leave the whole page unclickable indefinitely.
+                window.setTimeout(function () { overlay.hidden = true; }, 15000);
             });
         });
     }
