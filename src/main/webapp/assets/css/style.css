@@ -928,10 +928,12 @@ img {
 
 /* ===== Catalog layout: banner sidebars + menu (catalog landing) ===== */
 /* Menu stays the focus in the center column; banners are narrow side columns instead of a
-   block stacked above the grid, so they never sit on top of (or get scrolled under) the menu. */
+   block stacked above the grid, so they never sit on top of (or get scrolled under) the menu.
+   Sidebar width scales with viewport (clamp) instead of a rigid pixel value, so it stays
+   proportionate from small laptops up through wide desktop monitors. */
 .catalog-layout {
     display: grid;
-    grid-template-columns: 170px minmax(0, 1fr) 170px;
+    grid-template-columns: clamp(160px, 15vw, 220px) minmax(0, 1fr) clamp(160px, 15vw, 220px);
     gap: 16px;
     align-items: start;
 }
@@ -952,12 +954,21 @@ img {
 
 .hero-banner-compact {
     grid-template-columns: 1fr;
-    padding: 16px;
+    padding: 20px 16px;
     margin-top: 0;
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+}
+
+.hero-banner-compact > div {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .hero-banner-compact h1 {
-    font-size: 1rem;
+    font-size: 1.05rem;
     margin-bottom: 10px;
 }
 
@@ -965,13 +976,17 @@ img {
     font-size: 0.68rem;
     padding: 3px 10px;
     margin-bottom: 8px;
+    align-self: flex-start;
 }
 
 .hero-banner-compact .hero-info-pills {
     flex-direction: column;
+    margin-top: auto;
 }
 
-@media screen and (max-width: 1024px) {
+/* Laptops and landscape tablets keep the 3-column layout (this is the range it needs to "fit"
+   most); only narrower tablets/phones fall back to a stacked single column. */
+@media screen and (max-width: 860px) {
     .catalog-layout {
         grid-template-columns: 1fr;
     }
@@ -984,6 +999,7 @@ img {
 
     .catalog-sidebar .hero-banner-compact {
         flex: 1 1 220px;
+        min-height: 180px;
     }
 }
 
