@@ -550,10 +550,27 @@ img {
 /* ===== Footer ===== */
 .site-footer {
     margin-top: 32px;
-    padding: 20px;
+    padding: 24px 20px;
     text-align: center;
     color: var(--color-text-muted);
     font-size: 0.85rem;
+}
+
+.site-footer-school {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.site-footer-school strong {
+    color: var(--color-text);
+    font-size: 0.95rem;
+}
+
+.site-footer-copyright {
+    padding-top: 12px;
+    border-top: 1px solid var(--color-institutional-soft);
 }
 
 /* ===== Auth pages (login/register) ===== */
@@ -906,50 +923,48 @@ img {
     margin-top: 28px;
 }
 
-/* ===== Hero banner carousel (catalog landing) ===== */
-.hero-banner-carousel {
-    position: relative;
-    min-height: 220px;
+/* ===== Hero banner stack (catalog landing) ===== */
+/* Sticky: stays visible above the scrolling menu grid instead of scrolling away with it. */
+.hero-banner-stack {
+    position: sticky;
+    top: 12px;
+    z-index: 20;
+    margin-bottom: 20px;
 }
 
-.hero-banner-carousel .hero-slide {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    opacity: 0;
-    transform: translateX(12px);
-    pointer-events: none;
-    transition: opacity 0.6s ease, transform 0.6s ease;
-}
-
-.hero-banner-carousel .hero-slide.is-active {
-    position: relative;
-    opacity: 1;
-    transform: translateX(0);
-    pointer-events: auto;
-}
-
-.hero-carousel-dots {
+.hero-banner-grid {
     display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 12px;
+    flex-direction: column;
+    gap: 12px;
 }
 
-.hero-carousel-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    border: none;
-    background: var(--color-institutional-soft);
-    cursor: pointer;
-    padding: 0;
-    transition: background 0.2s ease, transform 0.2s ease;
+.hero-banner-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
 }
 
-.hero-carousel-dot.is-active {
-    background: var(--color-institutional);
-    transform: scale(1.3);
+.hero-banner-grid .hero-banner {
+    margin-top: 0;
+}
+
+.hero-banner-secondary {
+    padding: 20px;
+}
+
+.hero-banner-secondary h1 {
+    font-size: 1.15rem;
+}
+
+.hero-banner-secondary p {
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+}
+
+@media screen and (max-width: 640px) {
+    .hero-banner-row {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* ===== Product card hover motion + quick add ===== */

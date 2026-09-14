@@ -1,6 +1,11 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <footer class="site-footer">
-    &copy; 2026 Căng tin EAUT &mdash; Đại học Công nghệ Đông Á
+    <div class="site-footer-school">
+        <strong>Trường Đại học Công nghệ Đông Á (EAUT)</strong>
+        <span>Cơ sở đào tạo chính: Tòa nhà Polyco, đường Trịnh Văn Bô, quận Nam Từ Liêm, Hà Nội</span>
+        <span>Website: eaut.edu.vn</span>
+    </div>
+    <div class="site-footer-copyright">&copy; 2026 Căng tin EAUT &mdash; Đại học Công nghệ Đông Á</div>
 </footer>
 
 <div id="toast-container" class="toast-container" aria-live="polite"></div>

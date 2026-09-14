@@ -6,46 +6,49 @@
 <jsp:include page="/WEB-INF/views/common/nav.jsp" />
 <main class="page-content" data-page="catalog">
     <div class="container">
-        <div class="hero-banner-carousel" data-autoplay="5000">
-            <div class="hero-banner hero-slide is-active">
-                <div>
-                    <span class="hero-banner-eyebrow">CĂNG TIN EAUT</span>
-                    <h1>Đặt đồ ăn nhanh chóng — giao tận tòa nhà</h1>
-                    <p>Chọn món, thanh toán, và tiếp tục học — canteen mang đồ ăn đến tận nơi bạn học.</p>
-                    <div class="hero-info-pills">
-                        <span class="hero-info-pill"><strong>⏱ ${estimatedWaitMinutes} phút</strong>Thời gian chờ ước tính</span>
-                        <span class="hero-info-pill"><strong>🏢 4 tòa nhà</strong>Giao tận nơi</span>
+        <div class="hero-banner-stack">
+            <div class="hero-banner-grid">
+                <div class="hero-banner hero-banner-primary">
+                    <div>
+                        <span class="hero-banner-eyebrow">CĂNG TIN EAUT</span>
+                        <h1>Đặt đồ ăn nhanh chóng — giao tận tòa nhà</h1>
+                        <p>Chọn món, thanh toán, và tiếp tục học — canteen mang đồ ăn đến tận nơi bạn học.</p>
+                        <div class="hero-info-pills">
+                            <span class="hero-info-pill"><strong>⏱ ${estimatedWaitMinutes} phút</strong>Thời gian chờ ước tính</span>
+                            <span class="hero-info-pill"><strong>🏢 4 tòa nhà</strong>Giao tận nơi</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-banner-row">
+                    <div class="hero-banner hero-banner-secondary">
+                        <div>
+                            <span class="hero-banner-eyebrow">VÍ EAUT PAY</span>
+                            <h1>Thanh toán nhanh, tích điểm mỗi đơn</h1>
+                            <p>Nạp ví một lần, đặt món cả tuần — mỗi đơn hoàn thành còn được cộng điểm đổi giảm giá.</p>
+                            <div class="hero-info-pills">
+                                <span class="hero-info-pill"><strong>💳 EAUT Pay</strong>Số dư nội bộ</span>
+                                <span class="hero-info-pill"><strong>⭐ Tích điểm</strong>Đổi giảm giá</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hero-banner hero-banner-secondary">
+                        <div>
+                            <c:choose>
+                                <c:when test="${shopAcceptingOrders == false}">
+                                    <span class="hero-banner-eyebrow">TẠM NGƯNG NHẬN ĐƠN</span>
+                                    <h1>Căng tin đang tạm ngưng nhận đơn</h1>
+                                    <p>Bạn vẫn xem được thực đơn — quay lại sau ít phút để đặt hàng nhé.</p>
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="hero-banner-eyebrow">ĐANG MỞ NHẬN ĐƠN</span>
+                                    <h1>Sinh viên @eaut.edu.vn được giảm giá tự động</h1>
+                                    <p>Đăng nhập bằng email trường để tự động áp dụng ưu đãi EAUT Smart ID khi thanh toán.</p>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="hero-banner hero-slide">
-                <div>
-                    <span class="hero-banner-eyebrow">VÍ EAUT PAY</span>
-                    <h1>Thanh toán nhanh, tích điểm mỗi đơn</h1>
-                    <p>Nạp ví một lần, đặt món cả tuần không cần quét QR mỗi lần — mỗi đơn hoàn thành còn được cộng điểm đổi giảm giá.</p>
-                    <div class="hero-info-pills">
-                        <span class="hero-info-pill"><strong>💳 EAUT Pay</strong>Số dư nội bộ</span>
-                        <span class="hero-info-pill"><strong>⭐ Tích điểm</strong>Đổi giảm giá</span>
-                    </div>
-                </div>
-            </div>
-            <div class="hero-banner hero-slide">
-                <div>
-                    <c:choose>
-                        <c:when test="${shopAcceptingOrders == false}">
-                            <span class="hero-banner-eyebrow">TẠM NGƯNG NHẬN ĐƠN</span>
-                            <h1>Căng tin đang tạm ngưng nhận đơn</h1>
-                            <p>Bạn vẫn xem được thực đơn — quay lại sau ít phút để đặt hàng nhé.</p>
-                        </c:when>
-                        <c:otherwise>
-                            <span class="hero-banner-eyebrow">ĐANG MỞ NHẬN ĐƠN</span>
-                            <h1>Sinh viên @eaut.edu.vn được giảm giá tự động</h1>
-                            <p>Đăng nhập bằng email trường để tự động áp dụng ưu đãi EAUT Smart ID khi thanh toán.</p>
-                        </c:otherwise>
-                    </c:choose>
-                </div>
-            </div>
-            <div class="hero-carousel-dots"></div>
         </div>
 
         <c:if test="${shopAcceptingOrders == false}">

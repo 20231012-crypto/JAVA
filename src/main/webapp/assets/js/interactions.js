@@ -1,15 +1,15 @@
 /**
- * Site-wide UI/UX motion: scroll-reveal, the hero banner carousel, the add-to-cart fly
- * animation + cart badge bounce, a real-data "recent activity" toast, and a loading spinner
- * for slow form submits. Progressive enhancement only — every feature this touches (add to
- * cart, checkout) already works via a plain form submit without JavaScript.
+ * Site-wide UI/UX motion: scroll-reveal, the add-to-cart fly animation + cart badge bounce, a
+ * real-data "recent activity" toast, and a loading spinner for slow form submits. The hero
+ * banner is a static sticky 3-panel layout (see style.css .hero-banner-stack) — no JS needed.
+ * Progressive enhancement only — every feature this touches (add to cart, checkout) already
+ * works via a plain form submit without JavaScript.
  */
 (function () {
     "use strict";
 
     document.addEventListener("DOMContentLoaded", function () {
         initScrollReveal();
-        initHeroCarousel();
         initQuickAddToCart();
         initSpinnerOnSubmit();
         initRecentActivityToast();
@@ -33,48 +33,6 @@
             });
         }, { threshold: 0.1, rootMargin: "0px 0px -40px 0px" });
         targets.forEach(function (el) { observer.observe(el); });
-    }
-
-    function initHeroCarousel() {
-        var carousel = document.querySelector(".hero-banner-carousel");
-        if (!carousel) {
-            return;
-        }
-        var slides = carousel.querySelectorAll(".hero-slide");
-        if (slides.length < 2) {
-            return;
-        }
-        var dotsWrap = carousel.querySelector(".hero-carousel-dots");
-        var dots = [];
-        slides.forEach(function (_, i) {
-            var dot = document.createElement("button");
-            dot.type = "button";
-            dot.className = "hero-carousel-dot" + (i === 0 ? " is-active" : "");
-            dot.setAttribute("aria-label", "Xem banner " + (i + 1));
-            dot.addEventListener("click", function () { goTo(i); });
-            dotsWrap.appendChild(dot);
-            dots.push(dot);
-        });
-
-        var current = 0;
-        var intervalMs = parseInt(carousel.getAttribute("data-autoplay"), 10) || 5000;
-        var timer = null;
-
-        function goTo(index) {
-            slides[current].classList.remove("is-active");
-            dots[current].classList.remove("is-active");
-            current = (index + slides.length) % slides.length;
-            slides[current].classList.add("is-active");
-            dots[current].classList.add("is-active");
-        }
-
-        function start() {
-            timer = window.setInterval(function () { goTo(current + 1); }, intervalMs);
-        }
-
-        carousel.addEventListener("mouseenter", function () { window.clearInterval(timer); });
-        carousel.addEventListener("mouseleave", start);
-        start();
     }
 
     function initQuickAddToCart() {
