@@ -23,7 +23,18 @@ INSERT INTO permissions (permission_key, group_name, display_name, sort_order) V
   ('sales.counter',          'Bán hàng',       'Bán hàng trực tiếp tại quầy',         130),
   ('shop.status',            'Bán hàng',       'Bật/tắt nhận đơn toàn hệ thống',      105),
   ('wallet.topup',           'Tài chính',      'Nạp ví EAUT Pay cho khách hàng',      140),
-  ('reports.view',           'Tài chính',      'Xem báo cáo doanh thu',               150);
+  ('reports.view',           'Tài chính',      'Xem báo cáo doanh thu',               150),
+  -- Backported from migrations 010/011. SecurityFilter enforces both, but they only ever existed
+  -- in those migration files, so a fresh schema+seed install produced an ADMIN who got 403 on
+  -- their own customer and attendance screens. Keeping this file in step with the migrations is
+  -- what stops that recurring.
+  ('customers.manage',       'Quản trị',       'Quản lý tài khoản khách hàng',         52),
+  ('attendance.view',        'Quản trị',       'Xem báo cáo chấm công nhân viên',      55),
+  -- Added with the admin rebuild (migrations 013/015/016).
+  ('stock.adjust',           'Kho & vận hành', 'Kiểm kê, hủy hàng & xem sổ kho',        75),
+  ('orders.manage',          'Bán hàng',       'Xem & lọc toàn bộ đơn hàng',            95),
+  ('orders.refund',          'Tài chính',      'Hủy đơn và hoàn tiền vào ví khách',    145),
+  ('settings.manage',        'Quản trị',       'Cấu hình hệ thống & giao diện',        160);
 
 -- Default roles. is_system=TRUE just protects these four from deletion (so the app can't be
 -- left with zero admin-capable roles); their permissions are still fully editable from
@@ -38,7 +49,16 @@ INSERT INTO role_permissions (role_id, permission_key)
   SELECT r.role_id, p.permission_key FROM roles r, permissions p
   WHERE r.role_key = 'ADMIN' AND p.permission_key IN
     ('admin.dashboard','categories.manage','products.manage','buildings.manage','banners.manage',
-     'staff.manage','roles.manage','stock.import','wallet.topup','reports.view','shop.status');
+     'staff.manage','roles.manage','stock.import','wallet.topup','reports.view','shop.status',
+     'customers.manage','attendance.view','stock.adjust','settings.manage',
+     -- orders.queue and orders.action were SALES_STAFF-only, which left ADMIN unable to reach an
+     -- order at all — and orders.refund is useless to someone who cannot open one.
+     'orders.manage','orders.refund','orders.queue','orders.action');
+
+-- STORE_STAFF do the counting, so the stock-take and write-off screen is theirs as much as the
+-- admin's.
+INSERT INTO role_permissions (role_id, permission_key)
+  SELECT r.role_id, 'stock.adjust' FROM roles r WHERE r.role_key = 'STORE_STAFF';
 
 INSERT INTO role_permissions (role_id, permission_key)
   SELECT r.role_id, p.permission_key FROM roles r, permissions p
@@ -130,3 +150,23 @@ INSERT INTO warehouse_stock (product_id, quantity)
 
 INSERT INTO shelf_stock (product_id, quantity)
   SELECT product_id, 30 FROM products;
+
+-- ============================================================
+-- Business configuration (see migration 013 for the reasoning)
+-- Seeded with exactly the values the Java code already defaulted to, so a fresh install behaves
+-- identically to one that has never had this table.
+-- ============================================================
+INSERT INTO app_settings (setting_key, setting_value, value_type, group_name, display_name, hint, sort_order) VALUES
+  ('canteen.timezone',            'Asia/Ho_Chi_Minh', 'STRING',  'Vận hành',  'Múi giờ căng tin',                        'Mọi mốc ngày trong báo cáo tính theo múi giờ này',   10),
+  ('canteen.openTime',            '06:30',            'TIME',    'Vận hành',  'Giờ mở cửa',                              'Ngoài khung giờ này khách không đặt được đơn',       20),
+  ('canteen.closeTime',           '18:00',            'TIME',    'Vận hành',  'Giờ đóng cửa',                            NULL,                                                 30),
+  ('shipping.freeOverAmount',     '0',                'INT',     'Vận hành',  'Miễn phí ship cho đơn từ (đ)',            '0 = không áp dụng, luôn thu phí theo tòa nhà',       40),
+  ('stock.defaultLowThreshold',   '5',                'INT',     'Kho',       'Ngưỡng cảnh báo sắp hết mặc định',        'Dùng cho món chưa đặt ngưỡng riêng',                 50),
+  ('loyalty.vndPerPoint',         '10000',            'INT',     'Tích điểm', 'Số tiền đổi được 1 điểm (đ)',             'Ví dụ 10.000đ = 1 điểm',                             60),
+  ('loyalty.redeemValuePerPoint', '500',              'INT',     'Tích điểm', 'Giá trị 1 điểm khi thanh toán (đ)',       'Ví dụ 1 điểm = 500đ',                                70),
+  ('smartId.discountPercent',     '10',               'DECIMAL', 'Tích điểm', 'Chiết khấu EAUT Smart ID (%)',            'Áp dụng cho sinh viên có email @eaut.edu.vn',        80),
+  ('wallet.discountPercent',      '3',                'DECIMAL', 'Tích điểm', 'Chiết khấu khi trả bằng Ví EAUT Pay (%)', 'Khuyến khích dùng ví nội bộ',                        90),
+  ('alert.soundEnabled',          'true',             'BOOL',    'Thông báo', 'Bật âm báo đơn mới',                      NULL,                                                100),
+  ('alert.pollSeconds',           '20',               'INT',     'Thông báo', 'Tần suất kiểm tra đơn mới (giây)',        'Càng nhỏ càng nhanh nhưng tốn tài nguyên hơn',      110),
+  ('effects.mode',                'NONE',             'STRING',  'Giao diện', 'Hiệu ứng trang chủ',                      'NONE / SNOW / FIREWORKS / LEAVES',                  120),
+  ('effects.intensity',           '2',                'INT',     'Giao diện', 'Mức độ hiệu ứng',                         '1 = nhẹ, 2 = vừa, 3 = mạnh',                        130);

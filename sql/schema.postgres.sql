@@ -116,7 +116,9 @@ CREATE TABLE products (
   promo_target_quantity INT NULL,                        -- real "Đã bán X/Y" progress target; X computed live from COMPLETED order_items
   image_filename VARCHAR(255) NULL,
   unit           VARCHAR(20) NULL,
-  is_active      BOOLEAN NOT NULL DEFAULT TRUE,
+  is_active      BOOLEAN NOT NULL DEFAULT TRUE,           -- FALSE hides the dish from the menu entirely
+  is_available   BOOLEAN NOT NULL DEFAULT TRUE,           -- FALSE leaves it visible but greyed out and unorderable
+  low_stock_threshold INT NOT NULL DEFAULT 5 CHECK (low_stock_threshold >= 0),  -- per dish: "under 5" is meaningless across bottled water and set lunches
   avg_prep_minutes INT NOT NULL DEFAULT 10,              -- backs the KDS countdown timer (orders.estimated_ready_at)
   created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -124,13 +126,15 @@ CREATE TABLE products (
 -- 1:1 with products; a row is created here (quantity 0) in the same transaction as the product insert.
 CREATE TABLE warehouse_stock (
   product_id  INT PRIMARY KEY REFERENCES products(product_id) ON DELETE CASCADE,
-  quantity    INT NOT NULL DEFAULT 0
+  -- The database's rule, not just decrementIfEnough's: application guards can be forgotten by a
+  -- future caller, a CHECK cannot.
+  quantity    INT NOT NULL DEFAULT 0 CHECK (quantity >= 0)
 );
 
 -- 1:1 with products; only this quantity is sellable/visible to customers.
 CREATE TABLE shelf_stock (
   product_id  INT PRIMARY KEY REFERENCES products(product_id) ON DELETE CASCADE,
-  quantity    INT NOT NULL DEFAULT 0
+  quantity    INT NOT NULL DEFAULT 0 CHECK (quantity >= 0)
 );
 
 -- Nhập hàng: Admin/Manager stock-in receipt (header + lines)
@@ -188,6 +192,17 @@ CREATE TABLE orders (
   payment_confirmed_by  INT NULL REFERENCES users(user_id) ON DELETE SET NULL,
   payment_confirmed_at  TIMESTAMP NULL,
   estimated_ready_at    TIMESTAMP NULL, -- set when confirmed; drives the KDS countdown timer
+  -- The EAUT Pay incentive, kept apart from discount_amount so the receipt can name each discount
+  -- rather than printing a combined figure under the Smart ID label.
+  wallet_discount_amount DECIMAL(12,0) NOT NULL DEFAULT 0 CHECK (wallet_discount_amount >= 0),
+  -- Refund bookkeeping. refunded_at doubles as the "already refunded" flag: the admin refund
+  -- claims the order with UPDATE ... WHERE refunded_at IS NULL, which is what stops two
+  -- simultaneous clicks both paying the student back.
+  refunded_amount       DECIMAL(12,0) NOT NULL DEFAULT 0 CHECK (refunded_amount >= 0),
+  refunded_at           TIMESTAMP NULL,
+  refunded_by           INT NULL REFERENCES users(user_id) ON DELETE SET NULL,
+  CONSTRAINT chk_orders_refund_complete
+    CHECK ((refunded_at IS NULL AND refunded_by IS NULL) OR (refunded_at IS NOT NULL AND refunded_by IS NOT NULL)),
   note                  VARCHAR(255) NULL,
   created_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -222,6 +237,29 @@ CREATE TABLE order_status_history (
   changed_by  INT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
   note        VARCHAR(255) NULL,
   changed_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ===== Stock ledger =====
+-- Declared here rather than beside warehouse_stock/shelf_stock, which is where it
+-- belongs conceptually: it carries an FK to orders(order_id) for the RESTOCK rows a
+-- cancellation writes, so it cannot be created before orders exists.
+-- warehouse_stock/shelf_stock above stay the fast current counts; this is the history that
+-- explains them, the same split users.wallet_balance and wallet_transactions already use. Every
+-- write that changes a counter records a row here in the SAME transaction — a ledger that can be
+-- half-written is worse than none, because it looks authoritative while being wrong.
+CREATE TABLE stock_movements (
+  movement_id  SERIAL PRIMARY KEY,
+  product_id   INT NOT NULL REFERENCES products(product_id) ON DELETE RESTRICT,
+  location     VARCHAR(10) NOT NULL CHECK (location IN ('WAREHOUSE', 'SHELF')),
+  delta        INT NOT NULL CHECK (delta <> 0),          -- signed; zero would explain nothing
+  reason       VARCHAR(16) NOT NULL CHECK (reason IN
+                 ('IMPORT', 'TRANSFER_OUT', 'TRANSFER_IN', 'SALE', 'RESTOCK', 'WRITE_OFF', 'STOCK_TAKE')),
+  ref_order_id INT NULL REFERENCES orders(order_id) ON DELETE SET NULL,
+  note         VARCHAR(255) NULL,
+  -- NOT NULL and RESTRICT: every movement is somebody's action, and an audit trail that can lose
+  -- its actor is not an audit trail.
+  created_by   INT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
+  created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- EAUT Pay wallet ledger: every top-up/spend/refund is its own row, so users.wallet_balance is
@@ -294,8 +332,31 @@ CREATE TABLE banners (
   image_data          BYTEA NULL,
   image_content_type  VARCHAR(100) NULL,
   sort_order          INT NOT NULL DEFAULT 0,
-  is_active           BOOLEAN NOT NULL DEFAULT TRUE,
+  is_active           BOOLEAN NOT NULL DEFAULT TRUE,   -- the manual master switch: takes it down now
+  -- The automatic window, AND-ed with is_active. Both NULL keeps the always-on behaviour, and
+  -- end_at is exclusive so a banner ending at midnight is gone the instant that date starts.
+  start_at            TIMESTAMP NULL,
+  end_at              TIMESTAMP NULL,
+  CONSTRAINT chk_banner_window CHECK (start_at IS NULL OR end_at IS NULL OR end_at > start_at),
   created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ===== Business configuration =====
+-- Key/value rather than one wide row: the settings screen renders itself FROM these rows —
+-- group_name makes the section, display_name the label, value_type the input control — so adding
+-- a setting later is one INSERT with no schema change and no form to edit. AppConfig keeps the
+-- deployment's secrets; this table holds what the canteen owns.
+CREATE TABLE app_settings (
+  setting_key   VARCHAR(60) PRIMARY KEY,
+  setting_value VARCHAR(500) NOT NULL,
+  value_type    VARCHAR(10) NOT NULL DEFAULT 'STRING'
+                  CHECK (value_type IN ('STRING','INT','DECIMAL','BOOL','TIME')),
+  group_name    VARCHAR(40) NOT NULL,
+  display_name  VARCHAR(150) NOT NULL,
+  hint          VARCHAR(255) NULL,
+  sort_order    INT NOT NULL DEFAULT 0,
+  updated_by    INT NULL REFERENCES users(user_id) ON DELETE SET NULL,
+  updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Staff check-in/check-out (chấm công). One row per shift; check_out_at NULL = still on shift.
@@ -325,3 +386,14 @@ CREATE INDEX idx_order_items_product ON order_items(product_id);
 CREATE UNIQUE INDEX one_open_shift_per_user
   ON staff_attendance(user_id) WHERE check_out_at IS NULL;
 CREATE INDEX idx_attendance_user_day ON staff_attendance(user_id, check_in_at);
+
+-- The stock ledger is read two ways: one dish's history, and everything that happened recently.
+CREATE INDEX idx_stock_mov_product ON stock_movements(product_id, created_at DESC);
+CREATE INDEX idx_stock_mov_created ON stock_movements(created_at DESC);
+-- The admin order list sorts newest-first and filters by payment method; orders previously had
+-- indexes on customer_id and order_status only, so every page load sorted the whole table.
+CREATE INDEX idx_orders_created ON orders(created_at DESC);
+CREATE INDEX idx_orders_payment_method ON orders(payment_method);
+-- findActiveByPosition filters on position and orders by sort_order; banners had no index at all
+-- beyond its primary key.
+CREATE INDEX idx_banners_position ON banners(position, sort_order);
