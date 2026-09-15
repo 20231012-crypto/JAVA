@@ -2095,12 +2095,17 @@ body.has-admin-rail {
    screen and push the food off the page, so the rails go back to a strip there. */
 @media screen and (max-width: 860px) {
     .catalog-sidebar,
-    .catalog-sidebar .cms-banner {
+    .catalog-sidebar .cms-banner,
+    .catalog-sidebar .cms-banner-link {
         height: auto;
         flex: 0 0 auto;
     }
 
     .catalog-sidebar .cms-banner-media {
+        /* flex-basis must go back to auto along with the rest: with nothing left to grow into once
+           the column stops stretching, a basis of 0 collapses the media to nothing and leaves the
+           caption sitting on its own. */
+        flex: 0 0 auto;
         height: auto;
         min-height: 0;
         max-height: 220px;
