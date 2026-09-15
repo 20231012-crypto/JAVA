@@ -34,6 +34,16 @@ public class Order {
     private LocalDateTime paymentConfirmedAt;
     private LocalDateTime estimatedReadyAt;
     private String note;
+    /**
+     * Refund bookkeeping. refundedAt doubles as the "already refunded" flag — the admin refund
+     * claims the order with a conditional UPDATE on it, so a second click finds it non-null and is
+     * refused rather than paying out twice. The amount is stored rather than assumed to be
+     * totalAmount because a cancelled-but-unpaid COD order is refunded zero, and that has to read
+     * differently from never having been processed.
+     */
+    private BigDecimal refundedAmount = BigDecimal.ZERO;
+    private LocalDateTime refundedAt;
+    private Integer refundedBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -238,6 +248,39 @@ public class Order {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public BigDecimal getRefundedAmount() {
+        return refundedAmount;
+    }
+
+    public void setRefundedAmount(BigDecimal refundedAmount) {
+        this.refundedAmount = refundedAmount;
+    }
+
+    public LocalDateTime getRefundedAt() {
+        return refundedAt;
+    }
+
+    public void setRefundedAt(LocalDateTime refundedAt) {
+        this.refundedAt = refundedAt;
+    }
+
+    public Integer getRefundedBy() {
+        return refundedBy;
+    }
+
+    public void setRefundedBy(Integer refundedBy) {
+        this.refundedBy = refundedBy;
+    }
+
+    /** Drives the "Đã hoàn tiền" badge and hides the refund button on an order already settled. */
+    public boolean isRefunded() {
+        return refundedAt != null;
+    }
+
+    public String getRefundedAtDisplay() {
+        return refundedAt == null ? "" : refundedAt.format(DISPLAY_FORMAT);
     }
 
     public LocalDateTime getCreatedAt() {

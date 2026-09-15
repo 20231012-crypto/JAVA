@@ -52,6 +52,13 @@ public class SecurityFilter implements Filter {
             new PathRule("/admin/wallet", "wallet.topup"),
             new PathRule("/admin/customers", "customers.manage"),
             new PathRule("/admin/attendance", "attendance.view"),
+            // Refunding moves real money, so it needs its own permission and MUST stay above the
+            // plain /admin/orders rule — order matters here, first match wins.
+            new PathRule("/admin/orders/refund", "orders.refund"),
+            new PathRule("/admin/orders", "orders.manage"),
+            new PathRule("/admin/inventory", "stock.adjust"),
+            new PathRule("/admin/settings", "settings.manage"),
+            new PathRule("/admin/effects", "settings.manage"),
             new PathRule("/admin/store-report", "reports.view"),
             new PathRule("/admin/reports", "reports.view"),
             new PathRule("/admin", "admin.dashboard"),

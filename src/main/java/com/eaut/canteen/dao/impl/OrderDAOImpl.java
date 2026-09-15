@@ -15,6 +15,7 @@ import java.util.Map;
 import com.eaut.canteen.dao.OrderDAO;
 import com.eaut.canteen.model.Order;
 import com.eaut.canteen.model.OrderChannel;
+import com.eaut.canteen.model.OrderFilter;
 import com.eaut.canteen.model.OrderStatus;
 import com.eaut.canteen.model.PaymentMethod;
 import com.eaut.canteen.model.PaymentStatus;
@@ -65,6 +66,17 @@ public class OrderDAOImpl implements OrderDAO {
     private static final String SUM_REVENUE_THIS_MONTH =
             "SELECT COALESCE(SUM(total_amount), 0) FROM orders " +
             "WHERE order_status = 'COMPLETED' AND created_at >= date_trunc('month', CURRENT_DATE)";
+    // The double-refund guard: only matches while the order has never been refunded, so of two
+    // simultaneous clicks exactly one gets a row back and the other rolls back. See OrderDAO.
+    private static final String MARK_REFUNDED =
+            "UPDATE orders SET refunded_amount = ?, refunded_at = CURRENT_TIMESTAMP, refunded_by = ? " +
+            "WHERE order_id = ? AND refunded_at IS NULL";
+    // Read the points actually granted rather than recomputing them: the earn rate is a setting
+    // now, so the rate in force today need not be the one this order was rewarded under.
+    private static final String SUM_LOYALTY_AWARDED =
+            "SELECT COALESCE(SUM(points), 0) FROM loyalty_transactions " +
+            "WHERE order_id = ? AND type = 'EARN'";
+
     private static final String COUNTS_BY_STATUS =
             "SELECT order_status, COUNT(*) AS total FROM orders GROUP BY order_status";
 
@@ -291,6 +303,117 @@ public class OrderDAOImpl implements OrderDAO {
         return items;
     }
 
+    // ---- Admin order management ---------------------------------------------------------------
+
+    /**
+     * Builds the WHERE for one OrderFilter, appending a placeholder per condition and the matching
+     * value to {@code params} in the same order. Only ever concatenates fixed SQL fragments — every
+     * value the user supplied travels as a bind parameter, so a filter can narrow the query but
+     * can never change its shape.
+     */
+    private String buildFilterWhere(OrderFilter filter, List<Object> params) {
+        StringBuilder where = new StringBuilder(" WHERE 1 = 1");
+        if (filter.status() != null) {
+            where.append(" AND o.order_status = ?");
+            params.add(filter.status().name());
+        }
+        if (filter.from() != null) {
+            where.append(" AND o.created_at >= ?");
+            params.add(java.sql.Timestamp.valueOf(filter.from()));
+        }
+        if (filter.to() != null) {
+            // Exclusive, matching the half-open bounds AppClock produces.
+            where.append(" AND o.created_at < ?");
+            params.add(java.sql.Timestamp.valueOf(filter.to()));
+        }
+        if (filter.paymentMethod() != null) {
+            where.append(" AND o.payment_method = ?");
+            params.add(filter.paymentMethod().name());
+        }
+        if (filter.channel() != null) {
+            where.append(" AND o.channel = ?");
+            params.add(filter.channel().name());
+        }
+        if (filter.hasQuery()) {
+            // unaccent on both sides so "hoa" finds "Hòa" — the same treatment ProductDAO.search
+            // gives the menu, since staff type order lookups without diacritics too.
+            where.append(" AND (unaccent(o.order_code) ILIKE unaccent(?)")
+                 .append(" OR unaccent(u.full_name) ILIKE unaccent(?)")
+                 .append(" OR u.phone ILIKE ?")
+                 .append(" OR u.student_id ILIKE ?)");
+            String like = "%" + filter.query().trim() + "%";
+            params.add(like);
+            params.add(like);
+            params.add(like);
+            params.add(like);
+        }
+        return where.toString();
+    }
+
+    private void bindAll(PreparedStatement ps, List<Object> params) throws SQLException {
+        for (int i = 0; i < params.size(); i++) {
+            ps.setObject(i + 1, params.get(i));
+        }
+    }
+
+    @Override
+    public List<Order> findFiltered(Connection conn, OrderFilter filter, int limit, int offset) throws SQLException {
+        List<Object> params = new ArrayList<>();
+        String sql = BASE_SELECT + buildFilterWhere(filter, params)
+                + " ORDER BY o.created_at DESC LIMIT ? OFFSET ?";
+        params.add(limit);
+        params.add(offset);
+
+        List<Order> orders = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            bindAll(ps, params);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    orders.add(mapRow(rs));
+                }
+            }
+        }
+        return orders;
+    }
+
+    @Override
+    public int countFiltered(Connection conn, OrderFilter filter) throws SQLException {
+        List<Object> params = new ArrayList<>();
+        // Same FROM/JOIN as BASE_SELECT because the free-text filter reaches into users; counting
+        // off a narrower FROM would break the moment someone searches by student id.
+        String sql = "SELECT COUNT(*) FROM orders o "
+                + "LEFT JOIN buildings b ON o.building_id = b.building_id "
+                + "LEFT JOIN users u ON o.customer_id = u.user_id"
+                + buildFilterWhere(filter, params);
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            bindAll(ps, params);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
+    }
+
+    @Override
+    public int markRefunded(Connection conn, int orderId, BigDecimal amount, int refundedBy) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(MARK_REFUNDED)) {
+            ps.setBigDecimal(1, amount);
+            ps.setInt(2, refundedBy);
+            ps.setInt(3, orderId);
+            return ps.executeUpdate();
+        }
+    }
+
+    @Override
+    public int sumLoyaltyPointsAwarded(Connection conn, int orderId) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(SUM_LOYALTY_AWARDED)) {
+            ps.setInt(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
+    }
+
     private void setNullableInt(PreparedStatement ps, int index, Integer value) throws SQLException {
         if (value == null) {
             ps.setNull(index, Types.INTEGER);
@@ -340,6 +463,14 @@ public class OrderDAOImpl implements OrderDAO {
         }
 
         order.setNote(rs.getString("note"));
+
+        order.setRefundedAmount(rs.getBigDecimal("refunded_amount"));
+        if (rs.getTimestamp("refunded_at") != null) {
+            order.setRefundedAt(rs.getTimestamp("refunded_at").toLocalDateTime());
+        }
+        int refundedBy = rs.getInt("refunded_by");
+        order.setRefundedBy(rs.wasNull() ? null : refundedBy);
+
         order.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
         order.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
         return order;

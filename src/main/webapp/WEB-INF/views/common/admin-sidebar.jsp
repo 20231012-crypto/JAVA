@@ -23,6 +23,15 @@
                 </a>
             </li>
         </c:if>
+        <c:if test="${sessionScope.user.permissions['orders.manage']}">
+            <li>
+                <a class="admin-rail-link ${fn:startsWith(path, '/admin/orders') ? 'is-active' : ''}"
+                   href="${ctx}/admin/orders">
+                    <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-receipt"/></svg></span>
+                    <span class="admin-rail-label">Quản lý đơn hàng</span>
+                </a>
+            </li>
+        </c:if>
         <c:if test="${sessionScope.user.permissions['customers.manage']}">
             <li>
                 <a class="admin-rail-link ${fn:startsWith(path, '/admin/customers') ? 'is-active' : ''}"

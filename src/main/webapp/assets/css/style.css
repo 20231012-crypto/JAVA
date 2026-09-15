@@ -600,17 +600,29 @@ img {
     padding: 18px 20px;
 }
 
+/* display:block so the tile stacks whether the page used <div> or <span> for these — margin-top
+   on .stat-value only ever made sense as a block, and a span version was silently rendering the
+   label and the value on one line. */
 .stat-tile .stat-label {
+    display: block;
     font-size: 0.85rem;
     color: var(--color-institutional-dark);
     font-weight: 500;
 }
 
 .stat-tile .stat-value {
+    display: block;
     font-size: 1.6rem;
     font-weight: 700;
     color: var(--color-text);
     margin-top: 4px;
+}
+
+/* For a tile whose value is a date or a status pill rather than a number — 1.6rem would wrap a
+   timestamp onto two lines and blow a badge up out of proportion. */
+.stat-tile .stat-value-sm {
+    font-size: 1rem;
+    line-height: 1.4;
 }
 
 /* ===== Tables (admin/staff data views) ===== */
@@ -2202,5 +2214,177 @@ body.has-admin-rail {
         position: static;
         flex-direction: row;
         flex-wrap: wrap;
+    }
+}
+
+/* ===== Admin components (rebuilt admin area) ===== */
+
+/* Secondary text inside a table cell or a form. .form-group .hint already existed, but the data
+   tables use a bare .hint for the second line of a cell and it was rendering unstyled. */
+.hint {
+    color: var(--color-text-muted);
+    font-size: 0.82rem;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 8px;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
+/* Filter toolbar. A wrapping grid rather than a flex row: the order screen has six controls and
+   on a laptop they have to fold onto a second line without the last one becoming a sliver. */
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    padding: 14px 16px;
+    margin-top: 16px;
+    background: var(--color-institutional-soft);
+    border-radius: var(--radius-card);
+}
+
+.toolbar-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 150px;
+    flex: 0 1 auto;
+}
+
+.toolbar-field label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+}
+
+.toolbar-field input,
+.toolbar-field select {
+    padding: 8px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-btn);
+    font-family: inherit;
+    font-size: 0.9rem;
+    background: var(--color-surface);
+    color: var(--color-text);
+}
+
+.toolbar-field input:focus,
+.toolbar-field select:focus {
+    outline: 2px solid var(--color-institutional);
+    outline-offset: 1px;
+}
+
+.toolbar-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-left: auto;
+}
+
+/* A wide table on a narrow screen scrolls inside its own box rather than making the whole page
+   scroll sideways — losing the nav off the left edge is much worse than losing a column. */
+.table-scroll {
+    overflow-x: auto;
+    margin-top: 16px;
+}
+
+/* Order status timeline. The vertical rule is drawn on the list itself so it spans every entry,
+   and each dot sits on top of it. */
+.timeline {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0 0 0 22px;
+    position: relative;
+}
+
+.timeline::before {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    background: var(--color-border);
+}
+
+.timeline-item {
+    position: relative;
+    padding: 0 0 18px;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: -22px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--color-institutional);
+    border: 2px solid var(--color-surface);
+}
+
+.timeline-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: baseline;
+    font-weight: 600;
+}
+
+.timeline-time {
+    font-weight: 400;
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+}
+
+.timeline-note {
+    margin-top: 2px;
+    font-size: 0.9rem;
+}
+
+/* Destructive actions get their own visually walled-off block so they are never adjacent to an
+   ordinary save button. */
+.danger-zone {
+    margin-top: 12px;
+    padding: 16px 18px;
+    border: 1px solid var(--color-danger-soft);
+    border-left: 4px solid var(--color-danger);
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--color-danger-soft) 35%, var(--color-surface));
+}
+
+.danger-zone h3 {
+    color: var(--color-danger);
+    margin-bottom: 8px;
+}
+
+.danger-zone p {
+    font-size: 0.92rem;
+    margin-bottom: 10px;
+}
+
+.danger-zone code {
+    background: var(--color-surface);
+    padding: 1px 6px;
+    border-radius: var(--radius-btn);
+    font-weight: 700;
+}
+
+@media screen and (max-width: 768px) {
+    .toolbar-field {
+        min-width: 0;
+        flex: 1 1 140px;
+    }
+
+    .toolbar-actions {
+        margin-left: 0;
+        flex: 1 1 100%;
     }
 }

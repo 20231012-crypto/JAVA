@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.eaut.canteen.model.Order;
+import com.eaut.canteen.model.OrderFilter;
 import com.eaut.canteen.model.OrderStatus;
 import com.eaut.canteen.model.RecentActivityItem;
 import com.eaut.canteen.model.RevenuePoint;
@@ -65,4 +66,32 @@ public interface OrderDAO {
      * the catalog page's "vừa có người đặt món này" toast. Not fabricated: reads actual order_items.
      */
     List<RecentActivityItem> findRecentActivity(Connection conn, int limit) throws SQLException;
+
+    // ---- Admin order management -------------------------------------------------------------
+
+    /**
+     * One page of orders matching {@code filter}, newest first. Pair every call with
+     * {@link #countFiltered} using the same filter, or the pager will disagree with the rows.
+     */
+    List<Order> findFiltered(Connection conn, OrderFilter filter, int limit, int offset) throws SQLException;
+
+    /** Total rows {@link #findFiltered} would return for this filter, ignoring paging. */
+    int countFiltered(Connection conn, OrderFilter filter) throws SQLException;
+
+    /**
+     * Claims an order for refund. This is the guard against paying a student back twice: the
+     * UPDATE only matches while refunded_at is still NULL, so of two admins clicking at the same
+     * moment exactly one gets a row and the other must roll back. Never replace this with a
+     * SELECT-then-UPDATE — that is the race it exists to close.
+     *
+     * @return affected row count — 0 means this order was already refunded.
+     */
+    int markRefunded(Connection conn, int orderId, BigDecimal amount, int refundedBy) throws SQLException;
+
+    /**
+     * Loyalty points actually awarded for an order, read back from the ledger rather than
+     * recomputed from the current earn rate — the rate is a setting now and may have changed since
+     * the order completed, so recomputing would claw back the wrong number.
+     */
+    int sumLoyaltyPointsAwarded(Connection conn, int orderId) throws SQLException;
 }
