@@ -15,6 +15,8 @@ public class Order {
     private Integer buildingId;
     private String buildingName;
     private String customerName;
+    /** Contact number for the delivery screen's "Gọi khách" button; null for walk-in COUNTER sales. */
+    private String customerPhone;
     private String customerStudentId;
     private String customerClassName;
     private OrderChannel channel;
@@ -82,6 +84,14 @@ public class Order {
 
     public void setCustomerName(String customerName) {
         this.customerName = customerName;
+    }
+
+    public String getCustomerPhone() {
+        return customerPhone;
+    }
+
+    public void setCustomerPhone(String customerPhone) {
+        this.customerPhone = customerPhone;
     }
 
     /** MSSV — null unless the customer is an EAUT student who's gone through the checkout info gate. */

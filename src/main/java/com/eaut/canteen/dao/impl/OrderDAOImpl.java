@@ -18,12 +18,14 @@ import com.eaut.canteen.model.OrderChannel;
 import com.eaut.canteen.model.OrderStatus;
 import com.eaut.canteen.model.PaymentMethod;
 import com.eaut.canteen.model.PaymentStatus;
+import com.eaut.canteen.model.RevenuePoint;
 
 public class OrderDAOImpl implements OrderDAO {
 
     private static final String BASE_SELECT =
             "SELECT o.*, b.name AS building_name, " +
-            "u.full_name AS customer_name, u.student_id AS customer_student_id, u.class_name AS customer_class_name " +
+            "u.full_name AS customer_name, u.phone AS customer_phone, " +
+            "u.student_id AS customer_student_id, u.class_name AS customer_class_name " +
             "FROM orders o " +
             "LEFT JOIN buildings b ON o.building_id = b.building_id " +
             "LEFT JOIN users u ON o.customer_id = u.user_id ";
@@ -51,6 +53,21 @@ public class OrderDAOImpl implements OrderDAO {
             "WHERE order_status = 'COMPLETED' AND DATE(created_at) = CURRENT_DATE";
     private static final String COUNT_BY_STATUS =
             "SELECT COUNT(*) FROM orders WHERE order_status = ?";
+    // generate_series gives every day in the window a row, so a day with no trade shows as a real
+    // zero on the chart instead of being skipped and making the gap invisible.
+    private static final String REVENUE_BY_DAY =
+            "SELECT d.day::date AS day, " +
+            "COALESCE(SUM(o.total_amount) FILTER (WHERE o.order_status = 'COMPLETED'), 0) AS revenue, " +
+            "COUNT(o.order_id) FILTER (WHERE o.order_status = 'COMPLETED') AS order_count " +
+            "FROM generate_series(CURRENT_DATE - make_interval(days => ?), CURRENT_DATE, INTERVAL '1 day') AS d(day) " +
+            "LEFT JOIN orders o ON DATE(o.created_at) = d.day::date " +
+            "GROUP BY d.day ORDER BY d.day";
+    private static final String SUM_REVENUE_THIS_MONTH =
+            "SELECT COALESCE(SUM(total_amount), 0) FROM orders " +
+            "WHERE order_status = 'COMPLETED' AND created_at >= date_trunc('month', CURRENT_DATE)";
+    private static final String COUNTS_BY_STATUS =
+            "SELECT order_status, COUNT(*) AS total FROM orders GROUP BY order_status";
+
     private static final String COUNT_BY_HOUR_TODAY =
             "SELECT EXTRACT(HOUR FROM created_at) AS hour_of_day, COUNT(*) FROM orders " +
             "WHERE DATE(created_at) = CURRENT_DATE GROUP BY hour_of_day ORDER BY hour_of_day";
@@ -184,6 +201,45 @@ public class OrderDAOImpl implements OrderDAO {
     }
 
     @Override
+    public List<RevenuePoint> revenueByDay(Connection conn, int days) throws SQLException {
+        List<RevenuePoint> points = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(REVENUE_BY_DAY)) {
+            // days - 1: the series is inclusive at both ends, so "7 days" means today plus six back.
+            ps.setInt(1, Math.max(0, days - 1));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    points.add(new RevenuePoint(
+                            rs.getDate("day").toLocalDate(),
+                            rs.getBigDecimal("revenue"),
+                            rs.getInt("order_count")));
+                }
+            }
+        }
+        return points;
+    }
+
+    @Override
+    public BigDecimal sumRevenueThisMonth(Connection conn) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(SUM_REVENUE_THIS_MONTH);
+             ResultSet rs = ps.executeQuery()) {
+            rs.next();
+            return rs.getBigDecimal(1);
+        }
+    }
+
+    @Override
+    public Map<String, Integer> countsByStatus(Connection conn) throws SQLException {
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        try (PreparedStatement ps = conn.prepareStatement(COUNTS_BY_STATUS);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                counts.put(rs.getString("order_status"), rs.getInt("total"));
+            }
+        }
+        return counts;
+    }
+
+    @Override
     public int countByStatus(Connection conn, OrderStatus status) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(COUNT_BY_STATUS)) {
             ps.setString(1, status.name());
@@ -255,6 +311,7 @@ public class OrderDAOImpl implements OrderDAO {
         order.setBuildingId(rs.wasNull() ? null : buildingId);
         order.setBuildingName(rs.getString("building_name"));
         order.setCustomerName(rs.getString("customer_name"));
+        order.setCustomerPhone(rs.getString("customer_phone"));
         order.setCustomerStudentId(rs.getString("customer_student_id"));
         order.setCustomerClassName(rs.getString("customer_class_name"));
 

@@ -3,6 +3,9 @@
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
+<%-- On /admin/* the vertical rail carries every admin destination, so the top nav drops those
+     links rather than showing each one twice. Sales/store links stay, because the rail has none. --%>
+<c:set var="adminRailVisible" value="${fn:startsWith(requestPath, '/admin')}" />
 <header class="site-header">
     <a class="logo" href="${ctx}/products">
         <img src="${ctx}/assets/images/brand/eaut-logo.jpg" alt="EAUT" style="height:32px; vertical-align:middle; margin-right:8px;"
@@ -39,19 +42,14 @@
             <%-- Staff/admin: each link only shows if this user's role actually carries that
                  permission — an admin-created custom role only sees what it was granted. --%>
             <c:otherwise>
-                <c:if test="${sessionScope.user.permissions['admin.dashboard']}"><a href="${ctx}/admin">Tổng quan</a></c:if>
-                <c:if test="${sessionScope.user.permissions['categories.manage']}"><a href="${ctx}/admin/categories">Danh mục</a></c:if>
-                <c:if test="${sessionScope.user.permissions['products.manage']}"><a href="${ctx}/admin/products">Sản phẩm</a></c:if>
-                <c:if test="${sessionScope.user.permissions['buildings.manage']}"><a href="${ctx}/admin/buildings">Tòa nhà</a></c:if>
-                <c:if test="${sessionScope.user.permissions['banners.manage']}"><a href="${ctx}/admin/banners">Banner</a></c:if>
-                <c:if test="${sessionScope.user.permissions['stock.import']}"><a href="${ctx}/admin/stock-imports">Nhập hàng</a></c:if>
-                <c:if test="${sessionScope.user.permissions['staff.manage']}"><a href="${ctx}/admin/staff">Nhân viên</a></c:if>
-                <c:if test="${sessionScope.user.permissions['roles.manage']}"><a href="${ctx}/admin/roles">Vai trò &amp; phân quyền</a></c:if>
-                <c:if test="${sessionScope.user.permissions['wallet.topup']}"><a href="${ctx}/admin/wallet">Nạp ví EAUT Pay</a></c:if>
+                <c:if test="${not adminRailVisible}">
+                    <c:if test="${sessionScope.user.permissions['admin.dashboard']}"><a href="${ctx}/admin">Quản trị</a></c:if>
+                </c:if>
                 <c:if test="${sessionScope.user.permissions['orders.queue']}"><a href="${ctx}/sales/orders">Đơn hàng</a></c:if>
                 <c:if test="${sessionScope.user.permissions['sales.counter']}"><a href="${ctx}/sales/counter-sale">Bán tại quầy</a></c:if>
                 <c:if test="${sessionScope.user.permissions['store.transfer']}"><a href="${ctx}/store/transfers">Chuyển hàng lên kệ</a></c:if>
                 <c:if test="${sessionScope.user.permissions['store.fulfillment']}"><a href="${ctx}/store/orders">Đơn cần giao</a></c:if>
+                <a href="${ctx}/attendance">Chấm công</a>
             </c:otherwise>
         </c:choose>
     </nav>
@@ -74,3 +72,9 @@
         </c:otherwise>
     </c:choose>
 </header>
+
+<%-- Admin screens also get the vertical rail. Included here rather than in each of the eleven
+     admin JSPs so a new /admin/* page picks it up by existing. --%>
+<c:if test="${adminRailVisible}">
+    <jsp:include page="/WEB-INF/views/common/admin-sidebar.jsp" />
+</c:if>

@@ -51,6 +51,16 @@
                                 </div>
                                 <div><c:out value="${o.buildingName}" /> · <fmt:formatNumber value="${o.totalAmount}" type="number" groupingUsed="true" />₫</div>
                                 <div class="hint"><c:out value="${o.paymentMethod.displayName}" /> · <c:out value="${o.paymentStatus.displayName}" /></div>
+                                <%-- A delivery that cannot find the customer is the one time staff
+                                     genuinely need the phone; tel: hands it to the phone dialler in
+                                     one tap. Hidden for walk-in COUNTER orders, which have no
+                                     customer row, and for anyone who has no number on file. --%>
+                                <c:if test="${not empty o.customerPhone}">
+                                    <div class="kanban-customer">
+                                        <c:out value="${o.customerName}" />
+                                        <a class="btn btn-sm btn-secondary" href="tel:${o.customerPhone}">☎ Gọi khách</a>
+                                    </div>
+                                </c:if>
                                 <form method="post" action="${ctx}/store/orders/pick" style="margin-top:10px;">
                                     <input type="hidden" name="orderId" value="${o.orderId}">
                                     <button type="submit" class="btn btn-sm btn-primary">Lấy hàng &amp; giao</button>
@@ -74,6 +84,16 @@
                                 </div>
                                 <div><c:out value="${o.buildingName}" /> · <fmt:formatNumber value="${o.totalAmount}" type="number" groupingUsed="true" />₫</div>
                                 <div class="hint"><c:out value="${o.paymentMethod.displayName}" /> · <c:out value="${o.paymentStatus.displayName}" /></div>
+                                <%-- A delivery that cannot find the customer is the one time staff
+                                     genuinely need the phone; tel: hands it to the phone dialler in
+                                     one tap. Hidden for walk-in COUNTER orders, which have no
+                                     customer row, and for anyone who has no number on file. --%>
+                                <c:if test="${not empty o.customerPhone}">
+                                    <div class="kanban-customer">
+                                        <c:out value="${o.customerName}" />
+                                        <a class="btn btn-sm btn-secondary" href="tel:${o.customerPhone}">☎ Gọi khách</a>
+                                    </div>
+                                </c:if>
                                 <form method="post" action="${ctx}/store/orders/complete" style="margin-top:10px;">
                                     <input type="hidden" name="orderId" value="${o.orderId}">
                                     <button type="submit" class="btn btn-sm btn-secondary">Đã giao xong</button>

@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <fmt:setLocale value="vi_VN" scope="request" />
 <c:if test="${empty pageTitle}">
     <c:set var="pageTitle" value="Căng tin EAUT" scope="request" />
@@ -29,4 +30,15 @@
 
     <title><c:out value="${pageTitle}" /> - Căng tin EAUT</title>
 </head>
-<body data-context-path="${pageContext.request.contextPath}">
+<%-- The URL the browser actually asked for. Inside a forwarded JSP, servletPath is the view file
+     (/WEB-INF/views/...), not the route, so the original has to come from the forward attribute;
+     the fallback covers a JSP reached without a forward. Set once here in request scope so nav.jsp
+     and admin-sidebar.jsp can both use it. --%>
+<c:set var="requestPath" scope="request"
+       value="${empty requestScope['jakarta.servlet.forward.servlet_path']
+                ? pageContext.request.servletPath
+                : requestScope['jakarta.servlet.forward.servlet_path']}" />
+<%-- Admin screens get the fixed left rail, so the body has to keep clear of it. Derived from the
+     path rather than set by each page, so a new /admin/* screen picks it up automatically. --%>
+<body data-context-path="${pageContext.request.contextPath}"
+      class="${fn:startsWith(requestPath, '/admin') ? 'has-admin-rail' : ''}">

@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import com.eaut.canteen.model.AccountStatus;
+import com.eaut.canteen.model.CustomerSummary;
 import com.eaut.canteen.model.User;
 
 public interface UserDAO {
@@ -28,6 +29,17 @@ public interface UserDAO {
 
     /** Every non-customer role, for the admin staff-management screen. */
     List<User> findAllStaff(Connection conn) throws SQLException;
+
+    /**
+     * One page of customer accounts with what each has spent, for the admin customer screen.
+     * Includes DISABLED accounts — an admin managing accounts has to be able to see the ones
+     * they have locked. A null/blank search matches everyone; otherwise it matches name, username,
+     * email or phone, ignoring case and Vietnamese diacritics.
+     */
+    List<CustomerSummary> findCustomers(Connection conn, String search, int limit, int offset) throws SQLException;
+
+    /** Total matches for the same search as {@link #findCustomers}, for the page count. */
+    int countCustomers(Connection conn, String search) throws SQLException;
 
     void updateStatus(Connection conn, int userId, AccountStatus status) throws SQLException;
 

@@ -12,6 +12,7 @@ import java.util.List;
 import com.eaut.canteen.dao.UserDAO;
 import com.eaut.canteen.model.AccountStatus;
 import com.eaut.canteen.model.AuthProvider;
+import com.eaut.canteen.model.CustomerSummary;
 import com.eaut.canteen.model.Role;
 import com.eaut.canteen.model.User;
 
@@ -40,6 +41,28 @@ public class UserDAOImpl implements UserDAO {
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String FIND_ALL_STAFF =
             BASE_SELECT + "WHERE r.is_customer_default = FALSE ORDER BY r.display_name, u.full_name";
+
+    // Spend figures come from a LEFT JOIN on an aggregate rather than a per-row subquery, so the
+    // whole page costs one query. COMPLETED only: a pending or rejected order is not money spent.
+    // The LEFT JOIN keeps customers who have never ordered in the list (as 0 / NULL).
+    private static final String CUSTOMER_SELECT =
+            "SELECT u.*, r.role_key, r.display_name AS role_display_name, r.is_system AS role_is_system, " +
+            "r.is_customer_default AS role_is_customer_default, " +
+            "COALESCE(spend.order_count, 0) AS order_count, " +
+            "COALESCE(spend.total_spent, 0) AS total_spent, spend.last_order_at " +
+            "FROM users u JOIN roles r ON r.role_id = u.role_id " +
+            "LEFT JOIN (" +
+            "  SELECT o.customer_id, COUNT(*) AS order_count, SUM(o.total_amount) AS total_spent, " +
+            "         MAX(o.created_at) AS last_order_at " +
+            "  FROM orders o WHERE o.order_status = 'COMPLETED' GROUP BY o.customer_id" +
+            ") spend ON spend.customer_id = u.user_id " +
+            "WHERE r.is_customer_default = TRUE";
+    private static final String CUSTOMER_SEARCH_CLAUSE =
+            " AND (unaccent(u.full_name) ILIKE unaccent(?) OR u.username ILIKE ? " +
+            "OR u.email ILIKE ? OR COALESCE(u.phone, '') ILIKE ?)";
+    private static final String COUNT_CUSTOMERS =
+            "SELECT COUNT(*) FROM users u JOIN roles r ON r.role_id = u.role_id " +
+            "WHERE r.is_customer_default = TRUE";
     private static final String UPDATE_STATUS =
             "UPDATE users SET status = ? WHERE user_id = ?";
     private static final String FIND_BY_ROLE_ID =
@@ -159,6 +182,61 @@ public class UserDAOImpl implements UserDAO {
             }
         }
         return staff;
+    }
+
+    @Override
+    public List<CustomerSummary> findCustomers(Connection conn, String search, int limit, int offset)
+            throws SQLException {
+        StringBuilder sql = new StringBuilder(CUSTOMER_SELECT);
+        boolean searching = search != null && !search.isBlank();
+        if (searching) {
+            sql.append(CUSTOMER_SEARCH_CLAUSE);
+        }
+        sql.append(" ORDER BY spend.last_order_at DESC NULLS LAST, u.created_at DESC LIMIT ? OFFSET ?");
+
+        List<CustomerSummary> customers = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int index = 1;
+            if (searching) {
+                String like = "%" + search.trim() + "%";
+                for (int i = 0; i < 4; i++) {
+                    ps.setString(index++, like);
+                }
+            }
+            ps.setInt(index++, limit);
+            ps.setInt(index, offset);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    customers.add(new CustomerSummary(
+                            mapRow(rs),
+                            rs.getInt("order_count"),
+                            rs.getBigDecimal("total_spent"),
+                            rs.getTimestamp("last_order_at") == null
+                                    ? null : rs.getTimestamp("last_order_at").toLocalDateTime()));
+                }
+            }
+        }
+        return customers;
+    }
+
+    @Override
+    public int countCustomers(Connection conn, String search) throws SQLException {
+        StringBuilder sql = new StringBuilder(COUNT_CUSTOMERS);
+        boolean searching = search != null && !search.isBlank();
+        if (searching) {
+            sql.append(CUSTOMER_SEARCH_CLAUSE);
+        }
+        try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            if (searching) {
+                String like = "%" + search.trim() + "%";
+                for (int i = 1; i <= 4; i++) {
+                    ps.setString(i, like);
+                }
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
     }
 
     @Override
