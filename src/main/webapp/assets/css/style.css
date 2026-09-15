@@ -2710,3 +2710,13 @@ body.has-admin-rail {
         gap: 16px;
     }
 }
+
+/* Medium inline input for name/email cells in the editable staff table. */
+.input-mid {
+    width: 160px;
+    padding: 5px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-btn);
+    font-family: inherit;
+    font-size: 0.9rem;
+}

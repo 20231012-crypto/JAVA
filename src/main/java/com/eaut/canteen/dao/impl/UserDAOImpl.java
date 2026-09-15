@@ -59,7 +59,10 @@ public class UserDAOImpl implements UserDAO {
             "WHERE r.is_customer_default = TRUE";
     private static final String CUSTOMER_SEARCH_CLAUSE =
             " AND (unaccent(u.full_name) ILIKE unaccent(?) OR u.username ILIKE ? " +
-            "OR u.email ILIKE ? OR COALESCE(u.phone, '') ILIKE ?)";
+            // student_id belongs here: an MSSV is the identifier staff are actually handed at the
+            // counter, and leaving it out made the one number they always have unsearchable.
+            "OR u.email ILIKE ? OR COALESCE(u.phone, '') ILIKE ? " +
+            "OR COALESCE(u.student_id, '') ILIKE ?)";
     private static final String COUNT_CUSTOMERS =
             "SELECT COUNT(*) FROM users u JOIN roles r ON r.role_id = u.role_id " +
             "WHERE r.is_customer_default = TRUE";
@@ -81,6 +84,19 @@ public class UserDAOImpl implements UserDAO {
             "UPDATE users SET on_duty = ? WHERE user_id = ?";
     // "Active" means placed an order, not merely registered: a registration count only rises and
     // so tells a manager nothing about whether the canteen is being used.
+    private static final String UPDATE_STAFF_DETAILS =
+            "UPDATE users SET full_name = ?, email = ?, phone = ? WHERE user_id = ?";
+    private static final String UPDATE_ROLE =
+            "UPDATE users SET role_id = ? WHERE user_id = ?";
+    private static final String UPDATE_PASSWORD =
+            "UPDATE users SET password_hash = ? WHERE user_id = ?";
+    // Counts accounts that could still sign in and use the permission, which is why it filters on
+    // status: a DISABLED admin is not a way back into the system.
+    private static final String COUNT_PERMISSION_HOLDERS =
+            "SELECT COUNT(*) FROM users u " +
+            "JOIN role_permissions rp ON rp.role_id = u.role_id " +
+            "WHERE rp.permission_key = ? AND u.status = 'ACTIVE'";
+
     private static final String COUNT_ACTIVE_CUSTOMERS =
             "SELECT COUNT(DISTINCT customer_id) FROM orders " +
             "WHERE customer_id IS NOT NULL AND created_at >= ?";
@@ -214,7 +230,9 @@ public class UserDAOImpl implements UserDAO {
             int index = 1;
             if (searching) {
                 String like = "%" + search.trim() + "%";
-                for (int i = 0; i < 4; i++) {
+                // One bind per placeholder in CUSTOMER_SEARCH_CLAUSE — keep this count in step
+                // with that clause or the LIMIT/OFFSET binds land on the wrong indexes.
+                for (int i = 0; i < 5; i++) {
                     ps.setString(index++, like);
                 }
             }
@@ -244,7 +262,9 @@ public class UserDAOImpl implements UserDAO {
         try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             if (searching) {
                 String like = "%" + search.trim() + "%";
-                for (int i = 1; i <= 4; i++) {
+                // Must match findCustomers' bind count: the two share CUSTOMER_SEARCH_CLAUSE, and
+                // if they disagree the pager reports a different total than the rows it shows.
+                for (int i = 1; i <= 5; i++) {
                     ps.setString(i, like);
                 }
             }
@@ -407,5 +427,45 @@ public class UserDAOImpl implements UserDAO {
             user.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
         }
         return user;
+    }
+
+    @Override
+    public void updateStaffDetails(Connection conn, int userId, String fullName, String email,
+                                   String phone) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(UPDATE_STAFF_DETAILS)) {
+            ps.setString(1, fullName);
+            ps.setString(2, email);
+            ps.setString(3, phone);
+            ps.setInt(4, userId);
+            ps.executeUpdate();
+        }
+    }
+
+    @Override
+    public void updateRole(Connection conn, int userId, int roleId) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(UPDATE_ROLE)) {
+            ps.setInt(1, roleId);
+            ps.setInt(2, userId);
+            ps.executeUpdate();
+        }
+    }
+
+    @Override
+    public void updatePassword(Connection conn, int userId, String passwordHash) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(UPDATE_PASSWORD)) {
+            ps.setString(1, passwordHash);
+            ps.setInt(2, userId);
+            ps.executeUpdate();
+        }
+    }
+
+    @Override
+    public int countActiveHoldersOfPermission(Connection conn, String permissionKey) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(COUNT_PERMISSION_HOLDERS)) {
+            ps.setString(1, permissionKey);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
     }
 }

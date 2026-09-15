@@ -17,6 +17,16 @@ import com.eaut.canteen.model.WalletTransactionType;
 
 public class WalletDAOImpl implements WalletDAO {
 
+    // LEFT JOIN, not JOIN: a student who has never transacted has a ledger total of zero, and if
+    // their stored balance is not zero that is exactly the drift worth catching.
+    private static final String FIND_BALANCE_DRIFT =
+            "SELECT u.user_id, u.full_name, u.username, u.student_id, u.wallet_balance, " +
+            "COALESCE(SUM(w.amount), 0) AS ledger_total " +
+            "FROM users u LEFT JOIN wallet_transactions w ON w.user_id = u.user_id " +
+            "GROUP BY u.user_id, u.full_name, u.username, u.student_id, u.wallet_balance " +
+            "HAVING u.wallet_balance <> COALESCE(SUM(w.amount), 0) " +
+            "ORDER BY ABS(u.wallet_balance - COALESCE(SUM(w.amount), 0)) DESC";
+
     private static final String INSERT =
             "INSERT INTO wallet_transactions (user_id, amount, type, order_id, created_by, note) " +
             "VALUES (?, ?, ?, ?, ?, ?)";
@@ -166,5 +176,23 @@ public class WalletDAOImpl implements WalletDAO {
         } else {
             ps.setInt(index, value);
         }
+    }
+
+    @Override
+    public List<com.eaut.canteen.model.WalletDrift> findBalanceDrift(Connection conn) throws SQLException {
+        List<com.eaut.canteen.model.WalletDrift> rows = new java.util.ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(FIND_BALANCE_DRIFT);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                rows.add(new com.eaut.canteen.model.WalletDrift(
+                        rs.getInt("user_id"),
+                        rs.getString("full_name"),
+                        rs.getString("username"),
+                        rs.getString("student_id"),
+                        rs.getBigDecimal("wallet_balance"),
+                        rs.getBigDecimal("ledger_total")));
+            }
+        }
+        return rows;
     }
 }

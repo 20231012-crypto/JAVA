@@ -5,6 +5,14 @@
 <jsp:include page="/WEB-INF/views/common/nav.jsp" />
 <main class="page-content">
     <div class="container">
+        <c:if test="${not empty sessionScope.actionMessage}">
+            <div class="alert alert-success"><c:out value="${sessionScope.actionMessage}" /></div>
+            <c:remove var="actionMessage" scope="session" />
+        </c:if>
+        <c:if test="${not empty sessionScope.actionError}">
+            <div class="alert alert-error"><c:out value="${sessionScope.actionError}" /></div>
+            <c:remove var="actionError" scope="session" />
+        </c:if>
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
             <h1>Tài khoản nhân viên</h1>
             <c:if test="${sessionScope.user.permissions['roles.manage']}">
@@ -81,6 +89,64 @@
                 </c:forEach>
             </tbody>
         </table>
+
+        <h2>Sửa tài khoản</h2>
+        <p class="hint">
+            Tên đăng nhập không sửa được — đó là thứ mọi dòng lịch sử thao tác đang tham chiếu tới.
+            Nhân viên nghỉ việc thì khóa tài khoản, không xóa: bản ghi lịch sử giữ chặt tài khoản lại.
+        </p>
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Tài khoản</th><th>Họ tên</th><th>Email</th><th>SĐT</th><th>Vai trò</th><th></th></tr>
+                </thead>
+                <tbody>
+                    <c:forEach var="u" items="${staff}">
+                        <tr>
+                            <%-- One form per row rather than one for the table: a mistyped email on
+                                 one account must not block saving any of the others. --%>
+                            <form method="post" action="${pageContext.request.contextPath}/admin/staff/update" id="edit-${u.userId}"></form>
+                            <td><c:out value="${u.username}" /></td>
+                            <td>
+                                <input form="edit-${u.userId}" type="text" name="fullName"
+                                       value="<c:out value='${u.fullName}'/>" required class="input-mid">
+                            </td>
+                            <td>
+                                <input form="edit-${u.userId}" type="email" name="email"
+                                       value="<c:out value='${u.email}'/>" required class="input-mid">
+                            </td>
+                            <td>
+                                <input form="edit-${u.userId}" type="text" name="phone"
+                                       value="<c:out value='${u.phone}'/>" class="input-tiny">
+                            </td>
+                            <td>
+                                <select form="edit-${u.userId}" name="roleId">
+                                    <c:forEach var="r" items="${assignableRoles}">
+                                        <option value="${r.roleId}" ${r.roleId == u.role.roleId ? 'selected' : ''}>
+                                            <c:out value="${r.displayName}" />
+                                        </option>
+                                    </c:forEach>
+                                </select>
+                            </td>
+                            <td class="table-actions">
+                                <input form="edit-${u.userId}" type="hidden" name="csrfToken" value="${csrfToken}">
+                                <input form="edit-${u.userId}" type="hidden" name="userId" value="${u.userId}">
+                                <button form="edit-${u.userId}" type="submit" class="btn btn-sm btn-primary">Lưu</button>
+
+                                <form method="post" action="${pageContext.request.contextPath}/admin/staff/password" class="inline-form">
+                                    <input type="hidden" name="csrfToken" value="${csrfToken}">
+                                    <input type="hidden" name="userId" value="${u.userId}">
+                                    <label class="visually-hidden" for="pw-${u.userId}">Mật khẩu mới cho <c:out value="${u.username}" /></label>
+                                    <input type="password" id="pw-${u.userId}" name="newPassword"
+                                           minlength="6" placeholder="Mật khẩu mới" class="input-mid" autocomplete="new-password">
+                                    <button type="submit" class="btn btn-sm btn-secondary">Đặt lại</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </c:forEach>
+                </tbody>
+            </table>
+        </div>
     </div>
 </main>
 <jsp:include page="/WEB-INF/views/common/footer.jsp" />

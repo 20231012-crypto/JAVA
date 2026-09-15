@@ -142,13 +142,31 @@ public class WalletServlet extends HttpServlet {
             throws SQLException, ServletException, IOException {
         req.setAttribute("pageTitle", "Nạp ví EAUT Pay");
         req.setAttribute("pendingRequests", walletDAO.findPendingTopupRequests(conn));
+        // The reconciliation. An empty list is the check passing; anything in it means money moved
+        // without its ledger row, which stays invisible until a student disputes their balance.
+        req.setAttribute("balanceDrift", walletDAO.findBalanceDrift(conn));
         if (error != null) {
             req.setAttribute("error", error);
         }
         if (query != null && !query.isBlank()) {
+            // Exact username/email first, then the fuzzy search. Staff are handed an MSSV or a
+            // phone number far more often than a username, and the exact-match-only lookup made
+            // both unsearchable — findCustomers matches name, username, email, phone and student
+            // id, diacritic-insensitively.
             User customer = userDAO.findByUsername(conn, query.trim());
             if (customer == null) {
                 customer = userDAO.findByEmail(conn, query.trim());
+            }
+            if (customer == null) {
+                java.util.List<com.eaut.canteen.model.CustomerSummary> matches =
+                        userDAO.findCustomers(conn, query.trim(), 6, 0);
+                if (matches.size() == 1) {
+                    // One unambiguous hit resolves straight to the wallet, so looking someone up
+                    // by MSSV is a single step rather than search-then-click.
+                    customer = userDAO.findById(conn, matches.get(0).getUser().getUserId());
+                } else if (!matches.isEmpty()) {
+                    req.setAttribute("candidates", matches);
+                }
             }
             if (customer == null || !customer.getRole().isCustomerDefault()) {
                 req.setAttribute("notFound", true);

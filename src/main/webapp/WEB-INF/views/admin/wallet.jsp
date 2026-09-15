@@ -104,6 +104,68 @@
                 </c:otherwise>
             </c:choose>
         </c:if>
+
+        <c:if test="${not empty candidates}">
+            <h2>Có nhiều kết quả khớp</h2>
+            <p class="hint">Chọn đúng sinh viên để xem ví.</p>
+            <table class="data-table">
+                <thead><tr><th>Họ tên</th><th>MSSV</th><th>Liên hệ</th><th></th></tr></thead>
+                <tbody>
+                    <c:forEach var="row" items="${candidates}">
+                        <tr>
+                            <td><c:out value="${row.user.fullName}" /></td>
+                            <td><c:out value="${row.user.studentId}" /></td>
+                            <td>
+                                <c:out value="${row.user.email}" />
+                                <c:if test="${not empty row.user.phone}"><div class="hint"><c:out value="${row.user.phone}" /></div></c:if>
+                            </td>
+                            <td class="table-actions">
+                                <a class="btn btn-sm btn-secondary"
+                                   href="${ctx}/admin/wallet?q=${fn:escapeXml(row.user.username)}">Xem ví</a>
+                            </td>
+                        </tr>
+                    </c:forEach>
+                </tbody>
+            </table>
+        </c:if>
+
+        <h2>Đối soát số dư</h2>
+        <%-- Nothing in the database forces users.wallet_balance to equal the sum of that user's
+             wallet_transactions — no constraint, no trigger. So this table is the only way to find
+             out, and an empty one is the check passing. --%>
+        <c:choose>
+            <c:when test="${empty balanceDrift}">
+                <div class="alert alert-success">
+                    Số dư của mọi ví đều khớp với sổ giao dịch.
+                </div>
+            </c:when>
+            <c:otherwise>
+                <div class="alert alert-error">
+                    <strong>${fn:length(balanceDrift)} ví lệch so với sổ giao dịch.</strong>
+                    Có nghĩa là đã có luồng nào đó cộng/trừ tiền mà không ghi sổ — cần kiểm tra trước khi tin số dư.
+                </div>
+                <div class="table-scroll">
+                    <table class="data-table">
+                        <thead><tr><th>Sinh viên</th><th>Số dư đang lưu</th><th>Tổng theo sổ</th><th>Lệch</th></tr></thead>
+                        <tbody>
+                            <c:forEach var="d" items="${balanceDrift}">
+                                <tr>
+                                    <td>
+                                        <c:out value="${d.fullName}" />
+                                        <div class="hint"><c:out value="${d.username}" /> <c:out value="${d.studentId}" /></div>
+                                    </td>
+                                    <td><fmt:formatNumber value="${d.storedBalance}" type="number" groupingUsed="true" />₫</td>
+                                    <td><fmt:formatNumber value="${d.ledgerTotal}" type="number" groupingUsed="true" />₫</td>
+                                    <td class="${d.difference > 0 ? 'delta-up' : 'delta-down'}">
+                                        <fmt:formatNumber value="${d.difference}" type="number" groupingUsed="true" />₫
+                                    </td>
+                                </tr>
+                            </c:forEach>
+                        </tbody>
+                    </table>
+                </div>
+            </c:otherwise>
+        </c:choose>
     </div>
 </main>
 <jsp:include page="/WEB-INF/views/common/footer.jsp" />

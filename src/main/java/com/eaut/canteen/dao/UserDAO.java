@@ -60,6 +60,21 @@ public interface UserDAO {
     /** Staff self-toggles their own "đang trực" status — see DutyServlet. */
     void setOnDuty(Connection conn, int userId, boolean onDuty) throws SQLException;
 
+    /** Edits the fields an admin may change on a staff account. Username and auth provider are not
+     *  among them: the username is how the account is identified in every audit row. */
+    void updateStaffDetails(Connection conn, int userId, String fullName, String email,
+                            String phone) throws SQLException;
+
+    /** Moves an account to a different role. */
+    void updateRole(Connection conn, int userId, int roleId) throws SQLException;
+
+    /** Sets a new bcrypt hash. Callers must hash with PasswordUtil — never pass a plaintext. */
+    void updatePassword(Connection conn, int userId, String passwordHash) throws SQLException;
+
+    /** How many ACTIVE accounts hold a given permission, via their role. Used to refuse the change
+     *  that would lock the last administrator out of /admin/roles. */
+    int countActiveHoldersOfPermission(Connection conn, String permissionKey) throws SQLException;
+
     /** Every non-customer user currently on duty, for the "Nhân sự đang trực" roster on the Kanban boards. */
     List<User> findOnDutyStaff(Connection conn) throws SQLException;
 

@@ -33,6 +33,13 @@ public interface WalletDAO {
     /** For the admin confirmation queue — joins in each requester's name. */
     List<WalletTopupRequest> findPendingTopupRequests(Connection conn) throws SQLException;
 
+    /**
+     * Wallets whose stored balance disagrees with the sum of their own ledger. Nothing in the
+     * database enforces that the two match, so this query is the only way to find out — an empty
+     * result is the reconciliation passing.
+     */
+    List<com.eaut.canteen.model.WalletDrift> findBalanceDrift(Connection conn) throws SQLException;
+
     /** @return affected row count — 0 means the request was already resolved (confirmed/rejected) by someone else. */
     int updateTopupRequestStatus(Connection conn, int requestId, com.eaut.canteen.model.WalletTopupStatus status, int confirmedBy) throws SQLException;
 }
