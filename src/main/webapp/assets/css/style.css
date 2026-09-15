@@ -1491,6 +1491,13 @@ body.has-admin-rail.rail-collapsed {
 /* Hover cannot open anything on a touch screen, so below this width the rail stops being a rail:
    it becomes a scrolling strip of labelled links at the top of the page. */
 @media screen and (max-width: 768px) {
+    /* Neither of these means anything in a horizontal strip: there is nothing to collapse, and a
+       section heading sitting inline between links reads as a broken link. */
+    .admin-rail-toggle,
+    .admin-rail-group {
+        display: none;
+    }
+
     .admin-rail {
         position: static;
         width: auto;
