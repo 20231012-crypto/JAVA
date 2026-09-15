@@ -7,12 +7,12 @@
         <div class="auth-image">
             <h2>Chào mừng trở lại</h2>
             <p>Đăng nhập để đặt món tại căng tin EAUT.</p>
-            <p class="smart-id-badge">🪪 EAUT Smart ID: tự động giảm giá cho email @eaut.edu.vn</p>
+            <p class="smart-id-badge"><svg class="icon" aria-hidden="true"><use href="#i-id-card"/></svg> EAUT Smart ID: tự động giảm giá cho email @eaut.edu.vn</p>
         </div>
         <div class="auth-form">
             <h1 style="margin-bottom:8px;">Đăng nhập khách hàng</h1>
             <p class="hint" style="margin-bottom:24px;">
-                <a href="${pageContext.request.contextPath}/login">← Không phải khách hàng? Chọn lại loại tài khoản</a>
+                <a href="${pageContext.request.contextPath}/login"><svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg> Không phải khách hàng? Chọn lại loại tài khoản</a>
             </p>
 
             <c:if test="${not empty error}">

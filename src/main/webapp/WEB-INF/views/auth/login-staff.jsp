@@ -11,7 +11,7 @@
         <div class="auth-form">
             <h1 style="margin-bottom:8px;">Đăng nhập nhân viên</h1>
             <p class="hint" style="margin-bottom:24px;">
-                <a href="${pageContext.request.contextPath}/login">← Không phải nhân viên? Chọn lại loại tài khoản</a>
+                <a href="${pageContext.request.contextPath}/login"><svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg> Không phải nhân viên? Chọn lại loại tài khoản</a>
             </p>
 
             <c:if test="${not empty error}">

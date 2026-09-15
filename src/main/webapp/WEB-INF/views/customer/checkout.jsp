@@ -44,7 +44,7 @@
         </c:if>
 
         <c:if test="${shopAcceptingOrders == false}">
-            <div class="alert alert-error">🚫 Căng tin đang tạm ngưng nhận đơn (quá tải hoặc ngoài giờ phục vụ). Vui lòng quay lại sau.</div>
+            <div class="alert alert-error"><svg class="icon" aria-hidden="true"><use href="#i-ban"/></svg> Căng tin đang tạm ngưng nhận đơn (quá tải hoặc ngoài giờ phục vụ). Vui lòng quay lại sau.</div>
         </c:if>
 
         <form method="post" action="${pageContext.request.contextPath}/checkout/place" id="checkoutForm" class="show-spinner-on-submit">
@@ -112,12 +112,12 @@
                     </div>
                     <c:if test="${not empty smartIdDiscount}">
                         <div class="summary-row" style="color:var(--color-gold);">
-                            <span class="smart-id-badge" style="padding:2px 8px;">🪪 EAUT Smart ID</span>
+                            <span class="smart-id-badge" style="padding:2px 8px;"><svg class="icon" aria-hidden="true"><use href="#i-id-card"/></svg> EAUT Smart ID</span>
                             <span>-<fmt:formatNumber value="${smartIdDiscount}" type="number" groupingUsed="true" />₫</span>
                         </div>
                     </c:if>
                     <div class="summary-row" id="sumLoyaltyRow" hidden style="color:var(--color-gold);">
-                        <span>🎁 Điểm tích luỹ</span>
+                        <span><svg class="icon" aria-hidden="true"><use href="#i-gift"/></svg> Điểm tích luỹ</span>
                         <span id="sumLoyaltyValue">-0₫</span>
                     </div>
                     <div class="summary-row summary-total">

@@ -1165,6 +1165,33 @@ img {
     }
 }
 
+/* ===== Stroke icons =====
+   Sized in em and coloured with currentColor, so an icon always matches the text it sits beside
+   without a per-site override. Sprite geometry lives in common/_icon-sprite.jsp. */
+.icon {
+    width: 1.15em;
+    height: 1.15em;
+    flex-shrink: 0;
+    vertical-align: -0.18em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Bigger blocks (rail rows, empty states, login choice tiles) want a touch more presence. */
+.icon-lg {
+    width: 1.4em;
+    height: 1.4em;
+}
+
+/* A favourited item fills in rather than swapping to a different glyph, so the shape does not
+   jump between states. */
+.favorite-btn.is-favorited .icon {
+    fill: currentColor;
+}
+
 /* ===== Motion polish =====
    Each of these communicates something: a card lifting says "this is one clickable thing", a
    pressed button says the tap registered, a section fading in says new content arrived. Nothing

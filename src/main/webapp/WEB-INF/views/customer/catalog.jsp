@@ -19,15 +19,15 @@
                     <h1>Đặt đồ ăn nhanh chóng — giao tận tòa nhà</h1>
                     <p>Chọn món, thanh toán bằng Ví EAUT Pay hoặc VietQR, và tiếp tục học.</p>
                     <div class="hero-info-pills">
-                        <span class="hero-info-pill"><strong>⏱ ${estimatedWaitMinutes} phút</strong>Chờ ước tính</span>
-                        <span class="hero-info-pill"><strong>🏢 4 tòa nhà</strong>Giao tận nơi</span>
-                        <span class="hero-info-pill"><strong>💳 EAUT Pay</strong>Tích điểm mỗi đơn</span>
+                        <span class="hero-info-pill"><strong><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg> ${estimatedWaitMinutes} phút</strong>Chờ ước tính</span>
+                        <span class="hero-info-pill"><strong><svg class="icon" aria-hidden="true"><use href="#i-building"/></svg> 4 tòa nhà</strong>Giao tận nơi</span>
+                        <span class="hero-info-pill"><strong><svg class="icon" aria-hidden="true"><use href="#i-wallet"/></svg> EAUT Pay</strong>Tích điểm mỗi đơn</span>
                         <c:choose>
                             <c:when test="${shopAcceptingOrders == false}">
-                                <span class="hero-info-pill"><strong>🚫 Tạm ngưng</strong>Quay lại sau ít phút</span>
+                                <span class="hero-info-pill"><strong><svg class="icon" aria-hidden="true"><use href="#i-ban"/></svg> Tạm ngưng</strong>Quay lại sau ít phút</span>
                             </c:when>
                             <c:otherwise>
-                                <span class="hero-info-pill"><strong>✅ Đang mở</strong>Nhận đơn bình thường</span>
+                                <span class="hero-info-pill"><strong><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg> Đang mở</strong>Nhận đơn bình thường</span>
                             </c:otherwise>
                         </c:choose>
                     </div>
@@ -58,7 +58,7 @@
         </div>
 
         <c:if test="${shopAcceptingOrders == false}">
-            <div class="alert alert-error">🚫 Căng tin đang tạm ngưng nhận đơn — bạn vẫn xem được thực đơn nhưng chưa đặt hàng được lúc này.</div>
+            <div class="alert alert-error"><svg class="icon" aria-hidden="true"><use href="#i-ban"/></svg> Căng tin đang tạm ngưng nhận đơn — bạn vẫn xem được thực đơn nhưng chưa đặt hàng được lúc này.</div>
         </c:if>
 
         <%-- The in-page category chips were removed (the nav's "Danh mục sản phẩm" mega-menu covers
@@ -72,7 +72,7 @@
                         <strong><c:out value="${cat.name}" /></strong>
                     </c:if>
                 </c:forEach>
-                <a class="active-filter-clear" href="${ctx}/products">✕ Xem tất cả</a>
+                <a class="active-filter-clear" href="${ctx}/products"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg> Xem tất cả</a>
             </div>
         </c:if>
 

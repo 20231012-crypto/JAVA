@@ -18,7 +18,7 @@
         <c:if test="${sessionScope.user.permissions['admin.dashboard']}">
             <li>
                 <a class="admin-rail-link ${path eq '/admin' ? 'is-active' : ''}" href="${ctx}/admin">
-                    <span class="admin-rail-icon" aria-hidden="true">📊</span>
+                    <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-dashboard"/></svg></span>
                     <span class="admin-rail-label">Tổng quan</span>
                 </a>
             </li>
@@ -27,7 +27,7 @@
             <li>
                 <a class="admin-rail-link ${fn:startsWith(path, '/admin/customers') ? 'is-active' : ''}"
                    href="${ctx}/admin/customers">
-                    <span class="admin-rail-icon" aria-hidden="true">🧑</span>
+                    <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg></span>
                     <span class="admin-rail-label">Quản lý khách hàng</span>
                 </a>
             </li>
@@ -36,7 +36,7 @@
             <li>
                 <a class="admin-rail-link ${fn:startsWith(path, '/admin/products') ? 'is-active' : ''}"
                    href="${ctx}/admin/products">
-                    <span class="admin-rail-icon" aria-hidden="true">🍱</span>
+                    <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-utensils"/></svg></span>
                     <span class="admin-rail-label">Quản lý sản phẩm</span>
                 </a>
             </li>
@@ -45,7 +45,7 @@
             <li>
                 <a class="admin-rail-link ${fn:startsWith(path, '/admin/categories') ? 'is-active' : ''}"
                    href="${ctx}/admin/categories">
-                    <span class="admin-rail-icon" aria-hidden="true">🗂</span>
+                    <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-folders"/></svg></span>
                     <span class="admin-rail-label">Danh mục sản phẩm</span>
                 </a>
             </li>
@@ -54,7 +54,7 @@
             <li>
                 <a class="admin-rail-link ${fn:startsWith(path, '/admin/reports') ? 'is-active' : ''}"
                    href="${ctx}/admin/reports">
-                    <span class="admin-rail-icon" aria-hidden="true">📈</span>
+                    <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-trending-up"/></svg></span>
                     <span class="admin-rail-label">Thống kê doanh thu</span>
                 </a>
             </li>
@@ -63,7 +63,7 @@
             <li>
                 <a class="admin-rail-link ${fn:startsWith(path, '/admin/staff') ? 'is-active' : ''}"
                    href="${ctx}/admin/staff">
-                    <span class="admin-rail-icon" aria-hidden="true">👔</span>
+                    <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-briefcase"/></svg></span>
                     <span class="admin-rail-label">Quản lý nhân viên</span>
                 </a>
             </li>
@@ -72,7 +72,7 @@
             <li>
                 <a class="admin-rail-link ${fn:startsWith(path, '/admin/attendance') ? 'is-active' : ''}"
                    href="${ctx}/admin/attendance">
-                    <span class="admin-rail-icon" aria-hidden="true">⏱</span>
+                    <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg></span>
                     <span class="admin-rail-label">Chấm công nhân viên</span>
                 </a>
             </li>
@@ -81,7 +81,7 @@
             <li>
                 <a class="admin-rail-link ${fn:startsWith(path, '/admin/store-report') ? 'is-active' : ''}"
                    href="${ctx}/admin/store-report">
-                    <span class="admin-rail-icon" aria-hidden="true">🏪</span>
+                    <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-store"/></svg></span>
                     <span class="admin-rail-label">Quản lý cửa hàng</span>
                 </a>
             </li>
@@ -93,7 +93,7 @@
             <li>
                 <a class="admin-rail-link ${fn:startsWith(path, '/admin/stock-imports') ? 'is-active' : ''}"
                    href="${ctx}/admin/stock-imports">
-                    <span class="admin-rail-icon" aria-hidden="true">📥</span>
+                    <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-inbox-in"/></svg></span>
                     <span class="admin-rail-label">Nhập hàng vào kho</span>
                 </a>
             </li>
@@ -102,7 +102,7 @@
             <li>
                 <a class="admin-rail-link ${fn:startsWith(path, '/admin/buildings') ? 'is-active' : ''}"
                    href="${ctx}/admin/buildings">
-                    <span class="admin-rail-icon" aria-hidden="true">🏢</span>
+                    <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-building"/></svg></span>
                     <span class="admin-rail-label">Tòa nhà &amp; phí ship</span>
                 </a>
             </li>
@@ -111,7 +111,7 @@
             <li>
                 <a class="admin-rail-link ${fn:startsWith(path, '/admin/banners') ? 'is-active' : ''}"
                    href="${ctx}/admin/banners">
-                    <span class="admin-rail-icon" aria-hidden="true">🖼</span>
+                    <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-image"/></svg></span>
                     <span class="admin-rail-label">Banner trang chủ</span>
                 </a>
             </li>
@@ -120,7 +120,7 @@
             <li>
                 <a class="admin-rail-link ${fn:startsWith(path, '/admin/wallet') ? 'is-active' : ''}"
                    href="${ctx}/admin/wallet">
-                    <span class="admin-rail-icon" aria-hidden="true">💳</span>
+                    <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-wallet"/></svg></span>
                     <span class="admin-rail-label">Ví EAUT Pay</span>
                 </a>
             </li>
@@ -129,7 +129,7 @@
             <li>
                 <a class="admin-rail-link ${fn:startsWith(path, '/admin/roles') ? 'is-active' : ''}"
                    href="${ctx}/admin/roles">
-                    <span class="admin-rail-icon" aria-hidden="true">🔑</span>
+                    <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-key"/></svg></span>
                     <span class="admin-rail-label">Vai trò &amp; phân quyền</span>
                 </a>
             </li>

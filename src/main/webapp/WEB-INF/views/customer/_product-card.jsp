@@ -25,14 +25,11 @@
             <c:if test="${not empty sessionScope.user and sessionScope.user.role.customerDefault}">
                 <button type="button" class="icon-btn favorite-btn ${cardProduct.favoritedByCurrentUser ? 'is-favorited' : ''}"
                         data-favorite-toggle data-product-id="${cardProduct.productId}" aria-label="Yêu thích ${cardProduct.name}">
-                    <c:choose>
-                        <c:when test="${cardProduct.favoritedByCurrentUser}">♥</c:when>
-                        <c:otherwise>♡</c:otherwise>
-                    </c:choose>
+                    <svg class="icon" aria-hidden="true"><use href="#i-heart"/></svg>
                 </button>
             </c:if>
             <button type="button" class="icon-btn quickview-btn" data-quick-view data-product-id="${cardProduct.productId}"
-                    aria-label="Xem nhanh ${cardProduct.name}">👁</button>
+                    aria-label="Xem nhanh ${cardProduct.name}"><svg class="icon" aria-hidden="true"><use href="#i-eye"/></svg></button>
         </div>
     </a>
     <a class="card-body" href="${ctx}/products/detail?id=${cardProduct.productId}">

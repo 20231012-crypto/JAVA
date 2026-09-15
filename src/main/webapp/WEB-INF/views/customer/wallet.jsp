@@ -15,16 +15,16 @@
         <div class="stat-grid" style="margin-top:20px;">
             <div class="stat-tile">
                 <div class="stat-label">Số dư ví EAUT Pay</div>
-                <div class="stat-value">💳 <fmt:formatNumber value="${customer.walletBalance}" type="number" groupingUsed="true" />đ</div>
+                <div class="stat-value"><svg class="icon" aria-hidden="true"><use href="#i-wallet"/></svg> <fmt:formatNumber value="${customer.walletBalance}" type="number" groupingUsed="true" />đ</div>
             </div>
             <div class="stat-tile">
                 <div class="stat-label">Điểm tích luỹ</div>
-                <div class="stat-value">🎁 ${customer.loyaltyPoints}</div>
+                <div class="stat-value"><svg class="icon" aria-hidden="true"><use href="#i-gift"/></svg> ${customer.loyaltyPoints}</div>
             </div>
             <c:if test="${customer.eautStudent}">
                 <div class="stat-tile">
                     <div class="stat-label">Trạng thái</div>
-                    <div class="stat-value" style="font-size:1.1rem;"><span class="smart-id-badge">🪪 EAUT Smart ID</span></div>
+                    <div class="stat-value" style="font-size:1.1rem;"><span class="smart-id-badge"><svg class="icon" aria-hidden="true"><use href="#i-id-card"/></svg> EAUT Smart ID</span></div>
                 </div>
             </c:if>
         </div>

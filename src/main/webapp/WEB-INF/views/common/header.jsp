@@ -43,3 +43,4 @@
 <body data-context-path="${pageContext.request.contextPath}"
       data-csrf="${csrfToken}"
       class="${fn:startsWith(requestPath, '/admin') ? 'has-admin-rail' : ''}">
+<jsp:include page="/WEB-INF/views/common/_icon-sprite.jsp" />

@@ -66,7 +66,7 @@
                             <c:forEach var="f" items="${mostFavorited}">
                                 <tr>
                                     <td><c:out value="${f.productName}" /></td>
-                                    <td>♥ ${f.favoriteCount}</td>
+                                    <td><svg class="icon" aria-hidden="true"><use href="#i-heart"/></svg> ${f.favoriteCount}</td>
                                 </tr>
                             </c:forEach>
                         </tbody>

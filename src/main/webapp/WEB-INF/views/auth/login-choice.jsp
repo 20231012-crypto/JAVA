@@ -9,12 +9,12 @@
 
     <div class="login-choice-grid">
         <a class="login-choice-card" href="${ctx}/login/customer${not empty param.redirect ? '?redirect=' : ''}${param.redirect}">
-            <div class="login-choice-icon">🎓</div>
+            <div class="login-choice-icon"><svg class="icon" aria-hidden="true"><use href="#i-graduation-cap"/></svg></div>
             <h2>Khách hàng</h2>
             <p>Sinh viên / giảng viên — đăng nhập bằng tài khoản Google để đặt món, theo dõi đơn hàng.</p>
         </a>
         <a class="login-choice-card" href="${ctx}/login/staff${not empty param.redirect ? '?redirect=' : ''}${param.redirect}">
-            <div class="login-choice-icon">🧑‍💼</div>
+            <div class="login-choice-icon"><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg>‍<svg class="icon" aria-hidden="true"><use href="#i-briefcase"/></svg></div>
             <h2>Nhân viên</h2>
             <p>Quản lý, nhân viên bán hàng, nhân viên cửa hàng — đăng nhập bằng tài khoản được cấp.</p>
         </a>

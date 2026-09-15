@@ -18,7 +18,7 @@
     <form class="nav-search" method="get" action="${ctx}/products" role="search">
         <input type="search" name="q" value="<c:out value='${searchQuery}'/>"
                placeholder="Tìm món ăn, đồ uống..." aria-label="Tìm món trong thực đơn">
-        <button type="submit" class="nav-search-btn" aria-label="Tìm kiếm">🔍</button>
+        <button type="submit" class="nav-search-btn" aria-label="Tìm kiếm"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg></button>
     </form>
 
     <nav class="site-nav">
@@ -26,7 +26,7 @@
             <%-- Guest or logged-in customer: same shopper-facing menu either way. --%>
             <c:when test="${empty sessionScope.user or sessionScope.user.role.customerDefault}">
                 <div class="mega-menu-trigger">
-                    <button type="button" class="mega-menu-btn" data-mega-menu-toggle>Danh mục sản phẩm ▾</button>
+                    <button type="button" class="mega-menu-btn" data-mega-menu-toggle>Danh mục sản phẩm <svg class="icon" aria-hidden="true"><use href="#i-chevron-down"/></svg></button>
                     <div class="mega-menu-panel" id="mega-menu-panel" hidden></div>
                 </div>
                 <a href="${ctx}/products">Thực đơn</a>
@@ -65,7 +65,7 @@
                 <span class="avatar"><c:out value="${fn:substring(sessionScope.user.fullName, 0, 1)}" /></span>
                 <span><c:out value="${sessionScope.user.fullName}" /></span>
                 <c:if test="${sessionScope.user.role.customerDefault}">
-                    <span class="wallet-badge" title="Số dư ví EAUT Pay">💳 <fmt:formatNumber value="${sessionScope.user.walletBalance}" type="number" groupingUsed="true" />đ</span>
+                    <span class="wallet-badge" title="Số dư ví EAUT Pay"><svg class="icon" aria-hidden="true"><use href="#i-wallet"/></svg> <fmt:formatNumber value="${sessionScope.user.walletBalance}" type="number" groupingUsed="true" />đ</span>
                 </c:if>
                 <a href="${ctx}/logout">Đăng xuất</a>
             </div>

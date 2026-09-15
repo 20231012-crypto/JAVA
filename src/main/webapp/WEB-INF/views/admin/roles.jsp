@@ -27,7 +27,7 @@
                                   onsubmit="return confirm('Xoá vai trò &quot;${r.displayName}&quot;?');">
                                 <input type="hidden" name="csrfToken" value="${csrfToken}">
                                 <input type="hidden" name="roleId" value="${r.roleId}">
-                                <button type="submit" style="border:none; background:none; color:var(--color-danger); cursor:pointer; font-weight:700;">✕</button>
+                                <button type="submit" style="border:none; background:none; color:var(--color-danger); cursor:pointer; font-weight:700;"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button>
                             </form>
                         </c:if>
                     </div>

@@ -116,7 +116,8 @@
                     // A product usually appears twice on the catalog page (its own card, and
                     // possibly the quick-view modal open on top of it) — keep every instance in sync.
                     document.querySelectorAll('[data-favorite-toggle][data-product-id="' + productId + '"]').forEach(function (el) {
-                        el.textContent = data.favorited ? "♥" : "♡";
+                        // One glyph either way — .is-favorited fills it in via CSS, so the icon
+                        // does not jump to a different shape when toggled.
                         el.classList.toggle("is-favorited", data.favorited);
                     });
                 })
@@ -316,7 +317,7 @@
                     }
                     if (key !== lastSeenActivityKey && latest.minutesAgo <= 2) {
                         lastSeenActivityKey = key;
-                        showToast("🛎️ Một bạn ở " + latest.building + " vừa đặt " + latest.product, "info");
+                        showToast("Một bạn ở " + latest.building + " vừa đặt " + latest.product, "info");
                     }
                 })
                 .catch(function () { /* silent — this is a nice-to-have, not core functionality */ });

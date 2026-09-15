@@ -14,7 +14,7 @@
 </div>
 <div id="quick-view-modal" class="modal-overlay" hidden>
     <div class="modal-content">
-        <button type="button" class="modal-close-btn" data-modal-close aria-label="Đóng">✕</button>
+        <button type="button" class="modal-close-btn" data-modal-close aria-label="Đóng"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button>
         <div id="quick-view-content"></div>
     </div>
 </div>

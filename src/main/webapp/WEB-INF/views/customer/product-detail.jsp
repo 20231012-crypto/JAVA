@@ -59,10 +59,7 @@
                     <c:if test="${not empty sessionScope.user and sessionScope.user.role.customerDefault}">
                         <button type="button" class="icon-btn favorite-btn ${product.favoritedByCurrentUser ? 'is-favorited' : ''}"
                                 data-favorite-toggle data-product-id="${product.productId}" aria-label="Yêu thích">
-                            <c:choose>
-                                <c:when test="${product.favoritedByCurrentUser}">♥</c:when>
-                                <c:otherwise>♡</c:otherwise>
-                            </c:choose>
+                            <svg class="icon" aria-hidden="true"><use href="#i-heart"/></svg>
                         </button>
                     </c:if>
                 </div>

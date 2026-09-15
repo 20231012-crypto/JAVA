@@ -22,12 +22,12 @@
                         <input type="hidden" name="redirect" value="/sales/orders">
                         <c:choose>
                             <c:when test="${shopStatus.acceptingOrders}">
-                                <span class="badge badge-completed">🟢 Đang mở nhận đơn</span>
+                                <span class="badge badge-completed"><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg> Đang mở nhận đơn</span>
                                 <input type="hidden" name="accepting" value="false">
                                 <button type="submit" class="btn btn-sm btn-danger">Tạm ngưng nhận đơn</button>
                             </c:when>
                             <c:otherwise>
-                                <span class="badge badge-rejected">🔴 Đang tạm ngưng nhận đơn</span>
+                                <span class="badge badge-rejected"><svg class="icon" aria-hidden="true"><use href="#i-alert-circle"/></svg> Đang tạm ngưng nhận đơn</span>
                                 <input type="hidden" name="accepting" value="true">
                                 <button type="submit" class="btn btn-sm btn-primary">Mở nhận đơn lại</button>
                             </c:otherwise>
@@ -72,7 +72,7 @@
         <c:if test="${boardMode}">
             <div class="kanban-board">
                 <div class="kanban-column">
-                    <div class="kanban-column-header"><h3>🟠 Đơn mới chờ duyệt</h3><span class="kanban-count">${fn:length(pendingOrders)}</span></div>
+                    <div class="kanban-column-header"><h3><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg> Đơn mới chờ duyệt</h3><span class="kanban-count">${fn:length(pendingOrders)}</span></div>
                     <c:choose>
                         <c:when test="${empty pendingOrders}"><div class="kanban-empty">Không có đơn chờ duyệt</div></c:when>
                         <c:otherwise>
@@ -80,7 +80,7 @@
                                 <div class="kanban-card">
                                     <div class="kanban-ticket">
                                         <span class="kanban-ticket-code"><c:out value="${o.orderCode}" /></span>
-                                        <span class="kanban-elapsed">⏱ ${o.elapsedDisplay}</span>
+                                        <span class="kanban-elapsed"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg> ${o.elapsedDisplay}</span>
                                     </div>
                                     <c:if test="${o.channel == 'ONLINE'}">
                                         <div style="font-weight:600;">
@@ -111,7 +111,7 @@
                 </div>
 
                 <div class="kanban-column">
-                    <div class="kanban-column-header"><h3>🔵 Đã duyệt, chờ lấy hàng</h3><span class="kanban-count">${fn:length(confirmedOrders)}</span></div>
+                    <div class="kanban-column-header"><h3><svg class="icon" aria-hidden="true"><use href="#i-package"/></svg> Đã duyệt, chờ lấy hàng</h3><span class="kanban-count">${fn:length(confirmedOrders)}</span></div>
                     <c:choose>
                         <c:when test="${empty confirmedOrders}"><div class="kanban-empty">Không có đơn nào</div></c:when>
                         <c:otherwise>
@@ -119,7 +119,7 @@
                                 <div class="kanban-card">
                                     <div class="kanban-ticket">
                                         <span class="kanban-ticket-code"><c:out value="${o.orderCode}" /></span>
-                                        <span class="kanban-elapsed">⏱ ${o.elapsedDisplay}</span>
+                                        <span class="kanban-elapsed"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg> ${o.elapsedDisplay}</span>
                                     </div>
                                     <c:if test="${o.channel == 'ONLINE'}">
                                         <div style="font-weight:600;">
@@ -146,7 +146,7 @@
                 </div>
 
                 <div class="kanban-column">
-                    <div class="kanban-column-header"><h3>🟢 Đang giao</h3><span class="kanban-count">${fn:length(shippingOrders)}</span></div>
+                    <div class="kanban-column-header"><h3><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg> Đang giao</h3><span class="kanban-count">${fn:length(shippingOrders)}</span></div>
                     <c:choose>
                         <c:when test="${empty shippingOrders}"><div class="kanban-empty">Không có đơn nào</div></c:when>
                         <c:otherwise>
@@ -154,7 +154,7 @@
                                 <div class="kanban-card">
                                     <div class="kanban-ticket">
                                         <span class="kanban-ticket-code"><c:out value="${o.orderCode}" /></span>
-                                        <span class="kanban-elapsed">⏱ ${o.elapsedDisplay}</span>
+                                        <span class="kanban-elapsed"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg> ${o.elapsedDisplay}</span>
                                     </div>
                                     <div><c:out value="${o.buildingName}" /> · <fmt:formatNumber value="${o.totalAmount}" type="number" groupingUsed="true" />₫</div>
                                     <div class="hint">Đang chờ nhân viên cửa hàng giao xong</div>
@@ -210,13 +210,13 @@
                 var readyAt = Number(el.getAttribute("data-ready-at"));
                 var remainingMs = readyAt - Date.now();
                 if (remainingMs <= 0) {
-                    el.textContent = "⏰ Đã quá giờ dự kiến";
+                    el.textContent = "<svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg> Đã quá giờ dự kiến";
                     el.style.color = "var(--color-danger)";
                 } else {
                     var totalSeconds = Math.floor(remainingMs / 1000);
                     var minutes = Math.floor(totalSeconds / 60);
                     var seconds = totalSeconds % 60;
-                    el.textContent = "🍳 Còn " + minutes + " phút " + (seconds < 10 ? "0" : "") + seconds + " giây";
+                    el.textContent = "<svg class="icon" aria-hidden="true"><use href="#i-flame"/></svg> Còn " + minutes + " phút " + (seconds < 10 ? "0" : "") + seconds + " giây";
                 }
             });
         }

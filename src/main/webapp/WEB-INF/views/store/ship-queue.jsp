@@ -40,7 +40,7 @@
 
         <div class="kanban-board">
             <div class="kanban-column">
-                <div class="kanban-column-header"><h3>📦 Sẵn sàng lấy hàng</h3><span class="kanban-count">${fn:length(confirmedOrders)}</span></div>
+                <div class="kanban-column-header"><h3><svg class="icon" aria-hidden="true"><use href="#i-package"/></svg> Sẵn sàng lấy hàng</h3><span class="kanban-count">${fn:length(confirmedOrders)}</span></div>
                 <c:choose>
                     <c:when test="${empty confirmedOrders}"><div class="kanban-empty">Không có đơn nào</div></c:when>
                     <c:otherwise>
@@ -48,7 +48,7 @@
                             <div class="kanban-card">
                                 <div class="kanban-ticket">
                                     <span class="kanban-ticket-code"><c:out value="${o.orderCode}" /></span>
-                                    <span class="kanban-elapsed">⏱ ${o.elapsedDisplay}</span>
+                                    <span class="kanban-elapsed"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg> ${o.elapsedDisplay}</span>
                                 </div>
                                 <div><c:out value="${o.buildingName}" /> · <fmt:formatNumber value="${o.totalAmount}" type="number" groupingUsed="true" />₫</div>
                                 <div class="hint"><c:out value="${o.paymentMethod.displayName}" /> · <c:out value="${o.paymentStatus.displayName}" /></div>
@@ -59,7 +59,7 @@
                                 <c:if test="${not empty o.customerPhone}">
                                     <div class="kanban-customer">
                                         <c:out value="${o.customerName}" />
-                                        <a class="btn btn-sm btn-secondary" href="tel:${o.customerPhone}">☎ Gọi khách</a>
+                                        <a class="btn btn-sm btn-secondary" href="tel:${o.customerPhone}"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg> Gọi khách</a>
                                     </div>
                                 </c:if>
                                 <form method="post" action="${ctx}/store/orders/pick" style="margin-top:10px;">
@@ -74,7 +74,7 @@
             </div>
 
             <div class="kanban-column">
-                <div class="kanban-column-header"><h3>🚴 Đang giao</h3><span class="kanban-count">${fn:length(shippingOrders)}</span></div>
+                <div class="kanban-column-header"><h3><svg class="icon" aria-hidden="true"><use href="#i-bike"/></svg> Đang giao</h3><span class="kanban-count">${fn:length(shippingOrders)}</span></div>
                 <c:choose>
                     <c:when test="${empty shippingOrders}"><div class="kanban-empty">Không có đơn nào</div></c:when>
                     <c:otherwise>
@@ -82,7 +82,7 @@
                             <div class="kanban-card">
                                 <div class="kanban-ticket">
                                     <span class="kanban-ticket-code"><c:out value="${o.orderCode}" /></span>
-                                    <span class="kanban-elapsed">⏱ ${o.elapsedDisplay}</span>
+                                    <span class="kanban-elapsed"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg> ${o.elapsedDisplay}</span>
                                 </div>
                                 <div><c:out value="${o.buildingName}" /> · <fmt:formatNumber value="${o.totalAmount}" type="number" groupingUsed="true" />₫</div>
                                 <div class="hint"><c:out value="${o.paymentMethod.displayName}" /> · <c:out value="${o.paymentStatus.displayName}" /></div>
@@ -93,7 +93,7 @@
                                 <c:if test="${not empty o.customerPhone}">
                                     <div class="kanban-customer">
                                         <c:out value="${o.customerName}" />
-                                        <a class="btn btn-sm btn-secondary" href="tel:${o.customerPhone}">☎ Gọi khách</a>
+                                        <a class="btn btn-sm btn-secondary" href="tel:${o.customerPhone}"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg> Gọi khách</a>
                                     </div>
                                 </c:if>
                                 <form method="post" action="${ctx}/store/orders/complete" style="margin-top:10px;">

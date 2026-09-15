@@ -62,10 +62,10 @@
                     <div>
                         <h2 style="font-size:1.1rem;"><c:out value="${customer.fullName}" /> <span class="hint">(@<c:out value="${customer.username}" />)</span></h2>
                         <p class="hint"><c:out value="${customer.email}" /></p>
-                        <c:if test="${customer.eautStudent}"><span class="smart-id-badge" style="margin-top:6px;">🪪 EAUT Smart ID</span></c:if>
+                        <c:if test="${customer.eautStudent}"><span class="smart-id-badge" style="margin-top:6px;"><svg class="icon" aria-hidden="true"><use href="#i-id-card"/></svg> EAUT Smart ID</span></c:if>
                     </div>
                     <div class="wallet-badge" style="font-size:1.2rem; padding:8px 18px;">
-                        💳 <fmt:formatNumber value="${customer.walletBalance}" type="number" groupingUsed="true" />đ
+                        <svg class="icon" aria-hidden="true"><use href="#i-wallet"/></svg> <fmt:formatNumber value="${customer.walletBalance}" type="number" groupingUsed="true" />đ
                     </div>
                 </div>
 
