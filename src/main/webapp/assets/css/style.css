@@ -1023,7 +1023,7 @@ img {
     border-radius: var(--radius-container);
 }
 
-.hero-carousel-slide-banner .cms-banner-image {
+.hero-carousel-slide-banner .cms-banner-media {
     max-height: 240px;
     border-radius: var(--radius-container);
 }
@@ -1503,7 +1503,8 @@ img {
     text-decoration: none;
 }
 
-.cms-banner-image {
+/* Covers both <img> and <video> banners — they size identically. */
+.cms-banner-media {
     width: 100%;
     display: block;
     object-fit: cover;

@@ -42,13 +42,24 @@
                 <input type="number" id="sortOrder" name="sortOrder" value="${empty banner.sortOrder ? 0 : banner.sortOrder}">
             </div>
             <div class="form-group">
-                <label for="image">Ảnh banner</label>
+                <label for="image">Ảnh hoặc video banner</label>
                 <c:if test="${not empty banner and banner.hasImage}">
-                    <img src="${pageContext.request.contextPath}/banner-image?id=${banner.bannerId}" alt="${banner.title}"
-                         style="width:200px; border-radius:8px; display:block; margin-bottom:8px;">
+                    <c:choose>
+                        <c:when test="${banner.video}">
+                            <video src="${pageContext.request.contextPath}/banner-image?id=${banner.bannerId}"
+                                   controls muted playsinline preload="metadata"
+                                   style="width:260px; border-radius:8px; display:block; margin-bottom:8px;"></video>
+                        </c:when>
+                        <c:otherwise>
+                            <img src="${pageContext.request.contextPath}/banner-image?id=${banner.bannerId}" alt="${banner.title}"
+                                 style="width:200px; border-radius:8px; display:block; margin-bottom:8px;">
+                        </c:otherwise>
+                    </c:choose>
                 </c:if>
-                <input type="file" id="image" name="image" accept=".jpg,.jpeg,.png,.webp">
-                <span class="hint">Định dạng JPG, PNG hoặc WEBP, tối đa 5MB. Lưu trực tiếp trong database nên không mất khi hệ thống deploy lại.</span>
+                <input type="file" id="image" name="image" accept=".jpg,.jpeg,.png,.webp,.mp4,.webm">
+                <span class="hint">Ảnh: JPG, PNG, WEBP. Video: MP4, WEBM. Tối đa 20MB — video nên là clip ngắn
+                    (khoảng 10–15 giây) vì được lưu thẳng trong database để không mất khi deploy lại.
+                    Video chạy không tiếng và tự chuyển sang banner kế tiếp khi hết.</span>
             </div>
 
             <button type="submit" class="btn btn-primary">Lưu banner</button>

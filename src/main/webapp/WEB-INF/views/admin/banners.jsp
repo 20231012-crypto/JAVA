@@ -36,10 +36,16 @@
                                 <td><c:out value="${b.title}" /></td>
                                 <td>
                                     <c:choose>
+                                        <c:when test="${b.hasImage and b.video}">
+                                            <video src="${pageContext.request.contextPath}/banner-image?id=${b.bannerId}"
+                                                   muted playsinline preload="metadata"
+                                                   style="width:80px; border-radius:6px; display:block;"></video>
+                                            <span class="hint">Video</span>
+                                        </c:when>
                                         <c:when test="${b.hasImage}">
                                             <img src="${pageContext.request.contextPath}/banner-image?id=${b.bannerId}" alt="${b.title}" style="width:80px; border-radius:6px;">
                                         </c:when>
-                                        <c:otherwise><span class="hint">Chưa có ảnh</span></c:otherwise>
+                                        <c:otherwise><span class="hint">Chưa có ảnh/video</span></c:otherwise>
                                     </c:choose>
                                 </td>
                                 <td>${b.sortOrder}</td>

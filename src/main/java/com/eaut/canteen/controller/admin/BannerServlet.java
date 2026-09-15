@@ -11,6 +11,7 @@ import com.eaut.canteen.dao.BannerDAO;
 import com.eaut.canteen.dao.impl.BannerDAOImpl;
 import com.eaut.canteen.model.Banner;
 import com.eaut.canteen.util.DBConnection;
+import com.eaut.canteen.util.RequestParams;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -22,11 +23,16 @@ import jakarta.servlet.http.Part;
 
 /** Admin CRUD for banners.manage — list/create/edit/delete/toggle, per position (HEAD/FOOTER/LEFT/RIGHT). */
 @WebServlet({"/admin/banners", "/admin/banners/form", "/admin/banners/save", "/admin/banners/toggle", "/admin/banners/delete"})
-@MultipartConfig(maxFileSize = 5 * 1024 * 1024)
+// 20MB so a short promo clip fits. Deliberately not larger: the media lives in a database column
+// and BannerImageServlet reads the whole row into memory to serve it, so this is a size the app
+// can hold per request without trouble — it is a banner slot, not a video host.
+@MultipartConfig(maxFileSize = 20L * 1024 * 1024)
 public class BannerServlet extends HttpServlet {
 
     private static final Set<String> VALID_POSITIONS = Set.of("HEAD", "FOOTER", "LEFT", "RIGHT");
     private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
+    // MP4 (H.264) and WebM cover every current browser between them.
+    private static final Set<String> ALLOWED_VIDEO_TYPES = Set.of("video/mp4", "video/webm");
 
     private final BannerDAO bannerDAO = new BannerDAOImpl();
 
@@ -47,11 +53,8 @@ public class BannerServlet extends HttpServlet {
 
     private void showForm(HttpServletRequest req, HttpServletResponse resp, Connection conn)
             throws SQLException, ServletException, IOException {
-        String idParam = req.getParameter("id");
-        Banner banner = null;
-        if (idParam != null && !idParam.isBlank()) {
-            banner = bannerDAO.findById(conn, Integer.parseInt(idParam));
-        }
+        Integer id = RequestParams.intOrNull(req.getParameter("id"));
+        Banner banner = id == null ? null : bannerDAO.findById(conn, id);
         req.setAttribute("pageTitle", banner == null ? "Thêm banner" : "Sửa banner");
         req.setAttribute("banner", banner);
         req.getRequestDispatcher("/WEB-INF/views/admin/banner-form.jsp").forward(req, resp);
@@ -62,12 +65,21 @@ public class BannerServlet extends HttpServlet {
         try (Connection conn = DBConnection.getConnection()) {
             switch (req.getServletPath()) {
                 case "/admin/banners/toggle" -> {
-                    bannerDAO.setActive(conn, Integer.parseInt(req.getParameter("bannerId")),
-                            Boolean.parseBoolean(req.getParameter("active")));
+                    Integer toggleId = RequestParams.intOrNull(req.getParameter("bannerId"));
+                    if (toggleId == null) {
+                        resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+                        return;
+                    }
+                    bannerDAO.setActive(conn, toggleId, Boolean.parseBoolean(req.getParameter("active")));
                     resp.sendRedirect(req.getContextPath() + "/admin/banners");
                 }
                 case "/admin/banners/delete" -> {
-                    bannerDAO.delete(conn, Integer.parseInt(req.getParameter("bannerId")));
+                    Integer deleteId = RequestParams.intOrNull(req.getParameter("bannerId"));
+                    if (deleteId == null) {
+                        resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+                        return;
+                    }
+                    bannerDAO.delete(conn, deleteId);
                     resp.sendRedirect(req.getContextPath() + "/admin/banners");
                 }
                 default -> saveBanner(req, resp, conn);
@@ -90,28 +102,38 @@ public class BannerServlet extends HttpServlet {
         banner.setTitle(blankToNull(req.getParameter("title")));
         banner.setSubtitle(blankToNull(req.getParameter("subtitle")));
         banner.setLinkUrl(blankToNull(req.getParameter("linkUrl")));
-        String sortOrder = req.getParameter("sortOrder");
-        banner.setSortOrder(sortOrder == null || sortOrder.isBlank() ? 0 : Integer.parseInt(sortOrder));
+        banner.setSortOrder(RequestParams.intOrDefault(req.getParameter("sortOrder"), 0));
 
         String idParam = req.getParameter("bannerId");
         boolean isNew = idParam == null || idParam.isBlank();
+
+        // Validate the upload BEFORE writing anything: this used to insert the row first, so a
+        // rejected file left behind an empty banner that was already live on the catalog page.
+        Part imagePart = req.getPart("image");
+        boolean hasUpload = imagePart != null && imagePart.getSize() > 0;
+        String contentType = hasUpload ? imagePart.getContentType() : null;
+        if (hasUpload && (contentType == null
+                || !(ALLOWED_IMAGE_TYPES.contains(contentType) || ALLOWED_VIDEO_TYPES.contains(contentType)))) {
+            req.setAttribute("pageTitle", isNew ? "Thêm banner" : "Sửa banner");
+            req.setAttribute("banner", banner);
+            req.setAttribute("error", "Định dạng không được hỗ trợ. Ảnh: JPG, PNG, WEBP. Video: MP4, WEBM.");
+            req.getRequestDispatcher("/WEB-INF/views/admin/banner-form.jsp").forward(req, resp);
+            return;
+        }
+
         if (isNew) {
             bannerDAO.insert(conn, banner);
         } else {
-            banner.setBannerId(Integer.parseInt(idParam));
+            Integer bannerId = RequestParams.intOrNull(idParam);
+            if (bannerId == null) {
+                resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+                return;
+            }
+            banner.setBannerId(bannerId);
             bannerDAO.update(conn, banner);
         }
 
-        Part imagePart = req.getPart("image");
-        if (imagePart != null && imagePart.getSize() > 0) {
-            String contentType = imagePart.getContentType();
-            if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType)) {
-                req.setAttribute("pageTitle", isNew ? "Thêm banner" : "Sửa banner");
-                req.setAttribute("banner", banner);
-                req.setAttribute("error", "Định dạng ảnh không được hỗ trợ. Chỉ chấp nhận JPG, PNG hoặc WEBP.");
-                req.getRequestDispatcher("/WEB-INF/views/admin/banner-form.jsp").forward(req, resp);
-                return;
-            }
+        if (hasUpload) {
             byte[] imageData = readAllBytes(imagePart.getInputStream());
             bannerDAO.updateImage(conn, banner.getBannerId(), imageData, contentType);
         }

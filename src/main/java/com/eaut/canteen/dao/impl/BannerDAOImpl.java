@@ -14,9 +14,11 @@ import com.eaut.canteen.model.Banner;
 
 public class BannerDAOImpl implements BannerDAO {
 
+    // image_content_type comes along on listing queries (it is a short varchar, unlike image_data)
+    // because the view has to know whether to render an <img> or a <video> for this banner.
     private static final String BASE_SELECT =
             "SELECT banner_id, position, title, subtitle, link_url, sort_order, is_active, " +
-            "(image_data IS NOT NULL) AS has_image FROM banners ";
+            "image_content_type, (image_data IS NOT NULL) AS has_image FROM banners ";
     private static final String FIND_ACTIVE_BY_POSITION =
             BASE_SELECT + "WHERE is_active = TRUE AND position = ? ORDER BY sort_order, banner_id";
     private static final String FIND_ALL_FOR_ADMIN =
@@ -165,6 +167,7 @@ public class BannerDAOImpl implements BannerDAO {
         banner.setSortOrder(rs.getInt("sort_order"));
         banner.setActive(rs.getBoolean("is_active"));
         banner.setHasImage(rs.getBoolean("has_image"));
+        banner.setMediaContentType(rs.getString("image_content_type"));
         return banner;
     }
 }

@@ -7,8 +7,15 @@ public class Banner {
     private String title;
     private String subtitle;
     private String linkUrl;
-    /** Whether this banner has an image row set — the bytes themselves are only fetched by BannerImageServlet, never loaded into listing queries. */
+    /** Whether this banner has media set — the bytes themselves are only fetched by BannerImageServlet, never loaded into listing queries. */
     private boolean hasImage;
+    /**
+     * MIME type of the uploaded media: an image type, or a video type since banners accept short
+     * clips too. Backed by the column still named image_content_type — renaming it would mean an
+     * ALTER on the live database with the old code still serving traffic, which is not worth the
+     * cosmetic gain.
+     */
+    private String mediaContentType;
     private int sortOrder;
     private boolean active;
 
@@ -58,6 +65,19 @@ public class Banner {
 
     public void setHasImage(boolean hasImage) {
         this.hasImage = hasImage;
+    }
+
+    public String getMediaContentType() {
+        return mediaContentType;
+    }
+
+    public void setMediaContentType(String mediaContentType) {
+        this.mediaContentType = mediaContentType;
+    }
+
+    /** Lets the view pick between a &lt;video&gt; and an &lt;img&gt; without parsing MIME types in EL. */
+    public boolean isVideo() {
+        return mediaContentType != null && mediaContentType.startsWith("video/");
     }
 
     public int getSortOrder() {
