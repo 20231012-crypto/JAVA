@@ -1352,12 +1352,16 @@ img {
    Collapsed to icons, widening on hover or keyboard focus. Only the rail itself animates; the
    page content is pushed by a fixed margin so text never reflows mid-interaction, which would be
    both distracting and a re-layout on every hover. */
+/* Expanded by default now, with an explicit collapse button (admin.js remembers the choice).
+   It used to be a 62px icon strip that opened on hover, and that stopped working once the menu
+   passed a dozen entries: sixteen indistinguishable glyphs in a column is not navigation, and
+   hover never fires on a touch screen at all. */
 .admin-rail {
     position: fixed;
     top: 0;
     left: 0;
     bottom: 0;
-    width: 62px;
+    width: 232px;
     background: var(--color-surface);
     border-right: 1px solid var(--color-border);
     padding: 14px 0;
@@ -1367,10 +1371,54 @@ img {
     transition: width var(--duration-base) var(--ease-standard);
 }
 
-.admin-rail:hover,
-.admin-rail:focus-within {
+body.rail-collapsed .admin-rail {
+    width: 62px;
+}
+
+/* Collapsed, hover still peeks it open — the labels are the only way to tell the icons apart. */
+body.rail-collapsed .admin-rail:hover,
+body.rail-collapsed .admin-rail:focus-within {
     width: 232px;
     box-shadow: var(--shadow-container);
+}
+
+.admin-rail-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 18px;
+    margin-bottom: 8px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+.admin-rail-toggle:hover {
+    background: var(--color-institutional-soft);
+}
+
+/* Section heading inside the rail. Not a link, so it is marked presentational to a screen reader
+   by being plain text inside the list rather than an interactive item. */
+.admin-rail-group {
+    padding: 14px 18px 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+body.rail-collapsed .admin-rail:not(:hover):not(:focus-within) .admin-rail-group {
+    /* A heading with no room to render would push the icons out of alignment. */
+    visibility: hidden;
+    height: 10px;
+    padding: 0;
 }
 
 .admin-rail-list {
@@ -1412,15 +1460,16 @@ img {
 
 /* Hidden by width, not by display:none — a screen reader still reads the label, and it fades in
    as the rail opens instead of appearing abruptly. */
+/* Hidden by opacity, never display:none — a screen reader still reads the label when the rail is
+   collapsed, and it fades rather than snapping when the rail opens. */
 .admin-rail-label {
-    opacity: 0;
+    opacity: 1;
     font-size: 0.9rem;
     transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
-.admin-rail:hover .admin-rail-label,
-.admin-rail:focus-within .admin-rail-label {
-    opacity: 1;
+body.rail-collapsed .admin-rail:not(:hover):not(:focus-within) .admin-rail-label {
+    opacity: 0;
 }
 
 .admin-rail-divider {
@@ -1429,8 +1478,13 @@ img {
     margin: 10px 14px;
 }
 
-/* Content clears the collapsed rail; it does not move when the rail opens over it. */
+/* Content clears the rail at its current width. When collapsed the rail opens OVER the content on
+   hover rather than pushing it, so the page does not reflow under the cursor. */
 body.has-admin-rail {
+    padding-left: 248px;
+}
+
+body.has-admin-rail.rail-collapsed {
     padding-left: 76px;
 }
 
@@ -2794,5 +2848,167 @@ body.has-admin-rail {
 @media (prefers-reduced-motion: reduce) {
     .effect-choice {
         transition: none;
+    }
+}
+
+/* ===== Command palette (Ctrl+K) and the admin alert bell ===== */
+
+.palette-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 12vh 16px 16px;
+    z-index: 10005;
+}
+
+.palette-overlay[hidden] {
+    display: none !important;
+}
+
+.palette-box {
+    background: var(--color-surface);
+    border-radius: var(--radius-container);
+    box-shadow: var(--shadow-container);
+    width: 100%;
+    max-width: 560px;
+    overflow: hidden;
+}
+
+.palette-input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.palette-input-row input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 6px 0;
+    background: transparent;
+    color: var(--color-text);
+}
+
+.palette-input-row input:focus {
+    outline: none;
+}
+
+.palette-results {
+    max-height: 52vh;
+    overflow-y: auto;
+}
+
+.palette-group h3 {
+    padding: 12px 16px 4px;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+}
+
+.palette-group ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.palette-group a {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 9px 16px;
+    color: var(--color-text);
+}
+
+.palette-group a:hover,
+.palette-group a:focus-visible {
+    background: var(--color-institutional-soft);
+    text-decoration: none;
+}
+
+.palette-label {
+    font-weight: 500;
+}
+
+.palette-hint {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    text-align: right;
+}
+
+.palette-empty,
+.palette-footnote {
+    padding: 14px 16px;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
+.palette-footnote {
+    border-top: 1px solid var(--color-border);
+}
+
+kbd {
+    font-family: inherit;
+    font-size: 0.78rem;
+    padding: 1px 5px;
+    border: 1px solid var(--color-border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    background: var(--color-neutral-soft);
+}
+
+.alert-bell {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    padding: 4px 6px;
+    border-radius: var(--radius-pill);
+}
+
+.alert-bell:hover {
+    background: var(--color-surface);
+    color: var(--color-institutional);
+}
+
+.alert-bell-kbd {
+    font-size: 0.7rem;
+}
+
+/* The pending-work count. Filled in by polling; hidden when there is nothing waiting, so it is
+   never a badge showing zero. */
+.alert-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: var(--radius-pill);
+    background: var(--color-danger);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+@media screen and (max-width: 768px) {
+    .alert-bell-kbd {
+        display: none;
+    }
+
+    .palette-overlay {
+        padding: 8vh 12px 12px;
     }
 }

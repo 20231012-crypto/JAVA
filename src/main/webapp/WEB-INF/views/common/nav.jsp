@@ -62,6 +62,17 @@
         </c:when>
         <c:otherwise>
             <div class="user-info">
+                <%-- Alert bell for admin/sales screens. The badge is filled in by admin.js polling
+                     /admin/events; with JavaScript off it stays hidden and the queues are still
+                     one click away, so nothing depends on it. --%>
+                <c:if test="${fn:startsWith(requestPath, '/admin')}">
+                    <button type="button" class="alert-bell" data-palette-open
+                            title="Tìm nhanh (Ctrl + K)" aria-label="Tìm nhanh">
+                        <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+                        <kbd class="alert-bell-kbd">Ctrl K</kbd>
+                    </button>
+                    <span class="alert-badge" id="admin-alert-badge" hidden aria-live="polite"></span>
+                </c:if>
                 <span class="avatar"><c:out value="${fn:substring(sessionScope.user.fullName, 0, 1)}" /></span>
                 <span><c:out value="${sessionScope.user.fullName}" /></span>
                 <c:if test="${sessionScope.user.role.customerDefault}">
