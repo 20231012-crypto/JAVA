@@ -6,54 +6,74 @@
 <jsp:include page="/WEB-INF/views/common/nav.jsp" />
 <main class="page-content" data-page="catalog">
     <div class="container">
-        <div class="hero-banner hero-banner-top">
-            <div>
-                <span class="hero-banner-eyebrow">CĂNG TIN EAUT</span>
-                <h1>Đặt đồ ăn nhanh chóng — giao tận tòa nhà</h1>
-                <p>Chọn món, thanh toán bằng Ví EAUT Pay hoặc VietQR, và tiếp tục học — canteen mang đồ ăn đến tận nơi bạn học.</p>
-                <div class="hero-info-pills">
-                    <span class="hero-info-pill"><strong>⏱ ${estimatedWaitMinutes} phút</strong>Chờ ước tính</span>
-                    <span class="hero-info-pill"><strong>🏢 4 tòa nhà</strong>Giao tận nơi</span>
-                    <span class="hero-info-pill"><strong>💳 EAUT Pay</strong>Tích điểm mỗi đơn</span>
-                    <c:choose>
-                        <c:when test="${shopAcceptingOrders == false}">
-                            <span class="hero-info-pill"><strong>🚫 Tạm ngưng</strong>Quay lại sau ít phút</span>
-                        </c:when>
-                        <c:otherwise>
-                            <span class="hero-info-pill"><strong>✅ Đang mở</strong>Nhận đơn bình thường</span>
-                        </c:otherwise>
-                    </c:choose>
+        <%-- Rotating hero. Slide 1 is the live status panel (estimated wait + whether the canteen
+             is accepting orders right now), so the carousel is never empty and that information
+             never disappears; every further slide is an admin-configured HEAD banner from
+             /admin/banners, so the promotional content is not hardcoded. Arrows and dots only
+             render when there is more than one slide. --%>
+        <div class="hero-carousel" data-hero-carousel>
+            <div class="hero-carousel-viewport">
+                <div class="hero-banner hero-carousel-slide is-active">
+                    <span class="hero-banner-eyebrow">CĂNG TIN EAUT</span>
+                    <h1>Đặt đồ ăn nhanh chóng — giao tận tòa nhà</h1>
+                    <p>Chọn món, thanh toán bằng Ví EAUT Pay hoặc VietQR, và tiếp tục học.</p>
+                    <div class="hero-info-pills">
+                        <span class="hero-info-pill"><strong>⏱ ${estimatedWaitMinutes} phút</strong>Chờ ước tính</span>
+                        <span class="hero-info-pill"><strong>🏢 4 tòa nhà</strong>Giao tận nơi</span>
+                        <span class="hero-info-pill"><strong>💳 EAUT Pay</strong>Tích điểm mỗi đơn</span>
+                        <c:choose>
+                            <c:when test="${shopAcceptingOrders == false}">
+                                <span class="hero-info-pill"><strong>🚫 Tạm ngưng</strong>Quay lại sau ít phút</span>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="hero-info-pill"><strong>✅ Đang mở</strong>Nhận đơn bình thường</span>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <%-- Admin-configured banners: layout auto-adjusts to whichever positions actually have an
-             active banner (.catalog-layout / has-left / has-right below) instead of always
-             reserving empty space for a position nobody configured. --%>
-        <c:if test="${not empty headBanners}">
-            <div class="cms-banner-row">
                 <c:forEach var="b" items="${headBanners}">
-                    <c:set var="bannerRef" value="${b}" scope="request" />
-                    <jsp:include page="/WEB-INF/views/customer/_cms-banner.jsp" />
+                    <div class="hero-carousel-slide hero-carousel-slide-banner">
+                        <c:set var="bannerRef" value="${b}" scope="request" />
+                        <jsp:include page="/WEB-INF/views/customer/_cms-banner.jsp" />
+                    </div>
                 </c:forEach>
             </div>
-        </c:if>
+
+            <c:if test="${not empty headBanners}">
+                <button type="button" class="hero-carousel-nav hero-carousel-prev" data-hero-prev
+                        aria-label="Banner trước">&#8249;</button>
+                <button type="button" class="hero-carousel-nav hero-carousel-next" data-hero-next
+                        aria-label="Banner sau">&#8250;</button>
+                <div class="hero-carousel-dots" data-hero-dots>
+                    <button type="button" class="hero-carousel-dot is-active" data-hero-dot="0"
+                            aria-label="Chuyển tới banner 1"></button>
+                    <c:forEach var="b" items="${headBanners}" varStatus="bLoop">
+                        <button type="button" class="hero-carousel-dot" data-hero-dot="${bLoop.index + 1}"
+                                aria-label="Chuyển tới banner ${bLoop.index + 2}"></button>
+                    </c:forEach>
+                </div>
+            </c:if>
+        </div>
 
         <c:if test="${shopAcceptingOrders == false}">
             <div class="alert alert-error">🚫 Căng tin đang tạm ngưng nhận đơn — bạn vẫn xem được thực đơn nhưng chưa đặt hàng được lúc này.</div>
         </c:if>
 
-        <h1 class="section-title">Thực đơn căng tin</h1>
-
-        <div class="filter-bar">
-            <a class="filter-chip ${empty selectedCategory ? 'active' : ''}" href="${pageContext.request.contextPath}/products">Tất cả</a>
-            <c:forEach var="cat" items="${categories}">
-                <a class="filter-chip ${selectedCategory == cat.categoryId ? 'active' : ''}"
-                   href="${pageContext.request.contextPath}/products?category=${cat.categoryId}">
-                    <c:out value="${cat.name}" />
-                </a>
-            </c:forEach>
-        </div>
+        <%-- The in-page category chips were removed (the nav's "Danh mục sản phẩm" mega-menu covers
+             the same job), but a filtered view still needs to say what it is filtered to and offer
+             a way back out. --%>
+        <c:if test="${not empty selectedCategory}">
+            <div class="active-filter">
+                <span class="active-filter-label">Đang xem:</span>
+                <c:forEach var="cat" items="${categories}">
+                    <c:if test="${cat.categoryId == selectedCategory}">
+                        <strong><c:out value="${cat.name}" /></strong>
+                    </c:if>
+                </c:forEach>
+                <a class="active-filter-clear" href="${ctx}/products">✕ Xem tất cả</a>
+            </div>
+        </c:if>
 
         <div class="catalog-layout ${not empty leftBanners ? 'has-left' : ''} ${not empty rightBanners ? 'has-right' : ''}">
             <c:if test="${not empty leftBanners}">

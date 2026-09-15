@@ -102,11 +102,13 @@ public class CatalogServlet extends HttpServlet {
                 .filter(c -> !c.isTopLevel())
                 .toList();
 
-        String categoryParam = req.getParameter("category");
+        // A stale or hand-edited ?category= value must not 500 the whole menu — an unparseable one
+        // is treated as "no filter", the same as omitting it.
+        Integer categoryId = parseIntOrNull(req.getParameter("category"));
         List<Product> products;
-        if (categoryParam != null && !categoryParam.isBlank()) {
-            products = productDAO.findAllActiveByCategory(conn, Integer.parseInt(categoryParam));
-            req.setAttribute("selectedCategory", Integer.parseInt(categoryParam));
+        if (categoryId != null) {
+            products = productDAO.findAllActiveByCategory(conn, categoryId);
+            req.setAttribute("selectedCategory", categoryId);
         } else {
             products = productDAO.findAllActive(conn);
         }
@@ -126,6 +128,18 @@ public class CatalogServlet extends HttpServlet {
         req.setAttribute("footerBanners", bannerDAO.findActiveByPosition(conn, "FOOTER"));
 
         req.getRequestDispatcher("/WEB-INF/views/customer/catalog.jsp").forward(req, resp);
+    }
+
+    /** Returns null for a missing, blank or non-numeric value so callers can treat all three alike. */
+    private static Integer parseIntOrNull(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(raw.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     /** One query for the whole list instead of asking FavoriteDAO once per product. */
@@ -152,8 +166,8 @@ public class CatalogServlet extends HttpServlet {
 
     private void showDetail(HttpServletRequest req, HttpServletResponse resp, Connection conn)
             throws SQLException, ServletException, IOException {
-        int productId = Integer.parseInt(req.getParameter("id"));
-        Product product = productDAO.findById(conn, productId);
+        Integer productId = parseIntOrNull(req.getParameter("id"));
+        Product product = productId == null ? null : productDAO.findById(conn, productId);
 
         if (product == null || !product.isActive()) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -161,7 +175,7 @@ public class CatalogServlet extends HttpServlet {
         }
         User customer = currentCustomer(req);
         if (customer != null) {
-            product.setFavoritedByCurrentUser(favoriteDAO.isFavorited(conn, customer.getUserId(), productId));
+            product.setFavoritedByCurrentUser(favoriteDAO.isFavorited(conn, customer.getUserId(), product.getProductId()));
         }
 
         req.setAttribute("pageTitle", product.getName());
@@ -176,8 +190,8 @@ public class CatalogServlet extends HttpServlet {
      */
     private void showQuickView(HttpServletRequest req, HttpServletResponse resp, Connection conn)
             throws SQLException, ServletException, IOException {
-        int productId = Integer.parseInt(req.getParameter("id"));
-        Product product = productDAO.findById(conn, productId);
+        Integer productId = parseIntOrNull(req.getParameter("id"));
+        Product product = productId == null ? null : productDAO.findById(conn, productId);
 
         if (product == null || !product.isActive()) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -185,7 +199,7 @@ public class CatalogServlet extends HttpServlet {
         }
         User customer = currentCustomer(req);
         if (customer != null) {
-            product.setFavoritedByCurrentUser(favoriteDAO.isFavorited(conn, customer.getUserId(), productId));
+            product.setFavoritedByCurrentUser(favoriteDAO.isFavorited(conn, customer.getUserId(), product.getProductId()));
         }
 
         req.setAttribute("product", product);

@@ -99,7 +99,7 @@ INSERT INTO products (category_id, name, description, price, image_filename, uni
 
 -- Real dish/drink photography (see sql/migrations/005_dish_catalog_images.postgres.sql for the
 -- same catalog applied as an additive migration against the already-deployed database).
-INSERT INTO products (category_id, name, description, price, image_filename, unit, avg_prep_minutes) VALUES
+INSERT INTO products (category_id, name, description, price, image_filename, avg_prep_minutes) VALUES
   (5, 'Mì trộn xúc xích', 'Mì trộn tương ớt cay, trứng lòng đào, xúc xích chiên', 20000, '01_mi_tron_xuc_xich.jpg', 12),
   (4, 'Cơm rang dưa bò', 'Cơm rang dưa chua thịt bò giòn thơm nóng hổi', 28000, '02_com_rang_dua_bo.jpg', 12),
   (6, 'Bánh mì kẹp thập cẩm', 'Bánh mì kẹp pate, chả lụa, trứng ốp la, dưa leo, rau ngò', 20000, '03_banh_mi_kep_thap_cam.jpg', 6),
@@ -109,7 +109,7 @@ INSERT INTO products (category_id, name, description, price, image_filename, uni
   (6, 'Bánh bao thịt trứng cút', 'Bánh bao hấp nóng nhân thịt, trứng cút, lạp xưởng', 15000, '11_banh_bao_thit_trung_cut.jpg', 5),
   (7, 'Hamburger mini', 'Hamburger bò phô mai size mini', 20000, '19_hamburger_mini.jpg', 8);
 
-INSERT INTO products (category_id, name, description, price, image_filename, unit, avg_prep_minutes) VALUES
+INSERT INTO products (category_id, name, description, price, image_filename, avg_prep_minutes) VALUES
   (8, 'Cà phê sữa đá', 'Cà phê phin truyền thống pha cùng sữa đặc, đá', 15000, '13_ca_phe_sua_da.jpg', 5),
   (8, 'Trà sữa trân châu', 'Trà sữa béo thơm kèm trân châu đen dẻo dai', 20000, '15_tra_sua_tran_chau.jpg', 4),
   (9, 'Nước ép dưa hấu', 'Nước ép dưa hấu tươi mát giải nhiệt', 18000, '16_nuoc_ep_dua_hau.jpg', 4),
@@ -117,7 +117,7 @@ INSERT INTO products (category_id, name, description, price, image_filename, uni
   (9, 'Nước cam tươi', 'Nước cam vắt nguyên chất', 18000, '18_nuoc_cam_tuoi.jpg', 4),
   (8, 'Trà chanh tắc', 'Trà chanh tắc chua ngọt giải khát', 12000, '21_tra_chanh_tac.jpg', 3);
 
-INSERT INTO products (category_id, name, description, price, image_filename, unit, avg_prep_minutes) VALUES
+INSERT INTO products (category_id, name, description, price, image_filename, avg_prep_minutes) VALUES
   (11, 'Khoai tây lắc phô mai', 'Khoai tây chiên lắc bột phô mai giòn rụm', 18000, '07_khoai_tay_lac_pho_mai.jpg', 8),
   (11, 'Gà viên popcorn', 'Gà viên chiên xù giòn rụm kèm sốt cay', 20000, '08_ga_vien_popcorn.jpg', 8),
   (12, 'Bánh tráng nướng', 'Bánh tráng nướng Đà Lạt trứng cút, xúc xích, sốt mayo', 20000, '09_banh_trang_nuong.jpg', 10),

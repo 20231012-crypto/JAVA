@@ -20,5 +20,6 @@
 </div>
 
 <script src="${pageContext.request.contextPath}/assets/js/interactions.js" defer></script>
+<script src="${pageContext.request.contextPath}/assets/js/carousel.js" defer></script>
 </body>
 </html>
