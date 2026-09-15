@@ -41,4 +41,5 @@
 <%-- Admin screens get the fixed left rail, so the body has to keep clear of it. Derived from the
      path rather than set by each page, so a new /admin/* screen picks it up automatically. --%>
 <body data-context-path="${pageContext.request.contextPath}"
+      data-csrf="${csrfToken}"
       class="${fn:startsWith(requestPath, '/admin') ? 'has-admin-rail' : ''}">

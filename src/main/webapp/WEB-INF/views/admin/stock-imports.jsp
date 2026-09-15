@@ -9,6 +9,7 @@
 
         <form method="post" action="${pageContext.request.contextPath}/admin/stock-imports/save"
               style="margin:20px 0; display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+            <input type="hidden" name="csrfToken" value="${csrfToken}">
             <div class="form-group" style="margin-bottom:0;">
                 <label for="productId">Sản phẩm</label>
                 <select id="productId" name="productId" required>

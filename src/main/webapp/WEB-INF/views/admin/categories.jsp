@@ -8,6 +8,7 @@
         <p class="hint">Danh mục không chọn "Nhóm cấp trên" là nhóm lớn (cột trong menu Danh mục ở đầu trang). Danh mục có chọn nhóm cấp trên là danh mục con — sản phẩm chỉ gán được vào danh mục con.</p>
 
         <form method="post" action="${pageContext.request.contextPath}/admin/categories/save" style="margin:20px 0; display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+            <input type="hidden" name="csrfToken" value="${csrfToken}">
             <div class="form-group" style="flex:1; min-width:200px; margin-bottom:0;">
                 <label for="name">Tên danh mục mới</label>
                 <input type="text" id="name" name="name" required>
@@ -35,6 +36,7 @@
                     <tr>
                         <td>
                             <form method="post" action="${pageContext.request.contextPath}/admin/categories/save" style="display:flex; gap:6px; align-items:center;">
+                                <input type="hidden" name="csrfToken" value="${csrfToken}">
                                 <input type="hidden" name="categoryId" value="${cat.categoryId}">
                                 <input type="text" name="name" value="${cat.name}" style="max-width:220px;">
                                 <select name="parentCategoryId">
@@ -66,6 +68,7 @@
                         </td>
                         <td>
                             <form method="post" action="${pageContext.request.contextPath}/admin/categories/toggle">
+                                <input type="hidden" name="csrfToken" value="${csrfToken}">
                                 <input type="hidden" name="categoryId" value="${cat.categoryId}">
                                 <input type="hidden" name="active" value="${!cat.active}">
                                 <button type="submit" class="btn btn-sm ${cat.active ? 'btn-danger' : 'btn-secondary'}">

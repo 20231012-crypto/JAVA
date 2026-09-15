@@ -5,12 +5,15 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 
 import com.eaut.canteen.dao.BuildingDAO;
 import com.eaut.canteen.dao.LoyaltyDAO;
 import com.eaut.canteen.dao.OrderDAO;
 import com.eaut.canteen.dao.OrderItemDAO;
+import com.eaut.canteen.dao.ProductDAO;
 import com.eaut.canteen.dao.OrderStatusHistoryDAO;
 import com.eaut.canteen.dao.ShelfStockDAO;
 import com.eaut.canteen.dao.ShopStatusDAO;
@@ -20,6 +23,7 @@ import com.eaut.canteen.dao.impl.BuildingDAOImpl;
 import com.eaut.canteen.dao.impl.LoyaltyDAOImpl;
 import com.eaut.canteen.dao.impl.OrderDAOImpl;
 import com.eaut.canteen.dao.impl.OrderItemDAOImpl;
+import com.eaut.canteen.dao.impl.ProductDAOImpl;
 import com.eaut.canteen.dao.impl.OrderStatusHistoryDAOImpl;
 import com.eaut.canteen.dao.impl.ShelfStockDAOImpl;
 import com.eaut.canteen.dao.impl.ShopStatusDAOImpl;
@@ -35,6 +39,7 @@ import com.eaut.canteen.model.OrderChannel;
 import com.eaut.canteen.model.OrderItem;
 import com.eaut.canteen.model.OrderStatus;
 import com.eaut.canteen.model.PaymentMethod;
+import com.eaut.canteen.model.Product;
 import com.eaut.canteen.model.PaymentStatus;
 import com.eaut.canteen.model.User;
 import com.eaut.canteen.model.WalletTransaction;
@@ -58,6 +63,7 @@ public class CheckoutServlet extends HttpServlet {
     private final BuildingDAO buildingDAO = new BuildingDAOImpl();
     private final OrderDAO orderDAO = new OrderDAOImpl();
     private final OrderItemDAO orderItemDAO = new OrderItemDAOImpl();
+    private final ProductDAO productDAO = new ProductDAOImpl();
     private final ShelfStockDAO shelfStockDAO = new ShelfStockDAOImpl();
     private final OrderStatusHistoryDAO historyDAO = new OrderStatusHistoryDAOImpl();
     private final UserDAO userDAO = new UserDAOImpl();
@@ -144,7 +150,27 @@ public class CheckoutServlet extends HttpServlet {
                 return;
             }
 
-            BigDecimal subtotal = cart.getSubtotal();
+            // Price the order from the products table, not from the cart. The cart's prices were
+            // captured when each item was added, so an admin price change (or a promotion starting
+            // or ending) between then and checkout would otherwise be charged at the stale figure.
+            // The cart decides which products and how many; the database decides what they cost.
+            Map<Integer, Product> livePrices = new HashMap<>();
+            for (CartItem cartItem : cart.getItems()) {
+                Product live = productDAO.findById(conn, cartItem.getProductId());
+                if (live == null || !live.isActive()) {
+                    req.setAttribute("error", "Sản phẩm \"" + cartItem.getProductName()
+                            + "\" không còn được bán. Vui lòng xóa khỏi giỏ hàng và đặt lại.");
+                    forwardToCheckout(req, resp, conn, cart, customer);
+                    return;
+                }
+                livePrices.put(cartItem.getProductId(), live);
+            }
+
+            BigDecimal subtotal = BigDecimal.ZERO;
+            for (CartItem cartItem : cart.getItems()) {
+                subtotal = subtotal.add(livePrices.get(cartItem.getProductId()).getPrice()
+                        .multiply(BigDecimal.valueOf(cartItem.getQuantity())));
+            }
             BigDecimal shippingFee = building.getShippingFee();
             BigDecimal smartIdDiscount = customer.isEautStudent() ? smartIdDiscount(subtotal) : BigDecimal.ZERO;
             BigDecimal payableBeforeLoyalty = subtotal.add(shippingFee).subtract(smartIdDiscount);
@@ -216,8 +242,9 @@ public class CheckoutServlet extends HttpServlet {
                     item.setOrderId(orderId);
                     item.setProductId(cartItem.getProductId());
                     item.setQuantity(cartItem.getQuantity());
-                    item.setUnitPrice(cartItem.getUnitPrice());
-                    item.setLineTotal(cartItem.getLineTotal());
+                    BigDecimal unitPrice = livePrices.get(cartItem.getProductId()).getPrice();
+                    item.setUnitPrice(unitPrice);
+                    item.setLineTotal(unitPrice.multiply(BigDecimal.valueOf(cartItem.getQuantity())));
                     orderItemDAO.insert(conn, item);
                 }
 

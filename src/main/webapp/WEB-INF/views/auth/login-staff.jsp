@@ -19,6 +19,7 @@
             </c:if>
 
             <form method="post" action="${pageContext.request.contextPath}/login">
+                <input type="hidden" name="csrfToken" value="${csrfToken}">
                 <c:if test="${not empty param.redirect}">
                     <input type="hidden" name="redirect" value="${param.redirect}">
                 </c:if>

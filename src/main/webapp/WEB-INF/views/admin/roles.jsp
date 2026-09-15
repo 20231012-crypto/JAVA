@@ -25,6 +25,7 @@
                         <c:if test="${!r.system}">
                             <form method="post" action="${ctx}/admin/roles/delete" style="display:inline;"
                                   onsubmit="return confirm('Xoá vai trò &quot;${r.displayName}&quot;?');">
+                                <input type="hidden" name="csrfToken" value="${csrfToken}">
                                 <input type="hidden" name="roleId" value="${r.roleId}">
                                 <button type="submit" style="border:none; background:none; color:var(--color-danger); cursor:pointer; font-weight:700;">✕</button>
                             </form>
@@ -34,6 +35,7 @@
             </div>
 
             <form method="post" action="${ctx}/admin/roles/save" style="display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+                <input type="hidden" name="csrfToken" value="${csrfToken}">
                 <div class="form-group" style="margin-bottom:0;">
                     <label for="displayName">Tên vai trò mới</label>
                     <input type="text" id="displayName" name="displayName" placeholder="Ví dụ: Kế toán" required>
@@ -43,6 +45,7 @@
         </div>
 
         <form method="post" action="${ctx}/admin/roles/permissions">
+            <input type="hidden" name="csrfToken" value="${csrfToken}">
             <div style="overflow-x:auto;">
                 <table class="data-table" style="min-width:600px;">
                     <thead>

@@ -18,6 +18,7 @@
             <div class="card" style="padding:14px 18px; margin:16px 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
                 <c:if test="${sessionScope.user.permissions['shop.status']}">
                     <form method="post" action="${ctx}/sales/shop-status" style="display:flex; align-items:center; gap:10px;">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}">
                         <input type="hidden" name="redirect" value="/sales/orders">
                         <c:choose>
                             <c:when test="${shopStatus.acceptingOrders}">
@@ -40,6 +41,7 @@
                         <span class="badge badge-confirmed"><c:out value="${s.fullName}" /></span>
                     </c:forEach>
                     <form method="post" action="${ctx}/duty/toggle">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}">
                         <input type="hidden" name="redirect" value="/sales/orders">
                         <c:choose>
                             <c:when test="${sessionScope.user.onDuty}">
@@ -92,10 +94,12 @@
                                     <div class="table-actions" style="margin-top:10px;">
                                         <a class="btn btn-sm btn-secondary" href="${ctx}/sales/orders/detail?id=${o.orderId}">Xem</a>
                                         <form method="post" action="${ctx}/sales/orders/confirm" style="display:inline;">
+                                            <input type="hidden" name="csrfToken" value="${csrfToken}">
                                             <input type="hidden" name="orderId" value="${o.orderId}">
                                             <button type="submit" class="btn btn-sm btn-primary">Duyệt</button>
                                         </form>
                                         <form method="post" action="${ctx}/sales/orders/reject" style="display:inline;">
+                                            <input type="hidden" name="csrfToken" value="${csrfToken}">
                                             <input type="hidden" name="orderId" value="${o.orderId}">
                                             <button type="submit" class="btn btn-sm btn-danger">Từ chối</button>
                                         </form>
@@ -130,6 +134,7 @@
                                     <div class="table-actions" style="margin-top:10px;">
                                         <a class="btn btn-sm btn-secondary" href="${ctx}/sales/orders/detail?id=${o.orderId}">Xem</a>
                                         <form method="post" action="${ctx}/sales/orders/cancel" style="display:inline;">
+                                            <input type="hidden" name="csrfToken" value="${csrfToken}">
                                             <input type="hidden" name="orderId" value="${o.orderId}">
                                             <button type="submit" class="btn btn-sm btn-danger">Hủy</button>
                                         </form>

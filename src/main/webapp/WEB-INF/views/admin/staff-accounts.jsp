@@ -18,6 +18,7 @@
 
         <form method="post" action="${pageContext.request.contextPath}/admin/staff/save"
               style="margin:20px 0; display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+            <input type="hidden" name="csrfToken" value="${csrfToken}">
             <div class="form-group" style="margin-bottom:0;">
                 <label for="fullName">Họ tên</label>
                 <input type="text" id="fullName" name="fullName" required>
@@ -68,6 +69,7 @@
                         </td>
                         <td>
                             <form method="post" action="${pageContext.request.contextPath}/admin/staff/toggle">
+                                <input type="hidden" name="csrfToken" value="${csrfToken}">
                                 <input type="hidden" name="userId" value="${u.userId}">
                                 <input type="hidden" name="status" value="${u.status == 'ACTIVE' ? 'DISABLED' : 'ACTIVE'}">
                                 <button type="submit" class="btn btn-sm ${u.status == 'ACTIVE' ? 'btn-danger' : 'btn-secondary'}">

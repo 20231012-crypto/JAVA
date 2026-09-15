@@ -9,6 +9,7 @@
 
         <form method="post" action="${pageContext.request.contextPath}/admin/buildings/save"
               style="margin:20px 0; display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+            <input type="hidden" name="csrfToken" value="${csrfToken}">
             <div class="form-group" style="margin-bottom:0;">
                 <label for="name">Tên tòa nhà</label>
                 <input type="text" id="name" name="name" required>
@@ -42,6 +43,7 @@
                         </td>
                         <td>
                             <form method="post" action="${pageContext.request.contextPath}/admin/buildings/toggle">
+                                <input type="hidden" name="csrfToken" value="${csrfToken}">
                                 <input type="hidden" name="buildingId" value="${b.buildingId}">
                                 <input type="hidden" name="active" value="${!b.active}">
                                 <button type="submit" class="btn btn-sm ${b.active ? 'btn-danger' : 'btn-secondary'}">

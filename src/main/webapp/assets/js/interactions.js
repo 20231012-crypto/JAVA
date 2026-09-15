@@ -18,6 +18,11 @@
         initRecentActivityToast();
     });
 
+    /** The CSRF token SecurityFilter expects on every POST, published on <body> by header.jsp. */
+    function csrfToken() {
+        return document.body.getAttribute("data-csrf") || "";
+    }
+
     function contextPath() {
         return document.body.getAttribute("data-context-path") || "";
     }
@@ -67,6 +72,7 @@
                     "X-Requested-With": "fetch"
                 },
                 body: "productId=" + encodeURIComponent(productId) + "&quantity=1"
+                    + "&csrfToken=" + encodeURIComponent(csrfToken())
             })
                 .then(function (resp) { return resp.ok ? resp.json() : Promise.reject(); })
                 .then(function (data) {
@@ -103,6 +109,7 @@
                 method: "POST",
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: "productId=" + encodeURIComponent(productId)
+                    + "&csrfToken=" + encodeURIComponent(csrfToken())
             })
                 .then(function (resp) { return resp.ok ? resp.json() : Promise.reject(); })
                 .then(function (data) {

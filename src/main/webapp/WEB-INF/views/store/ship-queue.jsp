@@ -23,6 +23,7 @@
                 <span class="badge badge-confirmed"><c:out value="${s.fullName}" /></span>
             </c:forEach>
             <form method="post" action="${ctx}/duty/toggle">
+                <input type="hidden" name="csrfToken" value="${csrfToken}">
                 <input type="hidden" name="redirect" value="/store/orders">
                 <c:choose>
                     <c:when test="${sessionScope.user.onDuty}">
@@ -62,6 +63,7 @@
                                     </div>
                                 </c:if>
                                 <form method="post" action="${ctx}/store/orders/pick" style="margin-top:10px;">
+                                    <input type="hidden" name="csrfToken" value="${csrfToken}">
                                     <input type="hidden" name="orderId" value="${o.orderId}">
                                     <button type="submit" class="btn btn-sm btn-primary">Lấy hàng &amp; giao</button>
                                 </form>
@@ -95,6 +97,7 @@
                                     </div>
                                 </c:if>
                                 <form method="post" action="${ctx}/store/orders/complete" style="margin-top:10px;">
+                                    <input type="hidden" name="csrfToken" value="${csrfToken}">
                                     <input type="hidden" name="orderId" value="${o.orderId}">
                                     <button type="submit" class="btn btn-sm btn-secondary">Đã giao xong</button>
                                 </form>

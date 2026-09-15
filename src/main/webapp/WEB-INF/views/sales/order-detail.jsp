@@ -24,22 +24,26 @@
             <div style="display:flex; gap:10px; margin:16px 0; flex-wrap:wrap;">
                 <c:if test="${order.paymentMethod == 'VIETQR' && order.paymentStatus == 'UNPAID'}">
                     <form method="post" action="${pageContext.request.contextPath}/sales/orders/mark-paid">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}">
                         <input type="hidden" name="orderId" value="${order.orderId}">
                         <button type="submit" class="btn btn-primary">Đã nhận thanh toán</button>
                     </form>
                 </c:if>
                 <c:if test="${order.orderStatus == 'PENDING'}">
                     <form method="post" action="${pageContext.request.contextPath}/sales/orders/confirm">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}">
                         <input type="hidden" name="orderId" value="${order.orderId}">
                         <button type="submit" class="btn btn-primary">Xác nhận đơn</button>
                     </form>
                     <form method="post" action="${pageContext.request.contextPath}/sales/orders/reject">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}">
                         <input type="hidden" name="orderId" value="${order.orderId}">
                         <input type="hidden" name="note" value="Từ chối bởi nhân viên bán hàng">
                         <button type="submit" class="btn btn-danger">Từ chối đơn</button>
                     </form>
                 </c:if>
                 <form method="post" action="${pageContext.request.contextPath}/sales/orders/cancel">
+                    <input type="hidden" name="csrfToken" value="${csrfToken}">
                     <input type="hidden" name="orderId" value="${order.orderId}">
                     <input type="hidden" name="note" value="Hủy bởi nhân viên bán hàng">
                     <button type="submit" class="btn btn-secondary">Hủy đơn</button>

@@ -34,6 +34,7 @@
                         <td class="table-actions">
                             <a class="btn btn-sm btn-secondary" href="${pageContext.request.contextPath}/admin/products/form?id=${p.productId}">Sửa</a>
                             <form method="post" action="${pageContext.request.contextPath}/admin/products/toggle">
+                                <input type="hidden" name="csrfToken" value="${csrfToken}">
                                 <input type="hidden" name="productId" value="${p.productId}">
                                 <input type="hidden" name="active" value="${!p.active}">
                                 <button type="submit" class="btn btn-sm ${p.active ? 'btn-danger' : 'btn-secondary'}">

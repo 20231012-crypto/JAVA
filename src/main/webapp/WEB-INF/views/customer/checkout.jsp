@@ -14,6 +14,7 @@
                 <c:remove var="phoneError" scope="session" />
             </c:if>
             <form method="post" action="${pageContext.request.contextPath}/account/phone">
+                <input type="hidden" name="csrfToken" value="${csrfToken}">
                 <input type="hidden" name="redirect" value="${pageContext.request.contextPath}/checkout">
                 <div class="form-group">
                     <label for="phoneInput">Số điện thoại</label>
@@ -47,6 +48,7 @@
         </c:if>
 
         <form method="post" action="${pageContext.request.contextPath}/checkout/place" id="checkoutForm" class="show-spinner-on-submit">
+            <input type="hidden" name="csrfToken" value="${csrfToken}">
             <div class="checkout-layout">
                 <div>
                     <div class="form-group">

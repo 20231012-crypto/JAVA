@@ -2,6 +2,7 @@ package com.eaut.canteen.filter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 import com.eaut.canteen.model.User;
 
@@ -31,6 +32,14 @@ public class SecurityFilter implements Filter {
 
     private record PathRule(String prefix, String permission) {
     }
+
+    static final String CSRF_PARAM = "csrfToken";
+    /**
+     * Google's Sign-In button POSTs here from accounts.google.com, so it can never carry our token.
+     * It is not unprotected: GoogleAuthServlet checks Google's own g_csrf_token cookie/body pair,
+     * which is the defence designed for that flow.
+     */
+    private static final String GOOGLE_AUTH_PATH = "/auth/google";
 
     private static final List<PathRule> RULES = List.of(
             new PathRule("/admin/buildings", "buildings.manage"),
@@ -63,6 +72,16 @@ public class SecurityFilter implements Filter {
         HttpServletResponse resp = (HttpServletResponse) response;
         String path = req.getServletPath();
 
+        // Every request gets a token so that even a form rendered on a public page (the login
+        // form) can carry one; it is minted once per session and reused.
+        String csrfToken = ensureCsrfToken(req.getSession(true));
+        req.setAttribute(CSRF_PARAM, csrfToken);
+
+        if (isCsrfRejected(req, path, csrfToken)) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Phiên làm việc không hợp lệ, vui lòng tải lại trang.");
+            return;
+        }
+
         if (isPublic(path)) {
             chain.doFilter(request, response);
             return;
@@ -83,6 +102,31 @@ public class SecurityFilter implements Filter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    private String ensureCsrfToken(HttpSession session) {
+        String token = (String) session.getAttribute(CSRF_PARAM);
+        if (token == null) {
+            token = UUID.randomUUID().toString();
+            session.setAttribute(CSRF_PARAM, token);
+        }
+        return token;
+    }
+
+    /**
+     * Synchronizer-token check on every state-changing request. GET/HEAD are not checked because
+     * they must not change state in the first place; anything that does is the bug to fix.
+     *
+     * Reading the parameter also works for the multipart upload forms: the container parses the
+     * body against the target servlet's @MultipartConfig and caches the parts, so the servlet's
+     * own getPart() calls still see them afterwards.
+     */
+    private boolean isCsrfRejected(HttpServletRequest req, String path, String sessionToken) {
+        if (!"POST".equalsIgnoreCase(req.getMethod()) || GOOGLE_AUTH_PATH.equals(path)) {
+            return false;
+        }
+        String submitted = req.getParameter(CSRF_PARAM);
+        return submitted == null || !submitted.equals(sessionToken);
     }
 
     /** null means "no admin/sales/store rule applies" — e.g. /cart, /checkout, /orders, which only require being logged in. */

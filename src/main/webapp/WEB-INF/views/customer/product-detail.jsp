@@ -43,6 +43,7 @@
                     <c:choose>
                         <c:when test="${product.shelfQuantity > 0}">
                             <form method="post" action="${pageContext.request.contextPath}/cart/add">
+                                <input type="hidden" name="csrfToken" value="${csrfToken}">
                                 <input type="hidden" name="productId" value="${product.productId}">
                                 <div class="qty-form" style="margin-bottom:16px;">
                                     <label for="quantity">Số lượng</label>

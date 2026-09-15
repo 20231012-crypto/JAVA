@@ -11,6 +11,7 @@
         </c:if>
 
         <form method="post" action="${pageContext.request.contextPath}/admin/products/save" enctype="multipart/form-data">
+            <input type="hidden" name="csrfToken" value="${csrfToken}">
             <c:if test="${not empty product}">
                 <input type="hidden" name="productId" value="${product.productId}">
             </c:if>

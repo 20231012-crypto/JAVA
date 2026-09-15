@@ -31,6 +31,7 @@
                                 <div class="product-price"><fmt:formatNumber value="${p.price}" type="number" groupingUsed="true" />₫</div>
                                 <div style="color:var(--color-text-muted); font-size:0.85rem; margin-bottom:8px;">Tồn kệ: ${p.shelfQuantity}</div>
                                 <form method="post" action="${pageContext.request.contextPath}/sales/counter-sale/add">
+                                    <input type="hidden" name="csrfToken" value="${csrfToken}">
                                     <input type="hidden" name="productId" value="${p.productId}">
                                     <input type="hidden" name="quantity" value="1">
                                     <button type="submit" class="btn btn-secondary btn-sm" ${p.shelfQuantity <= 0 ? 'disabled' : ''}>Thêm</button>
@@ -54,6 +55,7 @@
                                 <span>
                                     <fmt:formatNumber value="${item.lineTotal}" type="number" groupingUsed="true" />₫
                                     <form method="post" action="${pageContext.request.contextPath}/sales/counter-sale/remove" style="display:inline;">
+                                        <input type="hidden" name="csrfToken" value="${csrfToken}">
                                         <input type="hidden" name="productId" value="${item.productId}">
                                         <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
                                     </form>
@@ -66,6 +68,7 @@
                         </div>
 
                         <form method="post" action="${pageContext.request.contextPath}/sales/counter-sale/complete" style="margin-top:16px;">
+                            <input type="hidden" name="csrfToken" value="${csrfToken}">
                             <div class="form-group">
                                 <label for="paymentMethod">Hình thức thanh toán</label>
                                 <select id="paymentMethod" name="paymentMethod">

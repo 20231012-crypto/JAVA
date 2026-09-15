@@ -58,12 +58,14 @@
                                 <td class="table-actions">
                                     <a class="btn btn-sm btn-secondary" href="${pageContext.request.contextPath}/admin/banners/form?id=${b.bannerId}">Sửa</a>
                                     <form method="post" action="${pageContext.request.contextPath}/admin/banners/toggle" style="display:inline;">
+                                        <input type="hidden" name="csrfToken" value="${csrfToken}">
                                         <input type="hidden" name="bannerId" value="${b.bannerId}">
                                         <input type="hidden" name="active" value="${!b.active}">
                                         <button type="submit" class="btn btn-sm ${b.active ? 'btn-danger' : 'btn-secondary'}">${b.active ? 'Ẩn' : 'Hiện lại'}</button>
                                     </form>
                                     <form method="post" action="${pageContext.request.contextPath}/admin/banners/delete" style="display:inline;"
                                           onsubmit="return confirm('Xoá hẳn banner này?');">
+                                        <input type="hidden" name="csrfToken" value="${csrfToken}">
                                         <input type="hidden" name="bannerId" value="${b.bannerId}">
                                         <button type="submit" class="btn btn-sm btn-danger">Xoá</button>
                                     </form>

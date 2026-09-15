@@ -23,6 +23,7 @@
                         </div>
                     </div>
                     <form method="post" action="${ctx}/attendance/clock">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}">
                         <input type="hidden" name="action" value="out">
                         <button type="submit" class="btn btn-secondary">Tan làm</button>
                     </form>
@@ -33,6 +34,7 @@
                         <div class="hint">Bấm "Vào làm" để bắt đầu tính giờ công.</div>
                     </div>
                     <form method="post" action="${ctx}/attendance/clock">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}">
                         <input type="hidden" name="action" value="in">
                         <button type="submit" class="btn btn-primary">Vào làm</button>
                     </form>

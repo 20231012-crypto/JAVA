@@ -11,6 +11,7 @@
         </c:if>
 
         <form method="post" action="${pageContext.request.contextPath}/admin/banners/save" enctype="multipart/form-data">
+            <input type="hidden" name="csrfToken" value="${csrfToken}">
             <c:if test="${not empty banner}">
                 <input type="hidden" name="bannerId" value="${banner.bannerId}">
             </c:if>

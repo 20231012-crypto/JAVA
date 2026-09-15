@@ -43,6 +43,7 @@
         <div class="card" style="padding:20px; margin-bottom:24px;">
             <h2 style="font-size:1rem; margin-bottom:12px;">Nạp tiền vào ví qua VietQR</h2>
             <form method="post" action="${ctx}/wallet/topup-request" style="display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+                <input type="hidden" name="csrfToken" value="${csrfToken}">
                 <div class="form-group" style="margin-bottom:0;">
                     <label for="amount">Số tiền (tối thiểu 10.000đ)</label>
                     <input type="number" id="amount" name="amount" min="10000" step="1000" required style="width:220px;">

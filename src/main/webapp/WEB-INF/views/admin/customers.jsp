@@ -70,6 +70,7 @@
                                 </td>
                                 <td class="table-actions">
                                     <form method="post" action="${ctx}/admin/customers/toggle">
+                                        <input type="hidden" name="csrfToken" value="${csrfToken}">
                                         <input type="hidden" name="userId" value="${row.user.userId}">
                                         <input type="hidden" name="q" value="<c:out value='${searchQuery}'/>">
                                         <c:choose>

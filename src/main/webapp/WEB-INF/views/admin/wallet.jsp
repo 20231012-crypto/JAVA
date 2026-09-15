@@ -31,10 +31,12 @@
                             <td><strong><c:out value="${r.transferNote}" /></strong></td>
                             <td class="table-actions">
                                 <form method="post" action="${ctx}/admin/wallet/topup-requests/confirm">
+                                    <input type="hidden" name="csrfToken" value="${csrfToken}">
                                     <input type="hidden" name="requestId" value="${r.requestId}">
                                     <button type="submit" class="btn btn-sm btn-primary">Đã nhận tiền, cộng ví</button>
                                 </form>
                                 <form method="post" action="${ctx}/admin/wallet/topup-requests/reject">
+                                    <input type="hidden" name="csrfToken" value="${csrfToken}">
                                     <input type="hidden" name="requestId" value="${r.requestId}">
                                     <button type="submit" class="btn btn-sm btn-danger">Từ chối</button>
                                 </form>
@@ -68,6 +70,7 @@
                 </div>
 
                 <form method="post" action="${ctx}/admin/wallet/topup" style="display:flex; gap:10px; align-items:end; margin-top:20px; flex-wrap:wrap;">
+                    <input type="hidden" name="csrfToken" value="${csrfToken}">
                     <input type="hidden" name="userId" value="${customer.userId}">
                     <div class="form-group" style="margin-bottom:0;">
                         <label for="amount">Số tiền nạp (đ)</label>

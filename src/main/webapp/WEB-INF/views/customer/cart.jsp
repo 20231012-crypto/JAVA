@@ -35,6 +35,7 @@
                                 <td><fmt:formatNumber value="${item.unitPrice}" type="number" groupingUsed="true" />₫</td>
                                 <td>
                                     <form method="post" action="${pageContext.request.contextPath}/cart/update" class="qty-form">
+                                        <input type="hidden" name="csrfToken" value="${csrfToken}">
                                         <input type="hidden" name="productId" value="${item.productId}">
                                         <input type="number" name="quantity" value="${item.quantity}" min="1"
                                                onchange="this.form.submit()">
@@ -43,6 +44,7 @@
                                 <td><fmt:formatNumber value="${item.lineTotal}" type="number" groupingUsed="true" />₫</td>
                                 <td>
                                     <form method="post" action="${pageContext.request.contextPath}/cart/remove">
+                                        <input type="hidden" name="csrfToken" value="${csrfToken}">
                                         <input type="hidden" name="productId" value="${item.productId}">
                                         <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
                                     </form>
