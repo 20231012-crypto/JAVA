@@ -1,7 +1,7 @@
 /**
  * Site-wide UI/UX motion: scroll-reveal, the add-to-cart fly animation + cart badge bounce, a
  * real-data "recent activity" toast, and a loading spinner for slow form submits. The hero
- * banner is a static sticky 3-panel layout (see style.css .hero-banner-stack) — no JS needed.
+ * carousel lives in its own file (carousel.js).
  * Progressive enhancement only — every feature this touches (add to cart, checkout) already
  * works via a plain form submit without JavaScript.
  */
@@ -9,6 +9,7 @@
     "use strict";
 
     document.addEventListener("DOMContentLoaded", function () {
+        respectReducedMotion();
         initScrollReveal();
         initQuickAddToCart();
         initFavoriteToggle();
@@ -17,6 +18,21 @@
         initSpinnerOnSubmit();
         initRecentActivityToast();
     });
+
+    /**
+     * Banner videos outside the carousel carry the autoplay attribute so they still play with no
+     * JS at all. The attribute cannot be conditioned on a media query, so this is where someone
+     * who asked their system for reduced motion gets them stopped.
+     */
+    function respectReducedMotion() {
+        if (!window.matchMedia || !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            return;
+        }
+        document.querySelectorAll("video[autoplay]").forEach(function (video) {
+            video.removeAttribute("autoplay");
+            video.pause();
+        });
+    }
 
     /** The CSRF token SecurityFilter expects on every POST, published on <body> by header.jsp. */
     function csrfToken() {

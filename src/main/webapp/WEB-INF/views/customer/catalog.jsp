@@ -35,6 +35,9 @@
 
                 <c:forEach var="b" items="${headBanners}">
                     <div class="hero-carousel-slide hero-carousel-slide-banner">
+                        <%-- In the carousel, carousel.js drives playback (it plays on arrival and advances
+                             when the clip ends), so the slide must not autoplay or loop on its own. --%>
+                        <c:set var="bannerInCarousel" value="true" scope="request" />
                         <c:set var="bannerRef" value="${b}" scope="request" />
                         <jsp:include page="/WEB-INF/views/customer/_cms-banner.jsp" />
                     </div>
@@ -122,6 +125,7 @@
             <c:if test="${not empty leftBanners}">
                 <aside class="catalog-sidebar">
                     <c:forEach var="b" items="${leftBanners}">
+                        <c:set var="bannerInCarousel" value="false" scope="request" />
                         <c:set var="bannerRef" value="${b}" scope="request" />
                         <jsp:include page="/WEB-INF/views/customer/_cms-banner.jsp" />
                     </c:forEach>
@@ -216,6 +220,7 @@
             <c:if test="${not empty rightBanners}">
                 <aside class="catalog-sidebar">
                     <c:forEach var="b" items="${rightBanners}">
+                        <c:set var="bannerInCarousel" value="false" scope="request" />
                         <c:set var="bannerRef" value="${b}" scope="request" />
                         <jsp:include page="/WEB-INF/views/customer/_cms-banner.jsp" />
                     </c:forEach>
@@ -226,6 +231,7 @@
         <c:if test="${not empty footerBanners}">
             <div class="cms-banner-row">
                 <c:forEach var="b" items="${footerBanners}">
+                    <c:set var="bannerInCarousel" value="false" scope="request" />
                     <c:set var="bannerRef" value="${b}" scope="request" />
                     <jsp:include page="/WEB-INF/views/customer/_cms-banner.jsp" />
                 </c:forEach>

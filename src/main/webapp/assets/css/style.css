@@ -2021,12 +2021,32 @@ body.has-admin-rail {
     text-decoration: none;
 }
 
-/* Covers both <img> and <video> banners — they size identically. */
+/* Covers both <img> and <video> banners — they size identically. The 220px cap suits the wide
+   head/footer strips; the vertical rails override it below. */
 .cms-banner-media {
     width: 100%;
     display: block;
     object-fit: cover;
     max-height: 220px;
+}
+
+/* A rail banner is a tall 9:16 frame, not a wide strip. The shared 220px cap was cropping it to
+   roughly a square in a 220px-wide column — the artwork was there, the box was just too short for
+   it. An explicit aspect-ratio makes the slot the shape the artwork is drawn for, whatever the
+   uploaded file's own proportions happen to be, and object-fit: cover fills it without stretching. */
+.catalog-sidebar .cms-banner-media {
+    max-height: none;
+    height: auto;
+    aspect-ratio: 9 / 16;
+}
+
+/* Stacked under the menu on narrow screens, a full 9:16 banner would be taller than the phone
+   screen and push the food off the page, so the rails go back to a strip there. */
+@media screen and (max-width: 860px) {
+    .catalog-sidebar .cms-banner-media {
+        aspect-ratio: auto;
+        max-height: 220px;
+    }
 }
 
 .cms-banner-title {

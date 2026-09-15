@@ -16,8 +16,20 @@
         <c:choose>
             <c:when test="${bannerRef.video}">
                 <%-- muted + playsinline are what browsers require before they will start a video
-                     without a click; carousel.js decides when to actually play it. --%>
+                     without a click.
+
+                     Inside the carousel, carousel.js owns playback: it starts the clip when the
+                     slide arrives and moves on when the clip ends, so autoplay/loop here would
+                     fight it. Everywhere else (the side rails and the footer row) nothing was
+                     driving these at all, which is why an uploaded video just sat on its first
+                     frame — those autoplay and loop on their own, like any decorative banner.
+                     interactions.js pauses them for anyone who asked for reduced motion. --%>
                 <video class="cms-banner-media" src="${mediaUrl}" muted playsinline preload="metadata"
+                       <%-- preload stays "metadata" even with autoplay: the browser fetches what it
+                            needs to start playing anyway, and "auto" would eagerly pull the whole
+                            clip on every page load for a decorative rail the reader may never
+                            scroll to — two of those is a lot of mobile data. --%>
+                       <c:if test="${not bannerInCarousel}">autoplay loop</c:if>
                        <c:if test="${not empty bannerRef.title}">aria-label="<c:out value='${bannerRef.title}'/>"</c:if>></video>
             </c:when>
             <c:otherwise>
