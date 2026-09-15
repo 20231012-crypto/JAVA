@@ -354,11 +354,52 @@ img {
     box-shadow: var(--shadow-card);
 }
 
+/* Exactly five per row on a full-width desktop menu, stepping down by viewport. minmax(0, 1fr)
+   rather than 1fr so a long dish name cannot push a column wider than its share. */
 .card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 20px;
     margin-top: 20px;
+}
+
+/* A banner sidebar eats 220px a side, so five columns would squeeze the cards. */
+.catalog-layout.has-left .card-grid,
+.catalog-layout.has-right .card-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media screen and (max-width: 1200px) {
+    .card-grid,
+    .catalog-layout.has-left .card-grid,
+    .catalog-layout.has-right .card-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media screen and (max-width: 980px) {
+    .card-grid,
+    .catalog-layout.has-left .card-grid,
+    .catalog-layout.has-right .card-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media screen and (max-width: 700px) {
+    .card-grid,
+    .catalog-layout.has-left .card-grid,
+    .catalog-layout.has-right .card-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+}
+
+@media screen and (max-width: 420px) {
+    .card-grid,
+    .catalog-layout.has-left .card-grid,
+    .catalog-layout.has-right .card-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
 .product-card {
@@ -721,9 +762,8 @@ img {
         padding: 24px;
     }
 
-    .card-grid {
-        grid-template-columns: 1fr;
-    }
+    /* .card-grid columns are handled by the dedicated ladder next to the .card-grid rule itself,
+       which steps 5 -> 4 -> 3 -> 2 -> 1; a blanket 1fr here would override the 2-column step. */
 
     .data-table {
         display: block;
@@ -1084,6 +1124,154 @@ img {
         height: 30px;
         font-size: 1.1rem;
     }
+}
+
+/* ===== Menu search in the header ===== */
+.nav-search {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1 1 220px;
+    max-width: 340px;
+    background: var(--color-institutional-soft);
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    padding: 4px 6px 4px 14px;
+    transition: border-color var(--duration-fast) var(--ease-standard),
+                background var(--duration-fast) var(--ease-standard);
+}
+
+.nav-search:focus-within {
+    background: var(--color-surface);
+    border-color: var(--color-institutional);
+}
+
+.nav-search input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    padding: 6px 0;
+    font-size: 0.9rem;
+    color: var(--color-text);
+}
+
+.nav-search input:focus {
+    outline: none;
+}
+
+.nav-search-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 4px 8px;
+    border-radius: var(--radius-pill);
+    transition: background var(--duration-fast) var(--ease-standard);
+}
+
+.nav-search-btn:hover {
+    background: var(--color-institutional-soft);
+}
+
+/* On a phone the search belongs on its own line rather than fighting the logo for space. */
+@media screen and (max-width: 768px) {
+    .nav-search {
+        order: 3;
+        flex-basis: 100%;
+        max-width: none;
+    }
+}
+
+/* ===== Discovery sections (Khuyến mãi / Hot hit tuần / Yêu thích) ===== */
+.catalog-section {
+    margin-top: 28px;
+}
+
+.catalog-section-title {
+    font-size: 1.15rem;
+    margin-bottom: 2px;
+}
+
+.catalog-section-note {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+}
+
+/* ===== Result count + sort ===== */
+.catalog-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+}
+
+.catalog-count {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+.catalog-sort {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+.catalog-sort select {
+    padding: 6px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-btn);
+    background: var(--color-surface);
+    font-size: 0.85rem;
+    color: var(--color-text);
+}
+
+/* ===== Pagination ===== */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 28px;
+}
+
+.pagination-link {
+    min-width: 36px;
+    padding: 7px 12px;
+    text-align: center;
+    border-radius: var(--radius-btn);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+    text-decoration: none;
+    font-size: 0.88rem;
+    transition: background var(--duration-fast) var(--ease-standard),
+                border-color var(--duration-fast) var(--ease-standard);
+}
+
+.pagination-link:hover {
+    background: var(--color-institutional-soft);
+    border-color: var(--color-institutional);
+    text-decoration: none;
+}
+
+.pagination-link.is-current {
+    background: var(--color-institutional);
+    border-color: var(--color-institutional);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.pagination-link.is-disabled {
+    color: var(--color-text-muted);
+    background: var(--color-neutral-soft);
+    cursor: default;
 }
 
 /* "Đang xem: <danh mục>" — replaces what the removed filter chips used to convey. */

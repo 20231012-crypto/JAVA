@@ -27,6 +27,7 @@ import com.eaut.canteen.model.Product;
 import com.eaut.canteen.model.RecentActivityItem;
 import com.eaut.canteen.model.User;
 import com.eaut.canteen.util.DBConnection;
+import com.eaut.canteen.util.RequestParams;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -37,6 +38,15 @@ import jakarta.servlet.http.HttpSession;
 
 @WebServlet({"/products", "/products/detail", "/products/recent-activity", "/products/quick-view", "/products/category-menu"})
 public class CatalogServlet extends HttpServlet {
+
+    /** 5 cards per row on desktop, four rows to a page. */
+    private static final int PAGE_SIZE = 20;
+    /** Enough for one full row in each of the promo/trending/favourites strips. */
+    private static final int SECTION_SIZE = 5;
+    /** "Hot hit tuần" — the last seven days of completed orders. */
+    private static final int HOT_WINDOW_DAYS = 7;
+    /** Stops a typed ?page=999999999 from becoming a pointless OFFSET. */
+    private static final int MAX_PAGE = 10_000;
 
     private final CategoryDAO categoryDAO = new CategoryDAOImpl();
     private final ProductDAO productDAO = new ProductDAOImpl();
@@ -104,19 +114,52 @@ public class CatalogServlet extends HttpServlet {
 
         // A stale or hand-edited ?category= value must not 500 the whole menu — an unparseable one
         // is treated as "no filter", the same as omitting it.
-        Integer categoryId = parseIntOrNull(req.getParameter("category"));
-        List<Product> products;
-        if (categoryId != null) {
-            products = productDAO.findAllActiveByCategory(conn, categoryId);
-            req.setAttribute("selectedCategory", categoryId);
-        } else {
-            products = productDAO.findAllActive(conn);
-        }
-        markFavorited(conn, products, currentCustomer(req));
+        Integer categoryId = RequestParams.intOrNull(req.getParameter("category"));
+        String query = RequestParams.trimmedOrNull(req.getParameter("q"));
+        String sort = RequestParams.trimmedOrNull(req.getParameter("sort"));
+        int page = RequestParams.intInRange(req.getParameter("page"), 1, 1, MAX_PAGE);
 
-        req.setAttribute("pageTitle", "Thực đơn");
+        int totalItems = productDAO.countSearch(conn, query, categoryId);
+        int totalPages = Math.max(1, (int) Math.ceil(totalItems / (double) PAGE_SIZE));
+        // Landing past the end (bookmark from when the menu was longer, or a typed ?page=) should
+        // show the last real page rather than an empty grid.
+        page = Math.min(page, totalPages);
+
+        List<Product> products = productDAO.search(conn, query, categoryId, sort,
+                PAGE_SIZE, (page - 1) * PAGE_SIZE);
+
+        User customer = currentCustomer(req);
+        Set<Integer> favoritedIds = favoritedIdsOf(conn, customer);
+        markFavorited(products, favoritedIds);
+
+        // Promotions / trending / favourites are for browsing, so they only appear on the plain
+        // menu. Stacking them above a search result would bury what the customer actually asked for.
+        boolean browsing = query == null && categoryId == null;
+        if (browsing) {
+            List<Product> promo = productDAO.findOnPromo(conn, SECTION_SIZE);
+            List<Product> hot = productDAO.findBestSellers(conn, HOT_WINDOW_DAYS, SECTION_SIZE);
+            markFavorited(promo, favoritedIds);
+            markFavorited(hot, favoritedIds);
+            req.setAttribute("promoProducts", promo);
+            req.setAttribute("hotProducts", hot);
+
+            if (customer != null) {
+                List<Product> favorites = productDAO.findFavoritesByUser(conn, customer.getUserId(), SECTION_SIZE);
+                markFavorited(favorites, favoritedIds);
+                req.setAttribute("favoriteProducts", favorites);
+            }
+        }
+
+        req.setAttribute("pageTitle", query != null ? "Tìm: " + query : "Thực đơn");
         req.setAttribute("categories", categories);
         req.setAttribute("products", products);
+        req.setAttribute("selectedCategory", categoryId);
+        req.setAttribute("searchQuery", query);
+        req.setAttribute("selectedSort", sort);
+        req.setAttribute("currentPage", page);
+        req.setAttribute("totalPages", totalPages);
+        req.setAttribute("totalItems", totalItems);
+        req.setAttribute("hotWindowDays", HOT_WINDOW_DAYS);
         req.setAttribute("shopAcceptingOrders", shopStatusDAO.get(conn).isAcceptingOrders());
         req.setAttribute("estimatedWaitMinutes", estimatedWaitMinutes(conn));
 
@@ -130,27 +173,24 @@ public class CatalogServlet extends HttpServlet {
         req.getRequestDispatcher("/WEB-INF/views/customer/catalog.jsp").forward(req, resp);
     }
 
-    /** Returns null for a missing, blank or non-numeric value so callers can treat all three alike. */
-    private static Integer parseIntOrNull(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return null;
-        }
-        try {
-            return Integer.valueOf(raw.trim());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
     /** One query for the whole list instead of asking FavoriteDAO once per product. */
-    private void markFavorited(Connection conn, List<Product> products, User customer) throws SQLException {
-        if (customer == null || products.isEmpty()) {
+    /**
+     * The catalog page paints heart state on up to four lists (grid, promo, trending, favourites).
+     * The id set is fetched once by the caller and reused, because with no connection pool each
+     * repeat of that query is a fresh round trip for an answer that cannot have changed.
+     */
+    private void markFavorited(List<Product> products, Set<Integer> favoritedIds) {
+        if (favoritedIds.isEmpty() || products.isEmpty()) {
             return;
         }
-        Set<Integer> favoritedIds = favoriteDAO.findFavoritedProductIds(conn, customer.getUserId());
         for (Product product : products) {
             product.setFavoritedByCurrentUser(favoritedIds.contains(product.getProductId()));
         }
+    }
+
+    /** Empty for a guest or a staff session — nobody to have favourites. */
+    private Set<Integer> favoritedIdsOf(Connection conn, User customer) throws SQLException {
+        return customer == null ? Set.of() : favoriteDAO.findFavoritedProductIds(conn, customer.getUserId());
     }
 
     /**
@@ -166,7 +206,7 @@ public class CatalogServlet extends HttpServlet {
 
     private void showDetail(HttpServletRequest req, HttpServletResponse resp, Connection conn)
             throws SQLException, ServletException, IOException {
-        Integer productId = parseIntOrNull(req.getParameter("id"));
+        Integer productId = RequestParams.intOrNull(req.getParameter("id"));
         Product product = productId == null ? null : productDAO.findById(conn, productId);
 
         if (product == null || !product.isActive()) {
@@ -190,7 +230,7 @@ public class CatalogServlet extends HttpServlet {
      */
     private void showQuickView(HttpServletRequest req, HttpServletResponse resp, Connection conn)
             throws SQLException, ServletException, IOException {
-        Integer productId = parseIntOrNull(req.getParameter("id"));
+        Integer productId = RequestParams.intOrNull(req.getParameter("id"));
         Product product = productId == null ? null : productDAO.findById(conn, productId);
 
         if (product == null || !product.isActive()) {

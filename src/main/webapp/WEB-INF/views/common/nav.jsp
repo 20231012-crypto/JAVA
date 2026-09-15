@@ -10,6 +10,14 @@
         Căng tin EAUT
     </a>
 
+    <%-- Plain GET form: the results are just the menu page with a ?q=, so the search is
+         bookmarkable, shareable and works with the back button. --%>
+    <form class="nav-search" method="get" action="${ctx}/products" role="search">
+        <input type="search" name="q" value="<c:out value='${searchQuery}'/>"
+               placeholder="Tìm món ăn, đồ uống..." aria-label="Tìm món trong thực đơn">
+        <button type="submit" class="nav-search-btn" aria-label="Tìm kiếm">🔍</button>
+    </form>
+
     <nav class="site-nav">
         <c:choose>
             <%-- Guest or logged-in customer: same shopper-facing menu either way. --%>

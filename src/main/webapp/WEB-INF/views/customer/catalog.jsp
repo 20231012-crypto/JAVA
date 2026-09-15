@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 <jsp:include page="/WEB-INF/views/common/header.jsp" />
 <jsp:include page="/WEB-INF/views/common/nav.jsp" />
@@ -75,6 +76,48 @@
             </div>
         </c:if>
 
+        <%-- Discovery strips only show on the plain menu; CatalogServlet leaves them unset when a
+             search or category filter is active so results are not buried under them. --%>
+        <c:if test="${not empty promoProducts}">
+            <section class="catalog-section">
+                <h2 class="catalog-section-title">Khuyến mãi</h2>
+                <div class="card-grid">
+                    <c:forEach var="p" items="${promoProducts}" varStatus="loop">
+                        <c:set var="cardProduct" value="${p}" scope="request" />
+                        <c:set var="cardDelay" value="${(loop.index % 5) * 40}" scope="request" />
+                        <jsp:include page="/WEB-INF/views/customer/_product-card.jsp" />
+                    </c:forEach>
+                </div>
+            </section>
+        </c:if>
+
+        <c:if test="${not empty hotProducts}">
+            <section class="catalog-section">
+                <h2 class="catalog-section-title">Hot hit tuần</h2>
+                <p class="catalog-section-note">Món được đặt nhiều nhất ${hotWindowDays} ngày qua.</p>
+                <div class="card-grid">
+                    <c:forEach var="p" items="${hotProducts}" varStatus="loop">
+                        <c:set var="cardProduct" value="${p}" scope="request" />
+                        <c:set var="cardDelay" value="${(loop.index % 5) * 40}" scope="request" />
+                        <jsp:include page="/WEB-INF/views/customer/_product-card.jsp" />
+                    </c:forEach>
+                </div>
+            </section>
+        </c:if>
+
+        <c:if test="${not empty favoriteProducts}">
+            <section class="catalog-section">
+                <h2 class="catalog-section-title">Món yêu thích của bạn</h2>
+                <div class="card-grid">
+                    <c:forEach var="p" items="${favoriteProducts}" varStatus="loop">
+                        <c:set var="cardProduct" value="${p}" scope="request" />
+                        <c:set var="cardDelay" value="${(loop.index % 5) * 40}" scope="request" />
+                        <jsp:include page="/WEB-INF/views/customer/_product-card.jsp" />
+                    </c:forEach>
+                </div>
+            </section>
+        </c:if>
+
         <div class="catalog-layout ${not empty leftBanners ? 'has-left' : ''} ${not empty rightBanners ? 'has-right' : ''}">
             <c:if test="${not empty leftBanners}">
                 <aside class="catalog-sidebar">
@@ -86,70 +129,86 @@
             </c:if>
 
             <div class="catalog-main">
+                <div class="catalog-toolbar">
+                    <span class="catalog-count">
+                        <c:choose>
+                            <c:when test="${not empty searchQuery}">
+                                Tìm thấy <strong>${totalItems}</strong> món cho &ldquo;<c:out value="${searchQuery}" />&rdquo;
+                            </c:when>
+                            <c:otherwise><strong>${totalItems}</strong> món</c:otherwise>
+                        </c:choose>
+                    </span>
+                    <form class="catalog-sort" method="get" action="${ctx}/products">
+                        <c:if test="${not empty searchQuery}"><input type="hidden" name="q" value="<c:out value='${searchQuery}'/>"></c:if>
+                        <c:if test="${not empty selectedCategory}"><input type="hidden" name="category" value="${selectedCategory}"></c:if>
+                        <label for="sort">Sắp xếp</label>
+                        <select id="sort" name="sort" onchange="this.form.submit()">
+                            <option value="" ${empty selectedSort ? 'selected' : ''}>Tên A-Z</option>
+                            <option value="gia-tang" ${selectedSort == 'gia-tang' ? 'selected' : ''}>Giá thấp đến cao</option>
+                            <option value="gia-giam" ${selectedSort == 'gia-giam' ? 'selected' : ''}>Giá cao đến thấp</option>
+                            <option value="ban-chay" ${selectedSort == 'ban-chay' ? 'selected' : ''}>Bán chạy nhất</option>
+                            <option value="moi" ${selectedSort == 'moi' ? 'selected' : ''}>Món mới nhất</option>
+                        </select>
+                        <noscript><button type="submit" class="btn btn-secondary btn-sm">Áp dụng</button></noscript>
+                    </form>
+                </div>
+
                 <c:choose>
                     <c:when test="${empty products}">
                         <div class="empty-state">
-                            <h2>Chưa có món nào</h2>
-                            <p>Vui lòng quay lại sau.</p>
+                            <c:choose>
+                                <c:when test="${not empty searchQuery}">
+                                    <h2>Không tìm thấy món nào</h2>
+                                    <p>Không có món nào khớp với &ldquo;<c:out value="${searchQuery}" />&rdquo;. Thử từ khóa khác xem sao.</p>
+                                    <p style="margin-top:12px;"><a class="btn btn-primary" href="${ctx}/products">Xem toàn bộ thực đơn</a></p>
+                                </c:when>
+                                <c:otherwise>
+                                    <h2>Chưa có món nào</h2>
+                                    <p>Vui lòng quay lại sau.</p>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
                     </c:when>
                     <c:otherwise>
                         <div class="card-grid">
                             <c:forEach var="p" items="${products}" varStatus="loop">
-                                <div class="card product-card reveal-on-scroll" style="transition-delay:${(loop.index % 6) * 40}ms">
-                                    <a class="product-card-media" href="${pageContext.request.contextPath}/products/detail?id=${p.productId}">
-                                        <c:if test="${p.onPromo}">
-                                            <span class="discount-badge">-${p.discountPercent}%</span>
-                                        </c:if>
-                                        <c:choose>
-                                            <c:when test="${not empty p.imageFilename}">
-                                                <img src="${pageContext.request.contextPath}/images/${p.imageFilename}" alt="${p.name}" loading="lazy">
-                                            </c:when>
-                                            <c:otherwise>
-                                                <div class="product-image-placeholder"><c:out value="${p.name}" /></div>
-                                            </c:otherwise>
-                                        </c:choose>
-                                        <div class="card-hover-actions">
-                                            <c:if test="${not empty sessionScope.user and sessionScope.user.role.customerDefault}">
-                                                <button type="button" class="icon-btn favorite-btn ${p.favoritedByCurrentUser ? 'is-favorited' : ''}"
-                                                        data-favorite-toggle data-product-id="${p.productId}" aria-label="Yêu thích ${p.name}">
-                                                    <c:choose>
-                                                        <c:when test="${p.favoritedByCurrentUser}">♥</c:when>
-                                                        <c:otherwise>♡</c:otherwise>
-                                                    </c:choose>
-                                                </button>
-                                            </c:if>
-                                            <button type="button" class="icon-btn quickview-btn" data-quick-view data-product-id="${p.productId}" aria-label="Xem nhanh ${p.name}">👁</button>
-                                        </div>
-                                    </a>
-                                    <a class="card-body" href="${pageContext.request.contextPath}/products/detail?id=${p.productId}">
-                                        <div class="product-name"><c:out value="${p.name}" /></div>
-                                        <c:if test="${p.showSoldProgress}">
-                                            <div class="sold-progress">
-                                                <div class="sold-progress-bar"><div class="sold-progress-fill" style="width:${p.soldProgressPercent}%"></div></div>
-                                                <div class="sold-progress-label">
-                                                    <span>Đã bán: ${p.soldQuantity}/${p.promoTargetQuantity}</span>
-                                                    <span>${p.soldProgressPercent}%</span>
-                                                </div>
-                                            </div>
-                                        </c:if>
-                                        <div class="product-price">
-                                            <c:if test="${p.onPromo}">
-                                                <span class="price-original"><fmt:formatNumber value="${p.originalPrice}" type="number" groupingUsed="true" />₫</span>
-                                            </c:if>
-                                            <span class="price-current"><fmt:formatNumber value="${p.price}" type="number" groupingUsed="true" />₫</span>
-                                        </div>
-                                        <c:if test="${p.shelfQuantity <= 0}">
-                                            <div class="out-of-stock">Tạm hết hàng</div>
-                                        </c:if>
-                                    </a>
-                                    <c:if test="${not empty sessionScope.user and sessionScope.user.role.customerDefault and p.shelfQuantity > 0 and shopAcceptingOrders != false}">
-                                        <button type="button" class="quick-add-btn quick-add-btn-block" data-quick-add data-product-id="${p.productId}" data-product-name="${p.name}"
-                                                aria-label="Thêm ${p.name} vào giỏ hàng">Thêm vào giỏ</button>
-                                    </c:if>
-                                </div>
+                                <c:set var="cardProduct" value="${p}" scope="request" />
+                                <c:set var="cardDelay" value="${(loop.index % 5) * 40}" scope="request" />
+                                <jsp:include page="/WEB-INF/views/customer/_product-card.jsp" />
                             </c:forEach>
                         </div>
+
+                        <c:if test="${totalPages > 1}">
+                            <%-- Server-rendered links so paging works without JS and every page is a
+                                 real, shareable URL. Each link carries the active filters along. --%>
+                            <c:set var="filterQs"><c:if test="${not empty searchQuery}">&amp;q=${fn:escapeXml(searchQuery)}</c:if><c:if test="${not empty selectedCategory}">&amp;category=${selectedCategory}</c:if><c:if test="${not empty selectedSort}">&amp;sort=${fn:escapeXml(selectedSort)}</c:if></c:set>
+                            <nav class="pagination" aria-label="Phân trang thực đơn">
+                                <c:choose>
+                                    <c:when test="${currentPage > 1}">
+                                        <a class="pagination-link" href="${ctx}/products?page=${currentPage - 1}${filterQs}" rel="prev">&#8249; Trước</a>
+                                    </c:when>
+                                    <c:otherwise><span class="pagination-link is-disabled">&#8249; Trước</span></c:otherwise>
+                                </c:choose>
+
+                                <c:forEach begin="1" end="${totalPages}" var="i">
+                                    <c:choose>
+                                        <c:when test="${i == currentPage}">
+                                            <span class="pagination-link is-current" aria-current="page">${i}</span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <a class="pagination-link" href="${ctx}/products?page=${i}${filterQs}">${i}</a>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </c:forEach>
+
+                                <c:choose>
+                                    <c:when test="${currentPage < totalPages}">
+                                        <a class="pagination-link" href="${ctx}/products?page=${currentPage + 1}${filterQs}" rel="next">Sau &#8250;</a>
+                                    </c:when>
+                                    <c:otherwise><span class="pagination-link is-disabled">Sau &#8250;</span></c:otherwise>
+                                </c:choose>
+                            </nav>
+                        </c:if>
                     </c:otherwise>
                 </c:choose>
             </div>

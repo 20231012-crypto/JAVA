@@ -22,6 +22,10 @@
 --     discount tracking.
 --   * wallet_transactions — auditable ledger backing users.wallet_balance.
 
+-- Accent-insensitive menu search: Vietnamese is often typed without diacritics when searching,
+-- so ProductDAOImpl.search compares unaccent(name) against unaccent(query).
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
 -- ============================================================
 -- Reference data
 -- ============================================================
@@ -294,6 +298,18 @@ CREATE TABLE banners (
   created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Staff check-in/check-out (chấm công). One row per shift; check_out_at NULL = still on shift.
+-- Distinct from users.on_duty, which is a live "working right now" switch for the queue boards:
+-- on_duty answers "who is working now", this table answers "who worked when, for how long".
+CREATE TABLE staff_attendance (
+  attendance_id  SERIAL PRIMARY KEY,
+  user_id        INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  check_in_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  check_out_at   TIMESTAMP NULL,
+  note           VARCHAR(255) NULL,
+  CONSTRAINT chk_attendance_order CHECK (check_out_at IS NULL OR check_out_at >= check_in_at)
+);
+
 CREATE INDEX idx_history_order     ON order_status_history(order_id);
 CREATE INDEX idx_orders_customer   ON orders(customer_id);
 CREATE INDEX idx_orders_status     ON orders(order_status);
@@ -301,3 +317,11 @@ CREATE INDEX idx_products_category ON products(category_id);
 CREATE INDEX idx_wallet_tx_user    ON wallet_transactions(user_id);
 CREATE INDEX idx_topup_user        ON wallet_topup_requests(user_id);
 CREATE INDEX idx_loyalty_tx_user   ON loyalty_transactions(user_id);
+-- Every line of every order lands in order_items, and both the best-seller report and the
+-- "Hot hit tuần" catalog section GROUP BY this column.
+CREATE INDEX idx_order_items_product ON order_items(product_id);
+-- At most one open shift per staff member: two rapid clock-in requests would both pass an
+-- application-level "is there an open shift?" check, so the database refuses the second.
+CREATE UNIQUE INDEX one_open_shift_per_user
+  ON staff_attendance(user_id) WHERE check_out_at IS NULL;
+CREATE INDEX idx_attendance_user_day ON staff_attendance(user_id, check_in_at);
