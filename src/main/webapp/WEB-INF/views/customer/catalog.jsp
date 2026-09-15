@@ -123,7 +123,7 @@
 
         <div class="catalog-layout ${not empty leftBanners ? 'has-left' : ''} ${not empty rightBanners ? 'has-right' : ''}">
             <c:if test="${not empty leftBanners}">
-                <aside class="catalog-sidebar">
+                <aside class="catalog-sidebar catalog-sidebar-left">
                     <c:forEach var="b" items="${leftBanners}">
                         <c:set var="bannerInCarousel" value="false" scope="request" />
                         <c:set var="bannerRef" value="${b}" scope="request" />
@@ -218,7 +218,7 @@
             </div>
 
             <c:if test="${not empty rightBanners}">
-                <aside class="catalog-sidebar">
+                <aside class="catalog-sidebar catalog-sidebar-right">
                     <c:forEach var="b" items="${rightBanners}">
                         <c:set var="bannerInCarousel" value="false" scope="request" />
                         <c:set var="bannerRef" value="${b}" scope="request" />

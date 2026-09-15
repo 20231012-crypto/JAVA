@@ -55,6 +55,11 @@
     --duration-base: 0.3s;
     --duration-slow: 0.5s;
 
+    /* The pinned banner rails: a rail is only worth pinning if the menu keeps a usable width
+       beside it, so its width and the page inset that clears it belong together. */
+    --rail-banner-width: 200px;
+    --rail-banner-inset: 236px; /* rail width + its 18px edge gap + 18px of breathing room */
+
     --shadow-card: 0 2px 8px rgba(11, 60, 136, 0.05);
     --shadow-container: 0 10px 15px -3px rgba(11, 60, 136, 0.08), 0 4px 6px -4px rgba(11, 60, 136, 0.04);
 }
@@ -2010,9 +2015,10 @@ body.has-admin-rail {
     grid-template-columns: 220px 1fr 220px;
 }
 
-/* Deliberately not sticky. A rail that detaches and rides down the page over the menu reads as a
-   floating overlay rather than a column of the layout — the two sections should stay level and
-   scroll together. */
+/* The in-flow form of a rail, used when the window is too narrow to pin one beside the page (see
+   the min-width: 1280px block further down, where the rail leaves the flow and pins to the window
+   edge instead). Here it is an ordinary column: it stays level with the menu and scrolls with it,
+   rather than detaching and riding down the page over it. */
 .catalog-sidebar {
     display: flex;
     flex-direction: column;
@@ -2111,6 +2117,67 @@ body.has-admin-rail {
         max-height: 220px;
     }
 }
+
+/* ===== Banner rails pinned to the window edges =====
+   From here up there is room beside the page for the rails to leave the document flow and stay put
+   while the menu scrolls under them, which is what they are for: an ad rail nobody ever scrolls
+   past. The page is inset by the same amount so nothing ends up underneath them, and the menu gets
+   the whole container back because the rails no longer occupy grid columns.
+
+   The 1280px floor is the width at which the inset still leaves the menu enough room; below it the
+   rails stay in the layout as ordinary columns (and below 860px, as the strip above). */
+@media screen and (min-width: 1280px) {
+    body.has-left-banner { padding-left: var(--rail-banner-inset); }
+    body.has-right-banner { padding-right: var(--rail-banner-inset); }
+
+    .catalog-layout.has-left,
+    .catalog-layout.has-right,
+    .catalog-layout.has-left.has-right {
+        grid-template-columns: 1fr;
+    }
+
+    .catalog-sidebar {
+        position: fixed;
+        /* Clears the sticky site header, which floats at top: 12px above everything. */
+        top: 96px;
+        bottom: 18px;
+        width: var(--rail-banner-width);
+        /* The in-flow rule sets height: 100% to match the grid row. Once fixed, that percentage
+           resolves against the viewport instead, which beats `bottom` and runs the rail 96px past
+           the bottom of the window — taking the banner caption with it. */
+        height: auto;
+        /* Under the header (z-index: 30) so a scrolled page still tucks the rail behind it, and
+           under the modal/toast layers, but over the page background. */
+        z-index: 20;
+    }
+
+    .catalog-sidebar-left { left: 18px; }
+    .catalog-sidebar-right { right: 18px; }
+
+    /* Fixed to the viewport, the rail's height no longer comes from the grid row, so the menu's
+       length stops mattering — the banner is exactly one screen tall either way. */
+    .catalog-sidebar .cms-banner-media {
+        min-height: 0;
+    }
+
+    /* Two rails inset the page by ~472px, which the five-column ladder does not know about: it
+       counts viewport width, and every grid outside .catalog-layout (Khuyến mãi / Hot hit / Yêu
+       thích) is not covered by the has-left/has-right step-down at all. Left alone, a 1340px window
+       gives 157px cards and clips the prices. Every grid on the page steps to four here and back to
+       five once the window is wide enough to afford it. */
+    body.has-left-banner .card-grid,
+    body.has-right-banner .card-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media screen and (min-width: 1560px) {
+    body.has-left-banner .card-grid,
+    body.has-right-banner .card-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+
 
 .cms-banner-title {
     padding: 12px 14px 2px;

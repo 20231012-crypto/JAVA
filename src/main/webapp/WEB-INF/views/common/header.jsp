@@ -39,8 +39,15 @@
                 ? pageContext.request.servletPath
                 : requestScope['jakarta.servlet.forward.servlet_path']}" />
 <%-- Admin screens get the fixed left rail, so the body has to keep clear of it. Derived from the
-     path rather than set by each page, so a new /admin/* screen picks it up automatically. --%>
+     path rather than set by each page, so a new /admin/* screen picks it up automatically.
+
+     The customer banner rails are pinned to the window edges rather than sitting in the page, so
+     the page itself has to be inset to leave room for them. That has to be decided on <body>, which
+     is above the catalog markup, so the flags are read here from the attributes the servlet set
+     before the forward. Pages with no banners set nothing and keep the full width. --%>
 <body data-context-path="${pageContext.request.contextPath}"
       data-csrf="${csrfToken}"
-      class="${fn:startsWith(requestPath, '/admin') ? 'has-admin-rail' : ''}">
+      class="${fn:startsWith(requestPath, '/admin') ? 'has-admin-rail' : ''}
+             ${not empty leftBanners ? 'has-left-banner' : ''}
+             ${not empty rightBanners ? 'has-right-banner' : ''}">
 <jsp:include page="/WEB-INF/views/common/_icon-sprite.jsp" />
