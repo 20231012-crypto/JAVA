@@ -65,7 +65,8 @@
              readable here without hovering, and it is what a screen reader gets. --%>
         <details class="chart-table-toggle">
             <summary>Xem số liệu dạng bảng</summary>
-            <table class="data-table">
+            <div class="table-scroll">
+                <table class="data-table">
                 <thead><tr><th>Ngày</th><th>Doanh thu</th><th>Số đơn hoàn thành</th></tr></thead>
                 <tbody>
                     <c:forEach var="point" items="${series}">
@@ -77,10 +78,12 @@
                     </c:forEach>
                 </tbody>
             </table>
+            </div>
         </details>
 
         <h2 style="font-size:1rem; margin-top:24px;">Đơn hàng theo trạng thái</h2>
-        <table class="data-table">
+        <div class="table-scroll">
+            <table class="data-table">
             <thead><tr><th>Trạng thái</th><th>Số đơn</th></tr></thead>
             <tbody>
                 <c:forEach var="entry" items="${statusCounts}">
@@ -91,6 +94,7 @@
                 </c:forEach>
             </tbody>
         </table>
+        </div>
     </div>
 </main>
 <jsp:include page="/WEB-INF/views/common/footer.jsp" />

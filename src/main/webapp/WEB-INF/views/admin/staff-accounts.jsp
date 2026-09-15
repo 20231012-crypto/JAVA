@@ -58,7 +58,8 @@
             <button type="submit" class="btn btn-primary">Tạo tài khoản</button>
         </form>
 
-        <table class="data-table">
+        <div class="table-scroll">
+            <table class="data-table">
             <thead>
                 <tr><th>Họ tên</th><th>Tên đăng nhập</th><th>Email</th><th>Vai trò</th><th>Trạng thái</th><th></th></tr>
             </thead>
@@ -89,6 +90,7 @@
                 </c:forEach>
             </tbody>
         </table>
+        </div>
 
         <h2>Sửa tài khoản</h2>
         <p class="hint">

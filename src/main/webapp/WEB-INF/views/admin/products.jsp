@@ -5,14 +5,39 @@
 <jsp:include page="/WEB-INF/views/common/nav.jsp" />
 <main class="page-content">
     <div class="container">
+        <c:if test="${not empty sessionScope.actionMessage}">
+            <div class="alert alert-success"><c:out value="${sessionScope.actionMessage}" /></div>
+            <c:remove var="actionMessage" scope="session" />
+        </c:if>
+        <c:if test="${not empty sessionScope.actionError}">
+            <div class="alert alert-error"><c:out value="${sessionScope.actionError}" /></div>
+            <c:remove var="actionError" scope="session" />
+        </c:if>
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <h1>Sản phẩm</h1>
             <a class="btn btn-primary" href="${pageContext.request.contextPath}/admin/products/form">Thêm sản phẩm</a>
         </div>
 
-        <table class="data-table" style="margin-top:20px;">
+                <%-- The whole table is one form. Bulk selection is therefore plain checkboxes and a
+             submit button — it works with JavaScript off, and admin.js only adds the select-all
+             convenience on top. --%>
+        <form method="post" action="${pageContext.request.contextPath}/admin/products/bulk">
+            <input type="hidden" name="csrfToken" value="${csrfToken}">
+            <div class="bulk-bar">
+                <span class="bulk-bar-label">Thao tác cho các món đã chọn:</span>
+                <button type="submit" name="action" value="sold-out" class="btn btn-sm btn-secondary">Báo hết hàng</button>
+                <button type="submit" name="action" value="available" class="btn btn-sm btn-secondary">Mở bán lại</button>
+                <button type="submit" name="action" value="hide" class="btn btn-sm btn-danger">Ẩn khỏi menu</button>
+                <button type="submit" name="action" value="show" class="btn btn-sm btn-secondary">Hiện lại</button>
+            </div>
+<div class="table-scroll">
+    <table class="data-table" style="margin-top:20px;">
             <thead>
                 <tr>
+                    <th class="col-select">
+                        <label class="visually-hidden" for="select-all-products">Chọn tất cả</label>
+                        <input type="checkbox" id="select-all-products" data-select-all="product-pick">
+                    </th>
                     <th>Tên sản phẩm</th><th>Danh mục</th><th>Giá</th>
                     <th>Tồn kho</th><th>Tồn kệ</th><th>Trạng thái</th><th></th>
                     <th>Còn hàng</th>
@@ -21,6 +46,11 @@
             <tbody>
                 <c:forEach var="p" items="${products}">
                     <tr>
+                        <td class="col-select">
+                            <label class="visually-hidden" for="pick-${p.productId}">Chọn <c:out value="${p.name}" /></label>
+                            <input type="checkbox" id="pick-${p.productId}" name="ids"
+                                   value="${p.productId}" data-select-item="product-pick">
+                        </td>
                         <td><c:out value="${p.name}" /></td>
                         <td><c:out value="${p.categoryName}" /></td>
                         <td><fmt:formatNumber value="${p.price}" type="number" groupingUsed="true" />₫</td>
@@ -68,6 +98,8 @@
                 </c:forEach>
             </tbody>
         </table>
+</div>
+        </form>
     </div>
 </main>
 <jsp:include page="/WEB-INF/views/common/footer.jsp" />

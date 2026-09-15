@@ -31,7 +31,8 @@
             <button type="submit" class="btn btn-primary">Chuyển lên kệ</button>
         </form>
 
-        <table class="data-table">
+        <div class="table-scroll">
+            <table class="data-table">
             <thead>
                 <tr><th>Sản phẩm</th><th>Tồn kho</th><th>Tồn kệ</th></tr>
             </thead>
@@ -45,9 +46,11 @@
                 </c:forEach>
             </tbody>
         </table>
+        </div>
 
         <h2 style="margin:24px 0 12px;">Lịch sử chuyển hàng gần đây</h2>
-        <table class="data-table">
+        <div class="table-scroll">
+            <table class="data-table">
             <thead>
                 <tr><th>Thời gian</th><th>Sản phẩm</th><th>Số lượng</th><th>Người thực hiện</th></tr>
             </thead>
@@ -62,6 +65,7 @@
                 </c:forEach>
             </tbody>
         </table>
+        </div>
     </div>
 </main>
 <jsp:include page="/WEB-INF/views/common/footer.jsp" />

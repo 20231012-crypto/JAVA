@@ -21,6 +21,9 @@ import com.eaut.canteen.dao.impl.StockMovementDAOImpl;
 import com.eaut.canteen.model.StockLocation;
 import com.eaut.canteen.model.StockMovementReason;
 import com.eaut.canteen.util.DBConnection;
+import java.util.List;
+import java.util.ArrayList;
+import com.eaut.canteen.util.RequestParams;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -54,11 +57,39 @@ public class StockImportServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         User admin = (User) req.getSession().getAttribute("user");
-        int productId = Integer.parseInt(req.getParameter("productId"));
-        int quantity = Integer.parseInt(req.getParameter("quantity"));
-        BigDecimal unitCost = new BigDecimal(req.getParameter("unitCost"));
-        String supplierName = req.getParameter("supplierName");
-        String note = req.getParameter("note");
+        // A delivery is a receipt with several lines on it. The form used to accept exactly one,
+        // so a van arriving with eight products meant filling the form eight times and ending up
+        // with eight unrelated receipts that no longer looked like one delivery.
+        String[] productIds = req.getParameterValues("productId");
+        String[] quantities = req.getParameterValues("quantity");
+        String[] unitCosts = req.getParameterValues("unitCost");
+        String supplierName = RequestParams.trimmedOrNull(req.getParameter("supplierName"));
+        String note = RequestParams.trimmedOrNull(req.getParameter("note"));
+
+        List<int[]> lines = new ArrayList<>();
+        List<BigDecimal> costs = new ArrayList<>();
+        if (productIds != null && quantities != null && unitCosts != null) {
+            int count = Math.min(productIds.length, Math.min(quantities.length, unitCosts.length));
+            for (int i = 0; i < count; i++) {
+                Integer pid = RequestParams.intOrNull(productIds[i]);
+                Integer qty = RequestParams.intOrNull(quantities[i]);
+                BigDecimal cost = parseMoney(unitCosts[i]);
+                // Blank rows are how the form offers spare lines, so they are skipped rather than
+                // rejected — only a row someone actually filled in has to be valid.
+                if (pid == null || qty == null || qty <= 0 || cost == null || cost.signum() < 0) {
+                    continue;
+                }
+                lines.add(new int[]{pid, qty});
+                costs.add(cost);
+            }
+        }
+
+        if (lines.isEmpty()) {
+            req.getSession().setAttribute("actionError",
+                    "Cần ít nhất một dòng hợp lệ: chọn món, số lượng lớn hơn 0 và đơn giá.");
+            resp.sendRedirect(req.getContextPath() + "/admin/stock-imports");
+            return;
+        }
 
         try (Connection conn = DBConnection.getConnection()) {
             conn.setAutoCommit(false);
@@ -69,21 +100,29 @@ public class StockImportServlet extends HttpServlet {
                 stockImport.setNote(note);
                 int importId = stockImportDAO.insert(conn, stockImport);
 
-                StockImportItem item = new StockImportItem();
-                item.setImportId(importId);
-                item.setProductId(productId);
-                item.setQuantity(quantity);
-                item.setUnitCost(unitCost);
-                stockImportItemDAO.insert(conn, item);
+                // One transaction for the whole receipt: a delivery that recorded four of its eight
+                // lines would leave the warehouse count wrong with no way to tell which half landed.
+                for (int i = 0; i < lines.size(); i++) {
+                    int productId = lines.get(i)[0];
+                    int quantity = lines.get(i)[1];
 
-                warehouseStockDAO.increment(conn, productId, quantity);
-                stockMovementDAO.insert(conn, productId, StockLocation.WAREHOUSE, quantity,
-                        StockMovementReason.IMPORT, null,
-                        supplierName == null || supplierName.isBlank()
-                                ? "Nhập kho" : "Nhập từ " + supplierName,
-                        admin.getUserId());
+                    StockImportItem item = new StockImportItem();
+                    item.setImportId(importId);
+                    item.setProductId(productId);
+                    item.setQuantity(quantity);
+                    item.setUnitCost(costs.get(i));
+                    stockImportItemDAO.insert(conn, item);
+
+                    warehouseStockDAO.increment(conn, productId, quantity);
+                    stockMovementDAO.insert(conn, productId, StockLocation.WAREHOUSE, quantity,
+                            StockMovementReason.IMPORT, null,
+                            supplierName == null ? "Nhập kho" : "Nhập từ " + supplierName,
+                            admin.getUserId());
+                }
 
                 conn.commit();
+                req.getSession().setAttribute("actionMessage",
+                        "Đã nhập " + lines.size() + " dòng vào kho.");
             } catch (SQLException e) {
                 conn.rollback();
                 throw e;
@@ -95,5 +134,18 @@ public class StockImportServlet extends HttpServlet {
         }
 
         resp.sendRedirect(req.getContextPath() + "/admin/stock-imports");
+    }
+
+    /** Accepts "12000" and "12.000" — staff type thousands separators out of habit. */
+    private BigDecimal parseMoney(String raw) {
+        String trimmed = RequestParams.trimmedOrNull(raw);
+        if (trimmed == null) {
+            return null;
+        }
+        try {
+            return new BigDecimal(trimmed.replace(".", "").replace(",", "").replace(" ", ""));
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

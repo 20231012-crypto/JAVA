@@ -54,7 +54,8 @@
 
         <c:if test="${not empty topupRequests}">
             <h2 style="margin-bottom:12px;">Yêu cầu nạp tiền</h2>
-            <table class="data-table" style="margin-bottom:24px;">
+            <div class="table-scroll">
+                <table class="data-table" style="margin-bottom:24px;">
                 <thead><tr><th>Thời gian</th><th>Số tiền</th><th>Nội dung CK</th><th>Trạng thái</th></tr></thead>
                 <tbody>
                     <c:forEach var="r" items="${topupRequests}">
@@ -71,6 +72,7 @@
                     </c:forEach>
                 </tbody>
             </table>
+            </div>
         </c:if>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
@@ -79,7 +81,8 @@
                 <c:choose>
                     <c:when test="${empty walletTransactions}"><div class="empty-state"><h2>Chưa có giao dịch</h2></div></c:when>
                     <c:otherwise>
-                        <table class="data-table">
+                        <div class="table-scroll">
+                            <table class="data-table">
                             <thead><tr><th>Thời gian</th><th>Loại</th><th>Số tiền</th></tr></thead>
                             <tbody>
                                 <c:forEach var="tx" items="${walletTransactions}">
@@ -93,6 +96,7 @@
                                 </c:forEach>
                             </tbody>
                         </table>
+                        </div>
                     </c:otherwise>
                 </c:choose>
             </div>
@@ -101,7 +105,8 @@
                 <c:choose>
                     <c:when test="${empty loyaltyTransactions}"><div class="empty-state"><h2>Chưa có giao dịch</h2></div></c:when>
                     <c:otherwise>
-                        <table class="data-table">
+                        <div class="table-scroll">
+                            <table class="data-table">
                             <thead><tr><th>Thời gian</th><th>Loại</th><th>Điểm</th></tr></thead>
                             <tbody>
                                 <c:forEach var="tx" items="${loyaltyTransactions}">
@@ -115,6 +120,7 @@
                                 </c:forEach>
                             </tbody>
                         </table>
+                        </div>
                     </c:otherwise>
                 </c:choose>
             </div>

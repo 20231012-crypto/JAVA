@@ -45,7 +45,8 @@
 
             <div>
                 <h2 style="margin-bottom:12px;">Sản phẩm</h2>
-                <table class="data-table" style="margin-bottom:24px;">
+                <div class="table-scroll">
+                    <table class="data-table" style="margin-bottom:24px;">
                     <thead>
                         <tr><th>Sản phẩm</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr>
                     </thead>
@@ -60,9 +61,11 @@
                         </c:forEach>
                     </tbody>
                 </table>
+                </div>
 
                 <h2 style="margin-bottom:12px;">Lịch sử trạng thái</h2>
-                <table class="data-table">
+                <div class="table-scroll">
+                    <table class="data-table">
                     <thead>
                         <tr><th>Thời gian</th><th>Trạng thái</th><th>Thực hiện bởi</th><th>Ghi chú</th></tr>
                     </thead>
@@ -77,6 +80,7 @@
                         </c:forEach>
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
     </div>

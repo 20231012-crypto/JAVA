@@ -51,7 +51,8 @@
                 </div>
             </c:when>
             <c:otherwise>
-                <table class="data-table">
+                <div class="table-scroll">
+                    <table class="data-table">
                     <thead>
                         <tr><th>Ngày</th><th>Vào làm</th><th>Tan làm</th><th>Số giờ</th></tr>
                     </thead>
@@ -69,6 +70,7 @@
                         </c:forEach>
                     </tbody>
                 </table>
+                </div>
             </c:otherwise>
         </c:choose>
     </div>

@@ -18,7 +18,8 @@
                 </div>
             </c:when>
             <c:otherwise>
-                <table class="data-table" style="margin-top:20px;">
+                <div class="table-scroll">
+                    <table class="data-table" style="margin-top:20px;">
                     <thead>
                         <tr>
                             <th>Mã đơn</th>
@@ -42,6 +43,7 @@
                         </c:forEach>
                     </tbody>
                 </table>
+                </div>
             </c:otherwise>
         </c:choose>
     </div>

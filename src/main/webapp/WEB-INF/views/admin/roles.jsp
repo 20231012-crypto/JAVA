@@ -47,7 +47,8 @@
         <form method="post" action="${ctx}/admin/roles/permissions">
             <input type="hidden" name="csrfToken" value="${csrfToken}">
             <div style="overflow-x:auto;">
-                <table class="data-table" style="min-width:600px;">
+                <div class="table-scroll">
+                    <table class="data-table" style="min-width:600px;">
                     <thead>
                         <tr>
                             <th>Chức năng</th>
@@ -80,6 +81,7 @@
                         </c:forEach>
                     </tbody>
                 </table>
+                </div>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:16px;">Lưu phân quyền</button>
         </form>

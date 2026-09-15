@@ -23,7 +23,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 
 @WebServlet({"/admin/products", "/admin/products/form", "/admin/products/save",
-             "/admin/products/toggle", "/admin/products/availability"})
+             "/admin/products/toggle", "/admin/products/availability", "/admin/products/bulk"})
 @MultipartConfig(maxFileSize = 5 * 1024 * 1024)
 public class ProductServlet extends HttpServlet {
 
@@ -73,6 +73,11 @@ public class ProductServlet extends HttpServlet {
                 if (productId != null) {
                     productDAO.setActive(conn, productId, Boolean.parseBoolean(req.getParameter("active")));
                 }
+                resp.sendRedirect(req.getContextPath() + "/admin/products");
+                return;
+            }
+            if ("/admin/products/bulk".equals(req.getServletPath())) {
+                bulk(req, conn);
                 resp.sendRedirect(req.getContextPath() + "/admin/products");
                 return;
             }
@@ -137,5 +142,45 @@ public class ProductServlet extends HttpServlet {
         }
 
         resp.sendRedirect(req.getContextPath() + "/admin/products");
+    }
+
+    /**
+     * Applies one change to every checked row.
+     *
+     * <p>Whitelisted action names rather than, say, a column and a value from the form: this
+     * endpoint writes to any number of products at once, and the set of things it can do should be
+     * readable here rather than assembled from request parameters.
+     *
+     * <p>Not transactional on purpose. These are independent per-product flags, and if the tenth
+     * of twenty fails there is no sense in undoing the nine that worked — the operator can see
+     * what changed and repeat the rest. Contrast the refund, which is one indivisible operation.
+     */
+    private void bulk(HttpServletRequest req, Connection conn) throws SQLException {
+        String action = req.getParameter("action");
+        String[] ids = req.getParameterValues("ids");
+        if (action == null || ids == null || ids.length == 0) {
+            req.getSession().setAttribute("actionError", "Chưa chọn món nào.");
+            return;
+        }
+
+        int applied = 0;
+        for (String raw : ids) {
+            Integer productId = RequestParams.intOrNull(raw);
+            if (productId == null) {
+                continue;
+            }
+            switch (action) {
+                case "hide" -> productDAO.setActive(conn, productId, false);
+                case "show" -> productDAO.setActive(conn, productId, true);
+                case "sold-out" -> productDAO.setAvailable(conn, productId, false);
+                case "available" -> productDAO.setAvailable(conn, productId, true);
+                default -> {
+                    req.getSession().setAttribute("actionError", "Thao tác không hợp lệ.");
+                    return;
+                }
+            }
+            applied++;
+        }
+        req.getSession().setAttribute("actionMessage", "Đã áp dụng cho " + applied + " món.");
     }
 }

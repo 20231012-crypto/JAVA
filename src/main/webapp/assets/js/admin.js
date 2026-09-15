@@ -10,6 +10,7 @@
         initRailToggle();
         initCommandPalette();
         initNewOrderAlert();
+        initSelectAll();
     });
 
     function contextPath() {
@@ -310,6 +311,36 @@
 
         poll();
         timer = window.setInterval(poll, pollMs);
+    }
+
+    /**
+     * Select-all for the bulk tables. Purely a convenience: the checkboxes and the submit buttons
+     * are plain form controls that work without this, so all it does is tick the boxes and keep
+     * the header box's indeterminate state honest.
+     */
+    function initSelectAll() {
+        document.querySelectorAll("[data-select-all]").forEach(function (master) {
+            var group = master.getAttribute("data-select-all");
+            var items = document.querySelectorAll('[data-select-item="' + group + '"]');
+            if (!items.length) {
+                return;
+            }
+
+            master.addEventListener("change", function () {
+                items.forEach(function (item) { item.checked = master.checked; });
+                master.indeterminate = false;
+            });
+
+            items.forEach(function (item) {
+                item.addEventListener("change", function () {
+                    var checked = 0;
+                    items.forEach(function (i) { if (i.checked) { checked++; } });
+                    master.checked = checked === items.length;
+                    // Neither all nor none: the header box says "some", rather than lying either way.
+                    master.indeterminate = checked > 0 && checked < items.length;
+                });
+            });
+        });
     }
 
     /** Shared with the palette's result rendering — both build HTML from server strings. */

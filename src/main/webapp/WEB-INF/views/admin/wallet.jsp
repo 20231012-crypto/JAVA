@@ -20,7 +20,8 @@
 
         <c:if test="${not empty pendingRequests}">
             <h2 style="margin-bottom:12px;">Yêu cầu nạp tiền chờ xác nhận (${fn:length(pendingRequests)})</h2>
-            <table class="data-table" style="margin-bottom:24px;">
+            <div class="table-scroll">
+                <table class="data-table" style="margin-bottom:24px;">
                 <thead><tr><th>Thời gian</th><th>Khách hàng</th><th>Số tiền</th><th>Nội dung CK</th><th></th></tr></thead>
                 <tbody>
                     <c:forEach var="r" items="${pendingRequests}">
@@ -45,6 +46,7 @@
                     </c:forEach>
                 </tbody>
             </table>
+            </div>
         </c:if>
 
         <form method="get" action="${ctx}/admin/wallet" style="display:flex; gap:10px; margin-bottom:24px;">
@@ -86,7 +88,8 @@
                     <div class="empty-state"><h2>Chưa có giao dịch nào</h2></div>
                 </c:when>
                 <c:otherwise>
-                    <table class="data-table">
+                    <div class="table-scroll">
+                        <table class="data-table">
                         <thead><tr><th>Thời gian</th><th>Loại</th><th>Số tiền</th><th>Ghi chú</th></tr></thead>
                         <tbody>
                             <c:forEach var="tx" items="${transactions}">
@@ -101,6 +104,7 @@
                             </c:forEach>
                         </tbody>
                     </table>
+                    </div>
                 </c:otherwise>
             </c:choose>
         </c:if>
@@ -108,7 +112,8 @@
         <c:if test="${not empty candidates}">
             <h2>Có nhiều kết quả khớp</h2>
             <p class="hint">Chọn đúng sinh viên để xem ví.</p>
-            <table class="data-table">
+            <div class="table-scroll">
+                <table class="data-table">
                 <thead><tr><th>Họ tên</th><th>MSSV</th><th>Liên hệ</th><th></th></tr></thead>
                 <tbody>
                     <c:forEach var="row" items="${candidates}">
@@ -127,6 +132,7 @@
                     </c:forEach>
                 </tbody>
             </table>
+            </div>
         </c:if>
 
         <h2>Đối soát số dư</h2>

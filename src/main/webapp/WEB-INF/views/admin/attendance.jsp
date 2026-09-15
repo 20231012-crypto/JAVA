@@ -37,7 +37,8 @@
             </c:when>
             <c:otherwise>
                 <h2 style="font-size:1rem;">Tổng giờ làm theo nhân viên</h2>
-                <table class="data-table">
+                <div class="table-scroll">
+                    <table class="data-table">
                     <thead><tr><th>Nhân viên</th><th>Tổng giờ</th></tr></thead>
                     <tbody>
                         <c:forEach var="entry" items="${totalsByStaff}">
@@ -48,9 +49,11 @@
                         </c:forEach>
                     </tbody>
                 </table>
+                </div>
 
                 <h2 style="font-size:1rem; margin-top:24px;">Chi tiết từng ca</h2>
-                <table class="data-table">
+                <div class="table-scroll">
+                    <table class="data-table">
                     <thead>
                         <tr><th>Ngày</th><th>Nhân viên</th><th>Vai trò</th><th>Vào làm</th><th>Tan làm</th><th>Số giờ</th></tr>
                     </thead>
@@ -70,6 +73,7 @@
                         </c:forEach>
                     </tbody>
                 </table>
+                </div>
                 <p class="hint" style="margin-top:8px;">
                     Ca chưa tan làm được tính tới thời điểm hiện tại.
                 </p>

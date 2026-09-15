@@ -3012,3 +3012,52 @@ kbd {
         padding: 8vh 12px 12px;
     }
 }
+
+/* Bulk action bar above a selectable table. Buttons are real submits with different name/value
+   pairs, so the whole thing is one plain form. */
+.bulk-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    margin: 16px 0 0;
+    background: var(--color-neutral-soft);
+    border-radius: var(--radius-card);
+}
+
+.bulk-bar-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    margin-right: 4px;
+}
+
+.col-select {
+    width: 34px;
+    text-align: center;
+}
+
+.col-select input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* A dense table needs a floor width or the browser crushes columns into unreadable slivers before
+   it agrees to scroll. Paired with .table-scroll, which bounds the scrolling to the table's own
+   box so the page itself never scrolls sideways. */
+@media screen and (max-width: 860px) {
+    .table-scroll .data-table {
+        min-width: 620px;
+    }
+
+    /* Inline per-row forms stack rather than squeezing their input to nothing. */
+    .inline-form {
+        flex-wrap: wrap;
+    }
+
+    .input-mid {
+        width: 120px;
+    }
+}

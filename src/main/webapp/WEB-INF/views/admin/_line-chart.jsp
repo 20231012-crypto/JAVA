@@ -59,7 +59,8 @@
 
         <details class="chart-table-toggle">
             <summary>Xem dạng bảng</summary>
-            <table class="data-table">
+            <div class="table-scroll">
+                <table class="data-table">
                 <thead><tr><th><c:out value="${param.unitLabel}" /></th><th>Doanh thu</th></tr></thead>
                 <tbody>
                     <c:forEach var="p" items="${series}">
@@ -70,6 +71,7 @@
                     </c:forEach>
                 </tbody>
             </table>
+            </div>
         </details>
     </c:otherwise>
 </c:choose>

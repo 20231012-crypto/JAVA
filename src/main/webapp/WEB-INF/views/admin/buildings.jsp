@@ -25,7 +25,8 @@
             <button type="submit" class="btn btn-primary">Thêm tòa nhà</button>
         </form>
 
-        <table class="data-table">
+        <div class="table-scroll">
+            <table class="data-table">
             <thead>
                 <tr><th>Tên</th><th>Mô tả</th><th>Phí ship</th><th>Trạng thái</th><th></th></tr>
             </thead>
@@ -55,6 +56,7 @@
                 </c:forEach>
             </tbody>
         </table>
+        </div>
     </div>
 </main>
 <jsp:include page="/WEB-INF/views/common/footer.jsp" />

@@ -150,7 +150,8 @@
 
                     <details class="chart-table-toggle">
                         <summary>Xem dạng bảng</summary>
-                        <table class="data-table">
+                        <div class="table-scroll">
+                            <table class="data-table">
                             <thead><tr><th>Phương thức</th><th>Số đơn</th><th>Tỷ lệ</th><th>Doanh thu</th></tr></thead>
                             <tbody>
                                 <c:forEach var="seg" items="${paymentSegments}">
@@ -163,6 +164,7 @@
                                 </c:forEach>
                             </tbody>
                         </table>
+                        </div>
                     </details>
                 </c:otherwise>
             </c:choose>
@@ -174,7 +176,8 @@
                 <c:choose>
                     <c:when test="${empty bestSellers}"><p class="hint">Chưa có đơn hoàn thành nào.</p></c:when>
                     <c:otherwise>
-                        <table class="data-table">
+                        <div class="table-scroll">
+                            <table class="data-table">
                             <thead><tr><th>Món</th><th>Đã bán</th><th>Giá</th></tr></thead>
                             <tbody>
                                 <c:forEach var="p" items="${bestSellers}">
@@ -186,6 +189,7 @@
                                 </c:forEach>
                             </tbody>
                         </table>
+                        </div>
                     </c:otherwise>
                 </c:choose>
             </section>
@@ -195,7 +199,8 @@
                 <c:choose>
                     <c:when test="${empty topCustomers}"><p class="hint">Chưa có đơn hoàn thành nào trong tháng.</p></c:when>
                     <c:otherwise>
-                        <table class="data-table">
+                        <div class="table-scroll">
+                            <table class="data-table">
                             <thead><tr><th>Sinh viên</th><th>Số đơn</th><th>Tổng chi</th><th>Điểm</th></tr></thead>
                             <tbody>
                                 <c:forEach var="cus" items="${topCustomers}">
@@ -211,6 +216,7 @@
                                 </c:forEach>
                             </tbody>
                         </table>
+                        </div>
                     </c:otherwise>
                 </c:choose>
             </section>

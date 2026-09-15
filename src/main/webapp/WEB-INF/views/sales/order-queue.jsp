@@ -175,7 +175,8 @@
                     <div class="empty-state"><h2>Không có đơn hàng nào</h2></div>
                 </c:when>
                 <c:otherwise>
-                    <table class="data-table">
+                    <div class="table-scroll">
+                        <table class="data-table">
                         <thead>
                             <tr><th>Mã đơn</th><th>Kênh</th><th>Khách/Tòa nhà</th><th>Tổng tiền</th><th>Thanh toán</th><th>Trạng thái</th><th></th></tr>
                         </thead>
@@ -193,6 +194,7 @@
                             </c:forEach>
                         </tbody>
                     </table>
+                    </div>
                 </c:otherwise>
             </c:choose>
         </c:if>

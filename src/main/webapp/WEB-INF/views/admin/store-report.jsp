@@ -31,7 +31,8 @@
                 </div>
             </c:when>
             <c:otherwise>
-                <table class="data-table">
+                <div class="table-scroll">
+                    <table class="data-table">
                     <thead>
                         <tr><th>#</th><th>Sản phẩm</th><th>Danh mục</th><th>Giá</th><th>Đã bán</th><th>Tồn kệ</th></tr>
                     </thead>
@@ -48,6 +49,7 @@
                         </c:forEach>
                     </tbody>
                 </table>
+                </div>
                 <p class="hint" style="margin-top:8px;">
                     "Đã bán" là tổng số lượng bán được từ trước tới nay; thứ tự xếp hạng tính theo
                     lượng bán trong ${days} ngày gần đây.
@@ -61,7 +63,8 @@
                 <div class="empty-state"><h2>Không có sản phẩm nào sắp hết</h2></div>
             </c:when>
             <c:otherwise>
-                <table class="data-table">
+                <div class="table-scroll">
+                    <table class="data-table">
                     <thead><tr><th>Sản phẩm</th><th>Tồn kệ</th><th>Tồn kho</th></tr></thead>
                     <tbody>
                         <c:forEach var="p" items="${lowStock}">
@@ -73,6 +76,7 @@
                         </c:forEach>
                     </tbody>
                 </table>
+                </div>
             </c:otherwise>
         </c:choose>
 
@@ -82,7 +86,8 @@
                 <div class="empty-state"><h2>Chưa có ai lưu món yêu thích</h2></div>
             </c:when>
             <c:otherwise>
-                <table class="data-table">
+                <div class="table-scroll">
+                    <table class="data-table">
                     <thead><tr><th>#</th><th>Sản phẩm</th><th>Lượt yêu thích</th></tr></thead>
                     <tbody>
                         <c:forEach var="f" items="${mostFavorited}" varStatus="loop">
@@ -94,6 +99,7 @@
                         </c:forEach>
                     </tbody>
                 </table>
+                </div>
             </c:otherwise>
         </c:choose>
     </div>

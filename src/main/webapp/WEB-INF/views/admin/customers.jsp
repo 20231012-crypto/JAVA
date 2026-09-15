@@ -32,7 +32,8 @@
                 </div>
             </c:when>
             <c:otherwise>
-                <table class="data-table">
+                <div class="table-scroll">
+                    <table class="data-table">
                     <thead>
                         <tr>
                             <th>Họ tên</th><th>Liên hệ</th><th>Số đơn</th><th>Tổng chi</th>
@@ -89,6 +90,7 @@
                         </c:forEach>
                     </tbody>
                 </table>
+                </div>
 
                 <c:if test="${totalPages > 1}">
                     <c:set var="filterQs"><c:if test="${not empty searchQuery}">&amp;q=${fn:escapeXml(searchQuery)}</c:if></c:set>

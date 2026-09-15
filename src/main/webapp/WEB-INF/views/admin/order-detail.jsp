@@ -47,7 +47,8 @@
         </div>
 
         <h2>Khách hàng</h2>
-        <table class="data-table">
+        <div class="table-scroll">
+            <table class="data-table">
             <tbody>
                 <tr><th>Họ tên</th><td>
                     <c:choose>
@@ -72,9 +73,11 @@
                 </c:if>
             </tbody>
         </table>
+        </div>
 
         <h2>Các món</h2>
-        <table class="data-table">
+        <div class="table-scroll">
+            <table class="data-table">
             <thead><tr><th>Món</th><th>Đơn giá</th><th>SL</th><th>Thành tiền</th></tr></thead>
             <tbody>
                 <c:forEach var="item" items="${items}">
@@ -101,6 +104,7 @@
                 <tr><th colspan="3">Tổng cộng</th><td><strong><fmt:formatNumber value="${order.totalAmount}" type="number" groupingUsed="true" />₫</strong></td></tr>
             </tfoot>
         </table>
+        </div>
 
         <h2>Lịch sử trạng thái</h2>
         <c:if test="${empty history}">
