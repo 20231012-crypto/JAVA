@@ -42,6 +42,22 @@
                 <label for="sortOrder">Thứ tự hiển thị (số nhỏ hơn hiện trước)</label>
                 <input type="number" id="sortOrder" name="sortOrder" value="${empty banner.sortOrder ? 0 : banner.sortOrder}">
             </div>
+
+        <%-- Scheduling. Both optional: leaving them empty keeps the banner always-on, which is how
+             every existing banner behaves. The window is AND-ed with the on/off switch, so the
+             switch still takes a banner down immediately regardless of dates. --%>
+        <div class="form-group">
+            <label for="startAt">Bắt đầu hiển thị</label>
+            <input type="datetime-local" id="startAt" name="startAt"
+                   value="<c:out value='${banner.startAtInput}'/>">
+            <span class="hint">Để trống = hiển thị ngay.</span>
+        </div>
+        <div class="form-group">
+            <label for="endAt">Tự động ẩn lúc</label>
+            <input type="datetime-local" id="endAt" name="endAt"
+                   value="<c:out value='${banner.endAtInput}'/>">
+            <span class="hint">Để trống = không tự ẩn. Dùng cho banner sự kiện như 20/11.</span>
+        </div>
             <div class="form-group">
                 <label for="image">Ảnh hoặc video banner</label>
                 <c:if test="${not empty banner and banner.hasImage}">

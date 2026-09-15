@@ -20,7 +20,7 @@
             <c:otherwise>
                 <table class="data-table" style="margin-top:20px;">
                     <thead>
-                        <tr><th>Vị trí</th><th>Tiêu đề</th><th>Ảnh</th><th>Thứ tự</th><th>Trạng thái</th><th></th></tr>
+                        <tr><th>Vị trí</th><th>Tiêu đề</th><th>Ảnh</th><th>Thứ tự</th><th>Lịch hiển thị</th><th>Trạng thái</th><th></th></tr>
                     </thead>
                     <tbody>
                         <c:forEach var="b" items="${banners}">
@@ -49,6 +49,7 @@
                                     </c:choose>
                                 </td>
                                 <td>${b.sortOrder}</td>
+                            <td><c:out value="${b.scheduleDisplay}" /></td>
                                 <td>
                                     <c:choose>
                                         <c:when test="${b.active}"><span class="badge badge-completed">Đang hiện</span></c:when>

@@ -49,5 +49,7 @@
       data-csrf="${csrfToken}"
       class="${fn:startsWith(requestPath, '/admin') ? 'has-admin-rail' : ''}
              ${not empty leftBanners ? 'has-left-banner' : ''}
-             ${not empty rightBanners ? 'has-right-banner' : ''}">
+             ${not empty rightBanners ? 'has-right-banner' : ''}"
+      data-effects="${empty effectsMode ? 'NONE' : effectsMode}"
+      data-effects-intensity="${empty effectsIntensity ? 2 : effectsIntensity}">
 <jsp:include page="/WEB-INF/views/common/_icon-sprite.jsp" />

@@ -27,6 +27,7 @@ import com.eaut.canteen.model.Product;
 import com.eaut.canteen.model.RecentActivityItem;
 import com.eaut.canteen.model.User;
 import com.eaut.canteen.util.DBConnection;
+import com.eaut.canteen.util.Settings;
 import com.eaut.canteen.util.RequestParams;
 
 import jakarta.servlet.ServletException;
@@ -166,6 +167,10 @@ public class CatalogServlet extends HttpServlet {
         // Layout auto-adjusts to whichever positions actually have an active banner — see
         // catalog.jsp/style.css .catalog-layout — instead of always reserving the space.
         req.setAttribute("headBanners", bannerDAO.findActiveByPosition(conn, "HEAD"));
+        // Read once per catalog render rather than per page site-wide: this is the only page the
+        // effects are meant for, and Settings caches so the cost is a map lookup.
+        req.setAttribute("effectsMode", Settings.getString(conn, "effects.mode", "NONE"));
+        req.setAttribute("effectsIntensity", Settings.getInt(conn, "effects.intensity", 2));
         req.setAttribute("leftBanners", bannerDAO.findActiveByPosition(conn, "LEFT"));
         req.setAttribute("rightBanners", bannerDAO.findActiveByPosition(conn, "RIGHT"));
         req.setAttribute("footerBanners", bannerDAO.findActiveByPosition(conn, "FOOTER"));

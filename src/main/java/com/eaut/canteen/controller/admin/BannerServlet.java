@@ -10,6 +10,7 @@ import java.util.Set;
 import com.eaut.canteen.dao.BannerDAO;
 import com.eaut.canteen.dao.impl.BannerDAOImpl;
 import com.eaut.canteen.model.Banner;
+import com.eaut.canteen.util.AppClock;
 import com.eaut.canteen.util.DBConnection;
 import com.eaut.canteen.util.RequestParams;
 
@@ -103,6 +104,11 @@ public class BannerServlet extends HttpServlet {
         banner.setSubtitle(blankToNull(req.getParameter("subtitle")));
         banner.setLinkUrl(blankToNull(req.getParameter("linkUrl")));
         banner.setSortOrder(RequestParams.intOrDefault(req.getParameter("sortOrder"), 0));
+        // The admin types these in canteen time; the columns store server time. Without the
+        // conversion a banner scheduled for 07:00 would appear at 14:00 in Hanoi, because on
+        // Render the JVM runs UTC.
+        banner.setStartAt(parseWindowBound(conn, req.getParameter("startAt")));
+        banner.setEndAt(parseWindowBound(conn, req.getParameter("endAt")));
 
         String idParam = req.getParameter("bannerId");
         boolean isNew = idParam == null || idParam.isBlank();
@@ -149,5 +155,22 @@ public class BannerServlet extends HttpServlet {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         in.transferTo(out);
         return out.toByteArray();
+    }
+
+    /**
+     * Reads one end of the scheduling window from a datetime-local field. Blank means "no limit",
+     * and an unparseable value is treated the same way rather than throwing: the field is optional
+     * and a malformed one should leave the banner unscheduled, not 500 the save.
+     */
+    private java.time.LocalDateTime parseWindowBound(Connection conn, String raw) throws SQLException {
+        String trimmed = RequestParams.trimmedOrNull(raw);
+        if (trimmed == null) {
+            return null;
+        }
+        try {
+            return AppClock.fromCanteenInput(conn, java.time.LocalDateTime.parse(trimmed));
+        } catch (java.time.format.DateTimeParseException e) {
+            return null;
+        }
     }
 }

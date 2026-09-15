@@ -145,6 +145,15 @@
         </c:if>
         <c:if test="${sessionScope.user.permissions['settings.manage']}">
             <li>
+                <a class="admin-rail-link ${fn:startsWith(path, '/admin/effects') ? 'is-active' : ''}"
+                   href="${ctx}/admin/effects">
+                    <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-sparkles"/></svg></span>
+                    <span class="admin-rail-label">Hiệu ứng trang chủ</span>
+                </a>
+            </li>
+        </c:if>
+        <c:if test="${sessionScope.user.permissions['settings.manage']}">
+            <li>
                 <a class="admin-rail-link ${fn:startsWith(path, '/admin/settings') ? 'is-active' : ''}"
                    href="${ctx}/admin/settings">
                     <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg></span>

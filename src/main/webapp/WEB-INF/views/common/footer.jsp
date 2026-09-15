@@ -23,6 +23,11 @@
 
 <script src="${pageContext.request.contextPath}/assets/js/interactions.js" defer></script>
 <script src="${pageContext.request.contextPath}/assets/js/carousel.js" defer></script>
+<%-- Only shipped when an effect is switched on: a student whose canteen has effects off should
+     not download a particle engine at all. --%>
+<c:if test="${not empty effectsMode and effectsMode != 'NONE'}">
+    <script src="${pageContext.request.contextPath}/assets/js/effects.js" defer></script>
+</c:if>
 <%-- Admin-only behaviour. Loaded just on /admin/* rather than site-wide: a student's phone has no
      use for it, and requestPath is already computed in header.jsp for the rail. --%>
 <c:if test="${fn:startsWith(requestPath, '/admin')}">

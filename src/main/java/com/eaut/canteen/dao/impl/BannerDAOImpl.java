@@ -18,17 +18,27 @@ public class BannerDAOImpl implements BannerDAO {
     // because the view has to know whether to render an <img> or a <video> for this banner.
     private static final String BASE_SELECT =
             "SELECT banner_id, position, title, subtitle, link_url, sort_order, is_active, " +
+            "start_at, end_at, " +
             "image_content_type, (image_data IS NOT NULL) AS has_image FROM banners ";
+    // Visible means active AND inside its window. The window is AND-ed with is_active rather than
+    // replacing it, so the manual switch still takes a banner down immediately regardless of dates,
+    // and a banner with no dates behaves exactly as it did before scheduling existed.
+    // end_at is exclusive so a banner set to end at midnight is gone the instant that date starts.
     private static final String FIND_ACTIVE_BY_POSITION =
-            BASE_SELECT + "WHERE is_active = TRUE AND position = ? ORDER BY sort_order, banner_id";
+            BASE_SELECT + "WHERE is_active = TRUE AND position = ? " +
+            "AND (start_at IS NULL OR start_at <= CURRENT_TIMESTAMP) " +
+            "AND (end_at IS NULL OR end_at > CURRENT_TIMESTAMP) " +
+            "ORDER BY sort_order, banner_id";
     private static final String FIND_ALL_FOR_ADMIN =
             BASE_SELECT + "ORDER BY position, sort_order, banner_id";
     private static final String FIND_BY_ID =
             BASE_SELECT + "WHERE banner_id = ?";
     private static final String INSERT =
-            "INSERT INTO banners (position, title, subtitle, link_url, sort_order, is_active) VALUES (?, ?, ?, ?, ?, TRUE)";
+            "INSERT INTO banners (position, title, subtitle, link_url, sort_order, start_at, end_at, is_active) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)";
     private static final String UPDATE =
-            "UPDATE banners SET position = ?, title = ?, subtitle = ?, link_url = ?, sort_order = ? WHERE banner_id = ?";
+            "UPDATE banners SET position = ?, title = ?, subtitle = ?, link_url = ?, sort_order = ?, " +
+            "start_at = ?, end_at = ? WHERE banner_id = ?";
     private static final String UPDATE_IMAGE =
             "UPDATE banners SET image_data = ?, image_content_type = ? WHERE banner_id = ?";
     private static final String SET_ACTIVE =
@@ -84,6 +94,8 @@ public class BannerDAOImpl implements BannerDAO {
             ps.setString(3, banner.getSubtitle());
             ps.setString(4, banner.getLinkUrl());
             ps.setInt(5, banner.getSortOrder());
+            setNullableTimestamp(ps, 6, banner.getStartAt());
+            setNullableTimestamp(ps, 7, banner.getEndAt());
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 keys.next();
@@ -100,7 +112,9 @@ public class BannerDAOImpl implements BannerDAO {
             ps.setString(3, banner.getSubtitle());
             ps.setString(4, banner.getLinkUrl());
             ps.setInt(5, banner.getSortOrder());
-            ps.setInt(6, banner.getBannerId());
+            setNullableTimestamp(ps, 6, banner.getStartAt());
+            setNullableTimestamp(ps, 7, banner.getEndAt());
+            ps.setInt(8, banner.getBannerId());
             ps.executeUpdate();
         }
     }
@@ -166,8 +180,24 @@ public class BannerDAOImpl implements BannerDAO {
         banner.setLinkUrl(rs.getString("link_url"));
         banner.setSortOrder(rs.getInt("sort_order"));
         banner.setActive(rs.getBoolean("is_active"));
+        if (rs.getTimestamp("start_at") != null) {
+            banner.setStartAt(rs.getTimestamp("start_at").toLocalDateTime());
+        }
+        if (rs.getTimestamp("end_at") != null) {
+            banner.setEndAt(rs.getTimestamp("end_at").toLocalDateTime());
+        }
         banner.setHasImage(rs.getBoolean("has_image"));
         banner.setMediaContentType(rs.getString("image_content_type"));
         return banner;
+    }
+
+    /** A null window bound means "no limit", which has to reach the column as SQL NULL. */
+    private void setNullableTimestamp(PreparedStatement ps, int index, java.time.LocalDateTime value)
+            throws SQLException {
+        if (value == null) {
+            ps.setNull(index, java.sql.Types.TIMESTAMP);
+        } else {
+            ps.setTimestamp(index, java.sql.Timestamp.valueOf(value));
+        }
     }
 }

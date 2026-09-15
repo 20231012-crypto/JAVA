@@ -79,6 +79,20 @@ public final class AppClock {
         return canteenTime.withZoneSameInstant(storageZone()).toLocalDateTime();
     }
 
+    /**
+     * Converts a wall-clock time an admin typed — which they mean in canteen time — into the value
+     * the TIMESTAMP columns store. Needed by anything that saves a scheduled moment: on Render the
+     * JVM is UTC, so storing "07:00" verbatim would make it fire at 14:00 in Hanoi.
+     */
+    public static LocalDateTime fromCanteenInput(Connection conn, LocalDateTime typed) throws SQLException {
+        return toStorage(typed.atZone(zone(conn)));
+    }
+
+    /** The inverse, for redrawing a stored moment in the form the admin typed it into. */
+    public static LocalDateTime toCanteenDisplay(Connection conn, LocalDateTime stored) throws SQLException {
+        return stored.atZone(storageZone()).withZoneSameInstant(zone(conn)).toLocalDateTime();
+    }
+
     public static LocalDate today(Connection conn) throws SQLException {
         return LocalDate.now(zone(conn));
     }
