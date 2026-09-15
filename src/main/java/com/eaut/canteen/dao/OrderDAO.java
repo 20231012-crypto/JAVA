@@ -94,4 +94,29 @@ public interface OrderDAO {
      * the order completed, so recomputing would claw back the wrong number.
      */
     int sumLoyaltyPointsAwarded(Connection conn, int orderId) throws SQLException;
+
+    // ---- Analytics ---------------------------------------------------------------------------
+    // Every one of these takes explicit from/to bounds rather than asking the database for
+    // CURRENT_DATE. The bounds come from AppClock, in the canteen's timezone — see the class
+    // comment there for the seven-hour reporting bug that motivated it.
+
+    /** Completed-order revenue in [from, to). */
+    java.math.BigDecimal sumRevenueBetween(Connection conn, java.time.LocalDateTime from,
+                                           java.time.LocalDateTime to) throws SQLException;
+
+    /** Keys "completed" and "cancelled" (cancelled counts rejections too) for [from, to). */
+    Map<String, Integer> orderOutcomeCounts(Connection conn, java.time.LocalDateTime from,
+                                            java.time.LocalDateTime to) throws SQLException;
+
+    /** Revenue per hour-of-day in [from, to) — hours with no trade are absent, callers fill them. */
+    Map<Integer, java.math.BigDecimal> revenueByHour(Connection conn, java.time.LocalDateTime from,
+                                                     java.time.LocalDateTime to) throws SQLException;
+
+    /** Revenue per ISO weekday (1 = Monday) in [from, to). */
+    Map<Integer, java.math.BigDecimal> revenueByWeekday(Connection conn, java.time.LocalDateTime from,
+                                                        java.time.LocalDateTime to) throws SQLException;
+
+    /** Order count and revenue per payment method in [from, to), busiest first. */
+    List<Object[]> paymentMethodMix(Connection conn, java.time.LocalDateTime from,
+                                    java.time.LocalDateTime to) throws SQLException;
 }

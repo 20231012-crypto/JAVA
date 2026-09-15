@@ -62,4 +62,18 @@ public interface UserDAO {
 
     /** Every non-customer user currently on duty, for the "Nhân sự đang trực" roster on the Kanban boards. */
     List<User> findOnDutyStaff(Connection conn) throws SQLException;
+
+    /**
+     * Customers who have actually ordered since {@code from}. "Active" is defined as having placed
+     * an order rather than merely having an account, because a registration count only ever goes
+     * up and so tells a manager nothing.
+     */
+    int countActiveCustomers(Connection conn, java.time.LocalDateTime from) throws SQLException;
+
+    /** Total EAUT Pay money held across every wallet — the float the canteen owes its students. */
+    java.math.BigDecimal sumWalletFloat(Connection conn) throws SQLException;
+
+    /** Biggest spenders since {@code from}, highest first. */
+    List<com.eaut.canteen.model.TopCustomer> findTopCustomers(Connection conn,
+            java.time.LocalDateTime from, int limit) throws SQLException;
 }

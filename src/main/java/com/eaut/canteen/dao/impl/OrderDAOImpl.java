@@ -77,6 +77,30 @@ public class OrderDAOImpl implements OrderDAO {
             "SELECT COALESCE(SUM(points), 0) FROM loyalty_transactions " +
             "WHERE order_id = ? AND type = 'EARN'";
 
+    // --- Analytics. All bounded by explicit parameters, never CURRENT_DATE: the reporting day
+    // must be the canteen's, not whatever zone the database happens to run in.
+    private static final String SUM_REVENUE_BETWEEN =
+            "SELECT COALESCE(SUM(total_amount), 0) FROM orders " +
+            "WHERE order_status = 'COMPLETED' AND created_at >= ? AND created_at < ?";
+    // One pass with FILTER rather than two COUNT queries — the two figures are always read
+    // together and would otherwise be able to disagree across a concurrent status change.
+    private static final String OUTCOME_COUNTS =
+            "SELECT COUNT(*) FILTER (WHERE order_status = 'COMPLETED') AS completed, " +
+            "COUNT(*) FILTER (WHERE order_status IN ('CANCELLED', 'REJECTED')) AS cancelled " +
+            "FROM orders WHERE created_at >= ? AND created_at < ?";
+    private static final String REVENUE_BY_HOUR =
+            "SELECT EXTRACT(HOUR FROM created_at)::int AS h, COALESCE(SUM(total_amount), 0) AS revenue " +
+            "FROM orders WHERE order_status = 'COMPLETED' AND created_at >= ? AND created_at < ? " +
+            "GROUP BY h ORDER BY h";
+    private static final String REVENUE_BY_WEEKDAY =
+            "SELECT EXTRACT(ISODOW FROM created_at)::int AS dow, COALESCE(SUM(total_amount), 0) AS revenue " +
+            "FROM orders WHERE order_status = 'COMPLETED' AND created_at >= ? AND created_at < ? " +
+            "GROUP BY dow ORDER BY dow";
+    private static final String PAYMENT_MIX =
+            "SELECT payment_method, COUNT(*) AS cnt, COALESCE(SUM(total_amount), 0) AS revenue " +
+            "FROM orders WHERE order_status = 'COMPLETED' AND created_at >= ? AND created_at < ? " +
+            "GROUP BY payment_method ORDER BY cnt DESC";
+
     private static final String COUNTS_BY_STATUS =
             "SELECT order_status, COUNT(*) AS total FROM orders GROUP BY order_status";
 
@@ -413,6 +437,83 @@ public class OrderDAOImpl implements OrderDAO {
                 return rs.next() ? rs.getInt(1) : 0;
             }
         }
+    }
+
+    // ---- Analytics ------------------------------------------------------------------------
+
+    private void bindRange(PreparedStatement ps, java.time.LocalDateTime from, java.time.LocalDateTime to)
+            throws SQLException {
+        ps.setTimestamp(1, java.sql.Timestamp.valueOf(from));
+        ps.setTimestamp(2, java.sql.Timestamp.valueOf(to));
+    }
+
+    @Override
+    public BigDecimal sumRevenueBetween(Connection conn, java.time.LocalDateTime from,
+                                        java.time.LocalDateTime to) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(SUM_REVENUE_BETWEEN)) {
+            bindRange(ps, from, to);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getBigDecimal(1) : BigDecimal.ZERO;
+            }
+        }
+    }
+
+    @Override
+    public Map<String, Integer> orderOutcomeCounts(Connection conn, java.time.LocalDateTime from,
+                                                   java.time.LocalDateTime to) throws SQLException {
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        try (PreparedStatement ps = conn.prepareStatement(OUTCOME_COUNTS)) {
+            bindRange(ps, from, to);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    counts.put("completed", rs.getInt("completed"));
+                    counts.put("cancelled", rs.getInt("cancelled"));
+                }
+            }
+        }
+        return counts;
+    }
+
+    private Map<Integer, BigDecimal> bucketedRevenue(Connection conn, String sql, String keyColumn,
+                                                     java.time.LocalDateTime from, java.time.LocalDateTime to)
+            throws SQLException {
+        Map<Integer, BigDecimal> buckets = new LinkedHashMap<>();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            bindRange(ps, from, to);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    buckets.put(rs.getInt(keyColumn), rs.getBigDecimal("revenue"));
+                }
+            }
+        }
+        return buckets;
+    }
+
+    @Override
+    public Map<Integer, BigDecimal> revenueByHour(Connection conn, java.time.LocalDateTime from,
+                                                  java.time.LocalDateTime to) throws SQLException {
+        return bucketedRevenue(conn, REVENUE_BY_HOUR, "h", from, to);
+    }
+
+    @Override
+    public Map<Integer, BigDecimal> revenueByWeekday(Connection conn, java.time.LocalDateTime from,
+                                                     java.time.LocalDateTime to) throws SQLException {
+        return bucketedRevenue(conn, REVENUE_BY_WEEKDAY, "dow", from, to);
+    }
+
+    @Override
+    public List<Object[]> paymentMethodMix(Connection conn, java.time.LocalDateTime from,
+                                           java.time.LocalDateTime to) throws SQLException {
+        List<Object[]> rows = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(PAYMENT_MIX)) {
+            bindRange(ps, from, to);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    rows.add(new Object[]{rs.getString("payment_method"), rs.getLong("cnt"), rs.getBigDecimal("revenue")});
+                }
+            }
+        }
+        return rows;
     }
 
     private void setNullableInt(PreparedStatement ps, int index, Integer value) throws SQLException {

@@ -2550,3 +2550,163 @@ body.has-admin-rail {
     white-space: nowrap;
     border: 0;
 }
+
+/* ===== Dashboard: KPI cards and hand-rolled charts ===== */
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.kpi-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-card);
+}
+
+.kpi-label {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+.kpi-value {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    margin: 4px 0 6px;
+}
+
+/* The arrow is doubled by the sign in the text, so colour is never the only cue. */
+.kpi-trend {
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.kpi-trend.is-up { color: var(--color-success); }
+.kpi-trend.is-down { color: var(--color-danger); }
+.kpi-trend.is-flat { color: var(--color-text-muted); font-weight: 400; }
+
+.chart-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.chart-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    padding: 18px 20px;
+    margin-top: 20px;
+}
+
+.chart-row .chart-card {
+    margin-top: 0;
+}
+
+.line-chart {
+    width: 100%;
+    height: 170px;
+    margin-top: 12px;
+    /* A tiny overhang so the 2px stroke is not shaved in half at y=0 and y=100, but not enough to
+       let a mis-scaled series escape the card unnoticed. */
+    overflow: visible;
+    padding: 2px 0;
+}
+
+.line-chart-grid line {
+    stroke: var(--color-border);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+
+.line-chart-line {
+    fill: none;
+    stroke: var(--color-institutional);
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    /* preserveAspectRatio="none" stretches the viewBox horizontally; without this the stroke
+       would be stretched with it and the line would read thicker than 2px. */
+    vector-effect: non-scaling-stroke;
+}
+
+.line-chart-axis {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+}
+
+.line-chart-axis span {
+    flex: 1 1 0;
+    text-align: center;
+    min-width: 0;
+}
+
+.donut-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 28px;
+    margin-top: 12px;
+}
+
+.donut-chart {
+    width: 180px;
+    height: 180px;
+    flex: 0 0 auto;
+}
+
+/* A ring, not a pie: the hole removes the centre where a pie's wedges are least distinguishable,
+   and the 2px dash gap the servlet leaves between arcs shows as surface between them. */
+.donut-arc {
+    fill: none;
+    stroke-width: 16;
+}
+
+.donut-legend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1 1 200px;
+}
+
+.donut-legend li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.donut-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex: 0 0 auto;
+    align-self: center;
+}
+
+.donut-legend-label {
+    font-weight: 500;
+}
+
+@media screen and (max-width: 768px) {
+    .kpi-value {
+        font-size: 1.4rem;
+    }
+
+    .donut-row {
+        gap: 16px;
+    }
+}

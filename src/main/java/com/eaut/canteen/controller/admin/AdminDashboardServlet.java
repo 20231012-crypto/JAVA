@@ -1,26 +1,28 @@
 package com.eaut.canteen.controller.admin;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.eaut.canteen.dao.BuildingDAO;
-import com.eaut.canteen.dao.CategoryDAO;
 import com.eaut.canteen.dao.FavoriteDAO;
 import com.eaut.canteen.dao.OrderDAO;
 import com.eaut.canteen.dao.ProductDAO;
 import com.eaut.canteen.dao.UserDAO;
-import com.eaut.canteen.dao.impl.BuildingDAOImpl;
-import com.eaut.canteen.dao.impl.CategoryDAOImpl;
 import com.eaut.canteen.dao.impl.FavoriteDAOImpl;
 import com.eaut.canteen.dao.impl.OrderDAOImpl;
 import com.eaut.canteen.dao.impl.ProductDAOImpl;
 import com.eaut.canteen.dao.impl.UserDAOImpl;
+import com.eaut.canteen.model.ChartPoint;
+import com.eaut.canteen.model.DonutSegment;
 import com.eaut.canteen.model.OrderStatus;
-import com.eaut.canteen.model.Product;
+import com.eaut.canteen.model.PaymentMethod;
+import com.eaut.canteen.util.AppClock;
 import com.eaut.canteen.util.DBConnection;
 
 import jakarta.servlet.ServletException;
@@ -29,86 +31,204 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * The admin overview: today's trading against yesterday's, the shape of the day, what students pay
+ * with, and who is spending.
+ *
+ * <p>All the chart geometry is computed here rather than in the JSP. EL cannot do the arithmetic
+ * without turning the view into a calculator, and a view that calculates has stopped being
+ * display-only — so this class emits points already scaled into an SVG viewBox and arcs with their
+ * stroke offsets resolved, and the JSP just prints them.
+ *
+ * <p>No chart library is loaded. The pages have never depended on a CDN and are not going to start;
+ * a line is a polyline and a donut is a dashed circle.
+ */
 @WebServlet("/admin")
 public class AdminDashboardServlet extends HttpServlet {
 
-    private static final ProductDAO productDAO = new ProductDAOImpl();
-    private static final CategoryDAO categoryDAO = new CategoryDAOImpl();
-    private static final BuildingDAO buildingDAO = new BuildingDAOImpl();
-    private static final UserDAO userDAO = new UserDAOImpl();
-    private static final OrderDAO orderDAO = new OrderDAOImpl();
-    private static final FavoriteDAO favoriteDAO = new FavoriteDAOImpl();
-
-    /** One bar per hour in this range — outside typical canteen operating hours the chart would be empty anyway. */
+    /** The trading window worth plotting. Outside it every canteen reads zero and the line is flat. */
     private static final int CHART_START_HOUR = 6;
     private static final int CHART_END_HOUR = 21;
+
+    /** Circumference of the donut's r=40 circle, to 2dp — the dash lengths are fractions of this. */
+    private static final double DONUT_CIRCUMFERENCE = 251.33;
+
+    /** From the validated categorical palette; see the dataviz palette reference. Order matters:
+     *  it keeps orange and yellow from ever becoming adjacent arcs. */
+    private static final String[] SERIES_COLORS = {"#2a78d6", "#eb6834", "#1baf7a", "#eda100"};
+
+    private static final String[] WEEKDAY_LABELS = {"T2", "T3", "T4", "T5", "T6", "T7", "CN"};
+
+    private static final OrderDAO orderDAO = new OrderDAOImpl();
+    private static final ProductDAO productDAO = new ProductDAOImpl();
+    private static final UserDAO userDAO = new UserDAOImpl();
+    private static final FavoriteDAO favoriteDAO = new FavoriteDAOImpl();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         try (Connection conn = DBConnection.getConnection()) {
-            List<Product> products = productDAO.findAllForAdmin(conn);
-            long lowStockCount = products.stream().filter(p -> p.isActive() && p.getShelfQuantity() < 5).count();
+            LocalDateTime startOfToday = AppClock.startOfToday(conn);
+            LocalDateTime endOfToday = AppClock.endOfToday(conn);
+            LocalDateTime startOfWeek = AppClock.startOfThisWeek(conn);
+            LocalDateTime startOfMonth = AppClock.startOfThisMonth(conn);
 
-            req.setAttribute("pageTitle", "Tổng quan");
-            req.setAttribute("productCount", products.size());
-            req.setAttribute("lowStockCount", lowStockCount);
-            req.setAttribute("categoryCount", categoryDAO.findAllActive(conn).size());
-            req.setAttribute("buildingCount", buildingDAO.findAllActive(conn).size());
-            req.setAttribute("staffCount", userDAO.findAllStaff(conn).size());
+            putRevenueWithTrend(req, conn, "today", startOfToday, endOfToday);
+            putRevenueWithTrend(req, conn, "week", startOfWeek, endOfToday);
+            putRevenueWithTrend(req, conn, "month", startOfMonth, endOfToday);
 
-            req.setAttribute("revenueToday", orderDAO.sumRevenueToday(conn));
+            Map<String, Integer> outcomes = orderDAO.orderOutcomeCounts(conn, startOfMonth, endOfToday);
+            req.setAttribute("completedThisMonth", outcomes.getOrDefault("completed", 0));
+            req.setAttribute("cancelledThisMonth", outcomes.getOrDefault("cancelled", 0));
+
+            req.setAttribute("activeCustomers", userDAO.countActiveCustomers(conn, startOfToday.minusDays(30)));
+            req.setAttribute("walletFloat", userDAO.sumWalletFloat(conn));
+
+            // Live operational counts — deliberately not date-bounded: "how many orders are
+            // waiting right now" has nothing to do with which day they were placed.
             req.setAttribute("pendingCount", orderDAO.countByStatus(conn, OrderStatus.PENDING));
             req.setAttribute("confirmedCount", orderDAO.countByStatus(conn, OrderStatus.CONFIRMED));
             req.setAttribute("shippingCount", orderDAO.countByStatus(conn, OrderStatus.SHIPPING));
 
-            Map<Integer, Integer> countsByHour = orderDAO.countOrdersByHourToday(conn);
-            req.setAttribute("hourlyChart", buildHourlyChart(countsByHour));
-            req.setAttribute("peakHourLabel", peakHourLabel(countsByHour));
+            req.setAttribute("hourPoints", hourSeries(conn, startOfToday, endOfToday));
+            req.setAttribute("weekdayPoints", weekdaySeries(conn, startOfWeek.minusDays(21), endOfToday));
+            req.setAttribute("paymentSegments", paymentDonut(conn, startOfMonth, endOfToday));
 
+            req.setAttribute("bestSellers", productDAO.findBestSellers(conn, 30, 5));
+            req.setAttribute("topCustomers", userDAO.findTopCustomers(conn, startOfMonth, 5));
+            req.setAttribute("lowStock", productDAO.findLowStock(conn));
             req.setAttribute("mostFavorited", favoriteDAO.findMostFavorited(conn, 5));
 
+            req.setAttribute("pageTitle", "Tổng quan");
             req.getRequestDispatcher("/WEB-INF/views/admin/dashboard.jsp").forward(req, resp);
         } catch (SQLException e) {
             throw new ServletException(e);
         }
     }
 
-    private String peakHourLabel(Map<Integer, Integer> countsByHour) {
-        return countsByHour.entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .map(e -> e.getKey() + "h (" + e.getValue() + " đơn)")
-                .orElse("Chưa có đơn hôm nay");
+    /**
+     * A revenue figure plus how it compares with the same length of time immediately before it.
+     * "Today vs yesterday", "this week vs last week" — the comparison is what makes the number mean
+     * anything; 2.4 million đồng on its own says nothing about whether trade is up.
+     */
+    private void putRevenueWithTrend(HttpServletRequest req, Connection conn, String key,
+                                     LocalDateTime from, LocalDateTime to) throws SQLException {
+        BigDecimal current = orderDAO.sumRevenueBetween(conn, from, to);
+        BigDecimal previous = orderDAO.sumRevenueBetween(conn, AppClock.previousWindowStart(from, to), from);
+        req.setAttribute("revenue" + capitalize(key), current);
+        req.setAttribute("revenue" + capitalize(key) + "Trend", percentChange(previous, current));
     }
 
-    /** One row per hour in the display range, bar height as a 0-100 percent of that day's busiest hour — ready for the JSP to render directly as CSS height%. */
-    private List<HourBar> buildHourlyChart(Map<Integer, Integer> countsByHour) {
-        int max = countsByHour.values().stream().mapToInt(Integer::intValue).max().orElse(0);
-        List<HourBar> bars = new ArrayList<>();
+    /**
+     * @return the percent change, or null when there is no previous figure to compare against —
+     *         "up from zero" is not a percentage, and rendering it as +100% would be a fiction.
+     */
+    private Integer percentChange(BigDecimal previous, BigDecimal current) {
+        if (previous == null || previous.signum() == 0) {
+            return null;
+        }
+        return current.subtract(previous)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(previous, 0, RoundingMode.HALF_UP)
+                .intValue();
+    }
+
+    private String capitalize(String s) {
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    }
+
+    /** Revenue through the trading day, one point per hour, scaled into a 0-100 viewBox. */
+    private List<ChartPoint> hourSeries(Connection conn, LocalDateTime from, LocalDateTime to)
+            throws SQLException {
+        Map<Integer, BigDecimal> byHour = orderDAO.revenueByHour(conn, from, to);
+        List<String> labels = new ArrayList<>();
+        List<BigDecimal> values = new ArrayList<>();
         for (int hour = CHART_START_HOUR; hour <= CHART_END_HOUR; hour++) {
-            int count = countsByHour.getOrDefault(hour, 0);
-            int heightPercent = max == 0 ? 0 : Math.round(count * 100f / max);
-            bars.add(new HourBar(hour, count, heightPercent));
+            labels.add(String.format("%02d:00", hour));
+            // Absent means no trade, which is a real zero — skipping the hour would close the gap
+            // and imply the canteen was busy straight through.
+            values.add(byHour.getOrDefault(hour, BigDecimal.ZERO));
         }
-        return bars;
+        return scale(labels, values);
     }
 
-    /** One bar of the admin dashboard's peak-hour chart (see admin/dashboard.jsp). */
-    public record HourBar(int hour, int count, int heightPercent) {
-        public String getLabel() {
-            return hour + "h";
+    private List<ChartPoint> weekdaySeries(Connection conn, LocalDateTime from, LocalDateTime to)
+            throws SQLException {
+        Map<Integer, BigDecimal> byDow = orderDAO.revenueByWeekday(conn, from, to);
+        List<String> labels = new ArrayList<>();
+        List<BigDecimal> values = new ArrayList<>();
+        for (int dow = 1; dow <= 7; dow++) {
+            labels.add(WEEKDAY_LABELS[dow - 1]);
+            values.add(byDow.getOrDefault(dow, BigDecimal.ZERO));
+        }
+        return scale(labels, values);
+    }
+
+    /**
+     * Maps values onto the 0-100 viewBox. The y axis starts at zero rather than at the smallest
+     * value: this is revenue, and a truncated baseline exaggerates every wobble into a cliff.
+     */
+    private List<ChartPoint> scale(List<String> labels, List<BigDecimal> values) {
+        BigDecimal max = values.stream().reduce(BigDecimal.ZERO, (a, b) -> a.max(b));
+        List<ChartPoint> points = new ArrayList<>();
+        int lastIndex = Math.max(1, values.size() - 1);
+        for (int i = 0; i < values.size(); i++) {
+            double x = i * 100.0 / lastIndex;
+            double y = max.signum() == 0 ? 100.0
+                    : 100.0 - values.get(i).multiply(BigDecimal.valueOf(100))
+                            .divide(max, 2, RoundingMode.HALF_UP).doubleValue();
+            points.add(new ChartPoint(labels.get(i), values.get(i),
+                    trim(x), trim(y)));
+        }
+        return points;
+    }
+
+    /** Two decimals is plenty of precision for a 100-unit viewBox, and keeps the markup readable. */
+    private String trim(double value) {
+        return BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP).toPlainString();
+    }
+
+    /**
+     * The payment mix as donut arcs. An SVG donut is one circle whose dash pattern reveals a single
+     * arc; each arc needs the running total of everything before it, so the sum happens here.
+     */
+    private List<DonutSegment> paymentDonut(Connection conn, LocalDateTime from, LocalDateTime to)
+            throws SQLException {
+        List<Object[]> rows = orderDAO.paymentMethodMix(conn, from, to);
+        long totalCount = rows.stream().mapToLong(r -> (Long) r[1]).sum();
+        if (totalCount == 0) {
+            return List.of();
         }
 
-        public int getHour() {
-            return hour;
-        }
+        List<DonutSegment> segments = new ArrayList<>();
+        double consumed = 0;
+        for (int i = 0; i < rows.size(); i++) {
+            Object[] row = rows.get(i);
+            long count = (Long) row[1];
+            double share = count / (double) totalCount;
+            double arc = share * DONUT_CIRCUMFERENCE;
 
-        public int getCount() {
-            return count;
+            // A 2px gap between arcs, per the mark spec: touching fills of similar lightness read
+            // as one shape, and the gap is also what keeps the colour-blind separation legible.
+            double drawn = Math.max(0, arc - 2);
+            segments.add(new DonutSegment(
+                    displayName(row[0].toString()),
+                    count,
+                    (BigDecimal) row[2],
+                    (int) Math.round(share * 100),
+                    SERIES_COLORS[i % SERIES_COLORS.length],
+                    trim(drawn) + " " + trim(DONUT_CIRCUMFERENCE - drawn),
+                    trim(-consumed)));
+            consumed += arc;
         }
+        return segments;
+    }
 
-        public int getHeightPercent() {
-            return heightPercent;
+    private String displayName(String paymentMethod) {
+        try {
+            return PaymentMethod.valueOf(paymentMethod).getDisplayName();
+        } catch (IllegalArgumentException e) {
+            return paymentMethod;
         }
     }
 }

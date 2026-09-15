@@ -79,6 +79,21 @@ public class UserDAOImpl implements UserDAO {
             "UPDATE users SET student_id = ?, class_name = ? WHERE user_id = ?";
     private static final String SET_ON_DUTY =
             "UPDATE users SET on_duty = ? WHERE user_id = ?";
+    // "Active" means placed an order, not merely registered: a registration count only rises and
+    // so tells a manager nothing about whether the canteen is being used.
+    private static final String COUNT_ACTIVE_CUSTOMERS =
+            "SELECT COUNT(DISTINCT customer_id) FROM orders " +
+            "WHERE customer_id IS NOT NULL AND created_at >= ?";
+    private static final String SUM_WALLET_FLOAT =
+            "SELECT COALESCE(SUM(wallet_balance), 0) FROM users";
+    private static final String FIND_TOP_CUSTOMERS =
+            "SELECT u.user_id, u.full_name, u.student_id, u.loyalty_points, " +
+            "COUNT(o.order_id) AS order_count, COALESCE(SUM(o.total_amount), 0) AS total_spent " +
+            "FROM users u JOIN orders o ON o.customer_id = u.user_id " +
+            "WHERE o.order_status = 'COMPLETED' AND o.created_at >= ? " +
+            "GROUP BY u.user_id, u.full_name, u.student_id, u.loyalty_points " +
+            "ORDER BY total_spent DESC LIMIT ?";
+
     private static final String FIND_ON_DUTY_STAFF =
             BASE_SELECT + "WHERE u.on_duty = TRUE AND r.is_customer_default = FALSE ORDER BY u.full_name";
 
@@ -306,6 +321,46 @@ public class UserDAOImpl implements UserDAO {
             ps.setInt(2, userId);
             ps.executeUpdate();
         }
+    }
+
+    @Override
+    public int countActiveCustomers(Connection conn, java.time.LocalDateTime from) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(COUNT_ACTIVE_CUSTOMERS)) {
+            ps.setTimestamp(1, java.sql.Timestamp.valueOf(from));
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
+    }
+
+    @Override
+    public java.math.BigDecimal sumWalletFloat(Connection conn) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(SUM_WALLET_FLOAT);
+             ResultSet rs = ps.executeQuery()) {
+            return rs.next() ? rs.getBigDecimal(1) : java.math.BigDecimal.ZERO;
+        }
+    }
+
+    @Override
+    public List<com.eaut.canteen.model.TopCustomer> findTopCustomers(Connection conn,
+            java.time.LocalDateTime from, int limit) throws SQLException {
+        List<com.eaut.canteen.model.TopCustomer> rows = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(FIND_TOP_CUSTOMERS)) {
+            ps.setTimestamp(1, java.sql.Timestamp.valueOf(from));
+            ps.setInt(2, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    rows.add(new com.eaut.canteen.model.TopCustomer(
+                            rs.getInt("user_id"),
+                            rs.getString("full_name"),
+                            rs.getString("student_id"),
+                            rs.getInt("order_count"),
+                            rs.getBigDecimal("total_spent"),
+                            rs.getInt("loyalty_points")));
+                }
+            }
+        }
+        return rows;
     }
 
     @Override
