@@ -405,6 +405,15 @@ img {
 .product-card {
     display: flex;
     flex-direction: column;
+    transition: transform var(--duration-base) var(--ease-standard),
+                box-shadow var(--duration-base) var(--ease-standard);
+}
+
+/* The whole card lifts, not just its image — it reads as one object rather than a picture that
+   happens to sit above some text. */
+.product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(11, 60, 136, 0.12);
 }
 
 .product-card img {
@@ -1013,10 +1022,40 @@ img {
     transform: translateY(0);
 }
 
+/* Someone who has asked their OS for less motion means all of it, not just the scroll reveal.
+   This previously covered only .reveal-on-scroll, leaving the image zoom, the fly-to-cart
+   animation, the cart bump, toasts, the hero carousel and the spinner still moving. */
 @media (prefers-reduced-motion: reduce) {
     .reveal-on-scroll {
         opacity: 1;
         transform: none;
+        transition: none;
+    }
+
+    .product-card-media img:hover,
+    .card:hover,
+    .btn-primary:hover,
+    .hero-carousel-nav:hover {
+        transform: none;
+    }
+
+    .cart-bump,
+    .hero-carousel-dot.is-active {
+        transform: none;
+    }
+
+    .fly-to-cart-clone {
+        display: none;
+    }
+
+    .page-spinner-overlay .spinner {
+        animation: none;
+    }
+
+    /* Keep the state change visible, just not animated. */
+    .toast,
+    .hero-carousel-slide.is-active {
+        animation: none;
         transition: none;
     }
 }
@@ -1124,6 +1163,46 @@ img {
         height: 30px;
         font-size: 1.1rem;
     }
+}
+
+/* ===== Motion polish =====
+   Each of these communicates something: a card lifting says "this is one clickable thing", a
+   pressed button says the tap registered, a section fading in says new content arrived. Nothing
+   here loops forever or hijacks scrolling — this is a menu people order lunch from in a hurry. */
+@media (prefers-reduced-motion: no-preference) {
+    /* Sections arrive one after another rather than all at once, which makes a long menu page
+       feel like it is loading in order instead of flashing into place. */
+    .catalog-section {
+        animation: sectionIn var(--duration-slow) var(--ease-standard) both;
+    }
+
+    .catalog-section:nth-of-type(2) { animation-delay: 60ms; }
+    .catalog-section:nth-of-type(3) { animation-delay: 120ms; }
+
+    .page-content {
+        animation: pageIn var(--duration-base) var(--ease-standard) both;
+    }
+}
+
+@keyframes sectionIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@keyframes pageIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Buttons acknowledge the press itself, so a slow connection still feels answered. */
+.btn:active,
+.quick-add-btn:active,
+.icon-btn:active {
+    transform: scale(0.97);
+}
+
+.pagination-link:active {
+    transform: scale(0.96);
 }
 
 /* ===== Bar chart (admin revenue) =====
