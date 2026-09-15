@@ -1107,6 +1107,25 @@ img {
     border-radius: var(--radius-container);
 }
 
+/* The arrows sit over the slide, so the text has to start inside them — otherwise the first
+   character of the subtitle disappears under the left arrow. Only applied when the arrows are
+   actually rendered (more than one slide), so a lone status panel keeps its full width. */
+.hero-carousel.has-controls .hero-banner,
+.hero-carousel.has-controls .cms-banner-title,
+.hero-carousel.has-controls .cms-banner-subtitle {
+    padding-left: 56px;
+    padding-right: 56px;
+}
+
+@media screen and (max-width: 768px) {
+    .hero-carousel.has-controls .hero-banner,
+    .hero-carousel.has-controls .cms-banner-title,
+    .hero-carousel.has-controls .cms-banner-subtitle {
+        padding-left: 44px;
+        padding-right: 44px;
+    }
+}
+
 .hero-carousel-nav {
     position: absolute;
     top: 50%;
@@ -1966,11 +1985,13 @@ body.has-admin-rail {
 
 /* ===== Catalog layout + admin-configured banners (auto-adjusts to whichever positions have an
    active banner — see CatalogServlet headBanners/leftBanners/rightBanners/footerBanners) ===== */
+/* Columns stretch to the tallest one (the menu), so the banner rails end level with the product
+   grid instead of stopping at their own content height and leaving a gap underneath. */
 .catalog-layout {
     display: grid;
     grid-template-columns: 1fr;
     gap: 16px;
-    align-items: start;
+    align-items: stretch;
 }
 
 .catalog-layout.has-left {
@@ -1985,12 +2006,31 @@ body.has-admin-rail {
     grid-template-columns: 220px 1fr 220px;
 }
 
+/* Deliberately not sticky. A rail that detaches and rides down the page over the menu reads as a
+   floating overlay rather than a column of the layout — the two sections should stay level and
+   scroll together. */
 .catalog-sidebar {
-    position: sticky;
-    top: 100px;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    height: 100%;
+}
+
+/* Each banner fills its share of the rail, and inside a banner the media takes whatever height is
+   left after the title/subtitle. object-fit: cover keeps the artwork filling that box without
+   distorting it. */
+.catalog-sidebar .cms-banner {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.catalog-sidebar .cms-banner-link {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .catalog-main {
@@ -2030,21 +2070,35 @@ body.has-admin-rail {
     max-height: 220px;
 }
 
-/* A rail banner is a tall 9:16 frame, not a wide strip. The shared 220px cap was cropping it to
-   roughly a square in a 220px-wide column — the artwork was there, the box was just too short for
-   it. An explicit aspect-ratio makes the slot the shape the artwork is drawn for, whatever the
-   uploaded file's own proportions happen to be, and object-fit: cover fills it without stretching. */
+/* A rail banner is a tall frame, not a wide strip: it runs the full height of the product grid it
+   sits beside, so the two columns read as one block instead of a short banner floating at the top.
+   The height therefore comes from the grid row, not from the artwork — neither the shared 220px cap
+   nor a fixed aspect-ratio applies here, and object-fit: cover (inherited above) fills whatever
+   height the row ends up being without stretching the image. */
 .catalog-sidebar .cms-banner-media {
     max-height: none;
+    aspect-ratio: auto;
+    /* basis 0, not auto: the media takes exactly the space left after the caption rather than
+       starting from its own intrinsic height and then being shrunk back, which is what makes the
+       final height depend on the image's own dimensions. */
+    flex: 1 1 0;
     height: auto;
-    aspect-ratio: 9 / 16;
+    /* Keeps the rail readable on a short page (few products) where there is little to fill. */
+    min-height: 200px;
 }
 
 /* Stacked under the menu on narrow screens, a full 9:16 banner would be taller than the phone
    screen and push the food off the page, so the rails go back to a strip there. */
 @media screen and (max-width: 860px) {
+    .catalog-sidebar,
+    .catalog-sidebar .cms-banner {
+        height: auto;
+        flex: 0 0 auto;
+    }
+
     .catalog-sidebar .cms-banner-media {
-        aspect-ratio: auto;
+        height: auto;
+        min-height: 0;
         max-height: 220px;
     }
 }

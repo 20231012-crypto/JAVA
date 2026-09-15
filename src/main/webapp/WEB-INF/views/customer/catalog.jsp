@@ -12,7 +12,7 @@
              never disappears; every further slide is an admin-configured HEAD banner from
              /admin/banners, so the promotional content is not hardcoded. Arrows and dots only
              render when there is more than one slide. --%>
-        <div class="hero-carousel" data-hero-carousel>
+        <div class="hero-carousel ${not empty headBanners ? 'has-controls' : ''}" data-hero-carousel>
             <div class="hero-carousel-viewport">
                 <div class="hero-banner hero-carousel-slide is-active">
                     <span class="hero-banner-eyebrow">CĂNG TIN EAUT</span>
