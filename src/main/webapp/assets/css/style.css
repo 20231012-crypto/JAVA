@@ -363,10 +363,14 @@ img {
     margin-top: 20px;
 }
 
-/* A banner sidebar eats 220px a side, so five columns would squeeze the cards. */
-.catalog-layout.has-left .card-grid,
-.catalog-layout.has-right .card-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+/* A banner sidebar eats 220px a side. On a wide desktop there is still room for the five columns
+   the menu is meant to show; from 1440px down the menu column can no longer hold five cards wide
+   enough to read, so it drops to four there rather than squeezing them. */
+@media screen and (max-width: 1439px) {
+    .catalog-layout.has-left .card-grid,
+    .catalog-layout.has-right .card-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
 }
 
 @media screen and (max-width: 1200px) {
