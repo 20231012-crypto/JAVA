@@ -41,7 +41,7 @@
 
         <div style="display:flex; gap:10px; align-items:center;">
             <c:choose>
-                <c:when test="${product.shelfQuantity > 0}">
+                <c:when test="${product.sellable}">
                     <button type="button" class="btn btn-primary quick-add-btn" data-quick-add
                             data-product-id="${product.productId}" data-product-name="${product.name}">Thêm vào giỏ</button>
                 </c:when>

@@ -41,7 +41,7 @@
 
                 <div style="display:flex; align-items:center; gap:12px;">
                     <c:choose>
-                        <c:when test="${product.shelfQuantity > 0}">
+                        <c:when test="${product.sellable}">
                             <form method="post" action="${pageContext.request.contextPath}/cart/add">
                                 <input type="hidden" name="csrfToken" value="${csrfToken}">
                                 <input type="hidden" name="productId" value="${product.productId}">

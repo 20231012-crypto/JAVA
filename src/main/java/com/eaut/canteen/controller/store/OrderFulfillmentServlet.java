@@ -22,6 +22,7 @@ import com.eaut.canteen.model.PaymentMethod;
 import com.eaut.canteen.model.User;
 import com.eaut.canteen.util.AppConfig;
 import com.eaut.canteen.util.DBConnection;
+import com.eaut.canteen.util.Settings;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -107,10 +108,12 @@ public class OrderFulfillmentServlet extends HttpServlet {
     }
 
     private void awardLoyaltyPoints(Connection conn, Order order) throws SQLException {
-        String configured = AppConfig.get("loyalty.vndPerPoint");
-        BigDecimal vndPerPoint = configured == null || configured.isBlank()
-                ? DEFAULT_VND_PER_POINT
-                : new BigDecimal(configured.trim());
+        // From app_settings so a manager can retune the earn rate without a redeploy; Settings
+        // falls back to AppConfig, so behaviour is unchanged where migration 013 has not run.
+        BigDecimal vndPerPoint = Settings.getDecimal(conn, "loyalty.vndPerPoint", DEFAULT_VND_PER_POINT);
+        if (vndPerPoint.signum() <= 0) {
+            vndPerPoint = DEFAULT_VND_PER_POINT; // a zero rate would divide by zero below
+        }
         int points = order.getTotalAmount().divide(vndPerPoint, 0, RoundingMode.DOWN).intValue();
         if (points <= 0) {
             return;

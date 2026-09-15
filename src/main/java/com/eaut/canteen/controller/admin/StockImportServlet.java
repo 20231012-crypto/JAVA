@@ -16,6 +16,10 @@ import com.eaut.canteen.dao.impl.WarehouseStockDAOImpl;
 import com.eaut.canteen.model.StockImport;
 import com.eaut.canteen.model.StockImportItem;
 import com.eaut.canteen.model.User;
+import com.eaut.canteen.dao.StockMovementDAO;
+import com.eaut.canteen.dao.impl.StockMovementDAOImpl;
+import com.eaut.canteen.model.StockLocation;
+import com.eaut.canteen.model.StockMovementReason;
 import com.eaut.canteen.util.DBConnection;
 
 import jakarta.servlet.ServletException;
@@ -28,6 +32,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public class StockImportServlet extends HttpServlet {
 
     private static final StockImportDAO stockImportDAO = new StockImportDAOImpl();
+    private static final StockMovementDAO stockMovementDAO = new StockMovementDAOImpl();
     private static final StockImportItemDAO stockImportItemDAO = new StockImportItemDAOImpl();
     private static final WarehouseStockDAO warehouseStockDAO = new WarehouseStockDAOImpl();
     private static final ProductDAO productDAO = new ProductDAOImpl();
@@ -72,6 +77,11 @@ public class StockImportServlet extends HttpServlet {
                 stockImportItemDAO.insert(conn, item);
 
                 warehouseStockDAO.increment(conn, productId, quantity);
+                stockMovementDAO.insert(conn, productId, StockLocation.WAREHOUSE, quantity,
+                        StockMovementReason.IMPORT, null,
+                        supplierName == null || supplierName.isBlank()
+                                ? "Nhập kho" : "Nhập từ " + supplierName,
+                        admin.getUserId());
 
                 conn.commit();
             } catch (SQLException e) {

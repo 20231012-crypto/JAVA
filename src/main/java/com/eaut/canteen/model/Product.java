@@ -23,6 +23,14 @@ public class Product {
     private int avgPrepMinutes = 10;
     /** Populated only by DAO methods that join shelf_stock (e.g. catalog listing). */
     private int shelfQuantity;
+    /**
+     * The manual "sold out" switch, separate from isActive. isActive=false removes the dish from
+     * the menu entirely; isAvailable=false leaves it visible but greyed out and unorderable — the
+     * state a kitchen needs when the shelf count still looks fine but an ingredient ran out.
+     */
+    private boolean available = true;
+    /** Per-dish low-stock warning level. Bottled water and set lunches do not share a sensible one. */
+    private int lowStockThreshold = 5;
     /** Populated only by DAO methods that join warehouse_stock (e.g. admin listing). */
     private int warehouseQuantity;
     /** Not from the products table — set manually by the controller from FavoriteDAO for the current session's user, if logged in. */
@@ -164,6 +172,35 @@ public class Product {
 
     public void setShelfQuantity(int shelfQuantity) {
         this.shelfQuantity = shelfQuantity;
+    }
+
+    public boolean isAvailable() {
+        return available;
+    }
+
+    public void setAvailable(boolean available) {
+        this.available = available;
+    }
+
+    public int getLowStockThreshold() {
+        return lowStockThreshold;
+    }
+
+    public void setLowStockThreshold(int lowStockThreshold) {
+        this.lowStockThreshold = lowStockThreshold;
+    }
+
+    /** True when the shelf has fallen to or below this dish's own warning level. */
+    public boolean isLowStock() {
+        return shelfQuantity <= lowStockThreshold;
+    }
+
+    /**
+     * Whether a customer can actually order this right now. All three have to hold: it must be on
+     * the menu, not manually closed, and physically present on the shelf.
+     */
+    public boolean isSellable() {
+        return active && available && shelfQuantity > 0;
     }
 
     public boolean isInStock() {

@@ -49,12 +49,15 @@
             </c:if>
             <span class="price-current"><fmt:formatNumber value="${cardProduct.price}" type="number" groupingUsed="true" />₫</span>
         </div>
-        <c:if test="${cardProduct.shelfQuantity <= 0}">
+        <%-- "Sellable" is all three: on the menu, not manually closed, and physically present.
+             The shelf count alone used to decide this, which left no way to close a dish whose
+             count still looks fine but whose ingredients have run out. --%>
+        <c:if test="${not cardProduct.sellable}">
             <div class="out-of-stock">Tạm hết hàng</div>
         </c:if>
     </a>
     <c:if test="${not empty sessionScope.user and sessionScope.user.role.customerDefault
-                  and cardProduct.shelfQuantity > 0 and shopAcceptingOrders != false}">
+                  and cardProduct.sellable and shopAcceptingOrders != false}">
         <button type="button" class="quick-add-btn quick-add-btn-block" data-quick-add
                 data-product-id="${cardProduct.productId}" data-product-name="${cardProduct.name}"
                 aria-label="Thêm ${cardProduct.name} vào giỏ hàng">Thêm vào giỏ</button>

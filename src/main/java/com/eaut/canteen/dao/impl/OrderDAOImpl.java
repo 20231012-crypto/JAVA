@@ -35,9 +35,9 @@ public class OrderDAOImpl implements OrderDAO {
 
     private static final String INSERT =
             "INSERT INTO orders (order_code, customer_id, building_id, channel, sold_by, subtotal, shipping_fee, " +
-            "discount_amount, loyalty_points_used, loyalty_discount_amount, total_amount, order_status, " +
-            "payment_method, payment_status, note) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            "discount_amount, wallet_discount_amount, loyalty_points_used, loyalty_discount_amount, " +
+            "total_amount, order_status, payment_method, payment_status, note) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String FIND_BY_ID = BASE_SELECT + "WHERE o.order_id = ?";
     private static final String FIND_BY_CUSTOMER = BASE_SELECT + "WHERE o.customer_id = ? ORDER BY o.created_at DESC";
     private static final String FIND_BY_STATUS = BASE_SELECT + "WHERE o.order_status = ? ORDER BY o.created_at";
@@ -117,13 +117,14 @@ public class OrderDAOImpl implements OrderDAO {
             ps.setBigDecimal(6, order.getSubtotal());
             ps.setBigDecimal(7, order.getShippingFee());
             ps.setBigDecimal(8, order.getDiscountAmount());
-            ps.setInt(9, order.getLoyaltyPointsUsed());
-            ps.setBigDecimal(10, order.getLoyaltyDiscountAmount());
-            ps.setBigDecimal(11, order.getTotalAmount());
-            ps.setString(12, order.getOrderStatus().name());
-            ps.setString(13, order.getPaymentMethod().name());
-            ps.setString(14, order.getPaymentStatus().name());
-            ps.setString(15, order.getNote());
+            ps.setBigDecimal(9, order.getWalletDiscountAmount());
+            ps.setInt(10, order.getLoyaltyPointsUsed());
+            ps.setBigDecimal(11, order.getLoyaltyDiscountAmount());
+            ps.setBigDecimal(12, order.getTotalAmount());
+            ps.setString(13, order.getOrderStatus().name());
+            ps.setString(14, order.getPaymentMethod().name());
+            ps.setString(15, order.getPaymentStatus().name());
+            ps.setString(16, order.getNote());
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 keys.next();
@@ -446,6 +447,7 @@ public class OrderDAOImpl implements OrderDAO {
         order.setSubtotal(rs.getBigDecimal("subtotal"));
         order.setShippingFee(rs.getBigDecimal("shipping_fee"));
         order.setDiscountAmount(rs.getBigDecimal("discount_amount"));
+        order.setWalletDiscountAmount(rs.getBigDecimal("wallet_discount_amount"));
         order.setLoyaltyPointsUsed(rs.getInt("loyalty_points_used"));
         order.setLoyaltyDiscountAmount(rs.getBigDecimal("loyalty_discount_amount"));
         order.setTotalAmount(rs.getBigDecimal("total_amount"));

@@ -3,6 +3,7 @@ package com.eaut.canteen.controller.customer;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalTime;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -45,7 +46,13 @@ import com.eaut.canteen.model.User;
 import com.eaut.canteen.model.WalletTransaction;
 import com.eaut.canteen.model.WalletTransactionType;
 import com.eaut.canteen.util.AppConfig;
+import com.eaut.canteen.util.AppClock;
+import com.eaut.canteen.dao.StockMovementDAO;
+import com.eaut.canteen.dao.impl.StockMovementDAOImpl;
+import com.eaut.canteen.model.StockLocation;
+import com.eaut.canteen.model.StockMovementReason;
 import com.eaut.canteen.util.DBConnection;
+import com.eaut.canteen.util.Settings;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -69,6 +76,7 @@ public class CheckoutServlet extends HttpServlet {
     private final UserDAO userDAO = new UserDAOImpl();
     private final WalletDAO walletDAO = new WalletDAOImpl();
     private final LoyaltyDAO loyaltyDAO = new LoyaltyDAOImpl();
+    private final StockMovementDAO stockMovementDAO = new StockMovementDAOImpl();
     private final ShopStatusDAO shopStatusDAO = new ShopStatusDAOImpl();
 
     @Override
@@ -89,11 +97,11 @@ public class CheckoutServlet extends HttpServlet {
             req.setAttribute("cart", cart);
             req.setAttribute("buildings", buildings);
             if (fresh.isEautStudent()) {
-                req.setAttribute("smartIdDiscount", smartIdDiscount(cart.getSubtotal()));
+                req.setAttribute("smartIdDiscount", smartIdDiscount(conn, cart.getSubtotal()));
             }
             req.setAttribute("walletBalance", fresh.getWalletBalance());
             req.setAttribute("loyaltyPoints", fresh.getLoyaltyPoints());
-            req.setAttribute("redeemValuePerPoint", redeemValuePerPoint());
+            req.setAttribute("redeemValuePerPoint", redeemValuePerPoint(conn));
             req.setAttribute("customerPhone", fresh.getPhone());
             req.setAttribute("customerStudentId", fresh.getStudentId());
             req.setAttribute("customerClassName", fresh.getClassName());
@@ -143,6 +151,17 @@ public class CheckoutServlet extends HttpServlet {
                 return;
             }
 
+            // Separate from the manual switch above: that one means "we are swamped right now",
+            // this one is the standing schedule nobody has to remember to flip.
+            if (!isWithinOpeningHours(conn)) {
+                req.setAttribute("error", "Ngoài giờ phục vụ ("
+                        + Settings.getString(conn, "canteen.openTime", "06:30") + " - "
+                        + Settings.getString(conn, "canteen.closeTime", "18:00")
+                        + "). Bạn vẫn xem được thực đơn và đặt lại vào giờ mở cửa.");
+                forwardToCheckout(req, resp, conn, cart, customer);
+                return;
+            }
+
             Building building = buildingDAO.findById(conn, buildingId);
             if (building == null) {
                 req.setAttribute("error", "Vui lòng chọn tòa nhà nhận hàng hợp lệ.");
@@ -157,9 +176,11 @@ public class CheckoutServlet extends HttpServlet {
             Map<Integer, Product> livePrices = new HashMap<>();
             for (CartItem cartItem : cart.getItems()) {
                 Product live = productDAO.findById(conn, cartItem.getProductId());
-                if (live == null || !live.isActive()) {
+                // isAvailable as well as isActive: a dish closed by hand while this cart sat
+                // open must not slip through just because its shelf count is still positive.
+                if (live == null || !live.isActive() || !live.isAvailable()) {
                     req.setAttribute("error", "Sản phẩm \"" + cartItem.getProductName()
-                            + "\" không còn được bán. Vui lòng xóa khỏi giỏ hàng và đặt lại.");
+                            + "\" hiện không bán. Vui lòng xóa khỏi giỏ hàng và đặt lại.");
                     forwardToCheckout(req, resp, conn, cart, customer);
                     return;
                 }
@@ -171,11 +192,15 @@ public class CheckoutServlet extends HttpServlet {
                 subtotal = subtotal.add(livePrices.get(cartItem.getProductId()).getPrice()
                         .multiply(BigDecimal.valueOf(cartItem.getQuantity())));
             }
-            BigDecimal shippingFee = building.getShippingFee();
-            BigDecimal smartIdDiscount = customer.isEautStudent() ? smartIdDiscount(subtotal) : BigDecimal.ZERO;
-            BigDecimal payableBeforeLoyalty = subtotal.add(shippingFee).subtract(smartIdDiscount);
+            BigDecimal shippingFee = effectiveShippingFee(conn, building.getShippingFee(), subtotal);
+            BigDecimal smartIdDiscount = customer.isEautStudent() ? smartIdDiscount(conn, subtotal) : BigDecimal.ZERO;
+            BigDecimal walletDiscount = paymentMethod == PaymentMethod.WALLET
+                    ? walletDiscount(conn, subtotal)
+                    : BigDecimal.ZERO;
+            BigDecimal payableBeforeLoyalty = subtotal.add(shippingFee)
+                    .subtract(smartIdDiscount).subtract(walletDiscount);
 
-            BigDecimal redeemValue = redeemValuePerPoint();
+            BigDecimal redeemValue = redeemValuePerPoint(conn);
             int maxRedeemable = payableBeforeLoyalty.divide(redeemValue, 0, RoundingMode.DOWN).intValue();
             int pointsUsed = wantsRedeemPoints ? Math.min(customer.getLoyaltyPoints(), maxRedeemable) : 0;
             BigDecimal loyaltyDiscount = redeemValue.multiply(BigDecimal.valueOf(pointsUsed));
@@ -197,6 +222,7 @@ public class CheckoutServlet extends HttpServlet {
                 order.setSubtotal(subtotal);
                 order.setShippingFee(shippingFee);
                 order.setDiscountAmount(smartIdDiscount);
+                order.setWalletDiscountAmount(walletDiscount);
                 order.setLoyaltyPointsUsed(pointsUsed);
                 order.setLoyaltyDiscountAmount(loyaltyDiscount);
                 order.setTotalAmount(total);
@@ -231,6 +257,11 @@ public class CheckoutServlet extends HttpServlet {
 
                 for (CartItem cartItem : cart.getItems()) {
                     int updated = shelfStockDAO.decrementIfEnough(conn, cartItem.getProductId(), cartItem.getQuantity());
+                    if (updated > 0) {
+                        stockMovementDAO.insert(conn, cartItem.getProductId(), StockLocation.SHELF,
+                                -cartItem.getQuantity(), StockMovementReason.SALE, orderId,
+                                "Khách đặt qua web", customer.getUserId());
+                    }
                     if (updated == 0) {
                         conn.rollback();
                         req.setAttribute("error", "Sản phẩm \"" + cartItem.getProductName() + "\" hiện không đủ hàng trên kệ.");
@@ -279,21 +310,66 @@ public class CheckoutServlet extends HttpServlet {
         return PaymentMethod.COD;
     }
 
-    /** EAUT Smart ID automatic discount on subtotal — see AppConfig "smartId.discountPercent" (default 10%). Rounded down to whole đồng. */
-    private BigDecimal smartIdDiscount(BigDecimal subtotal) {
-        String configured = AppConfig.get("smartId.discountPercent");
-        BigDecimal percent = configured == null || configured.isBlank()
-                ? DEFAULT_SMART_ID_DISCOUNT_PERCENT
-                : new BigDecimal(configured.trim());
-        return subtotal.multiply(percent).divide(BigDecimal.valueOf(100), 0, RoundingMode.DOWN);
+    /**
+     * EAUT Smart ID automatic discount on subtotal. Read from app_settings; Settings falls back to
+     * AppConfig, so a database that has not run migration 013 still behaves exactly as before.
+     * Rounded down to whole đồng — this currency has no minor unit.
+     */
+    private BigDecimal smartIdDiscount(Connection conn, BigDecimal subtotal) throws SQLException {
+        return percentOf(subtotal, Settings.getDecimal(conn, "smartId.discountPercent", DEFAULT_SMART_ID_DISCOUNT_PERCENT));
     }
 
-    /** Tích điểm redemption rate — see AppConfig "loyalty.redeemValuePerPoint" (default 500đ/point). */
-    private BigDecimal redeemValuePerPoint() {
-        String configured = AppConfig.get("loyalty.redeemValuePerPoint");
-        return configured == null || configured.isBlank()
-                ? DEFAULT_REDEEM_VALUE_PER_POINT
-                : new BigDecimal(configured.trim());
+    /**
+     * The incentive for paying with the internal wallet rather than cash or a bank transfer. Taken
+     * on the subtotal like the Smart ID discount, so the two are comparable and neither compounds
+     * on top of the other.
+     */
+    private BigDecimal walletDiscount(Connection conn, BigDecimal subtotal) throws SQLException {
+        return percentOf(subtotal, Settings.getDecimal(conn, "wallet.discountPercent", BigDecimal.ZERO));
+    }
+
+    private BigDecimal percentOf(BigDecimal amount, BigDecimal percent) {
+        if (percent == null || percent.signum() <= 0) {
+            return BigDecimal.ZERO;
+        }
+        return amount.multiply(percent).divide(BigDecimal.valueOf(100), 0, RoundingMode.DOWN);
+    }
+
+    /** Tích điểm redemption rate, in đồng per point. */
+    private BigDecimal redeemValuePerPoint(Connection conn) throws SQLException {
+        BigDecimal configured = Settings.getDecimal(conn, "loyalty.redeemValuePerPoint", DEFAULT_REDEEM_VALUE_PER_POINT);
+        // Zero would make every point worthless AND divide by zero when capping the redemption.
+        return configured.signum() <= 0 ? DEFAULT_REDEEM_VALUE_PER_POINT : configured;
+    }
+
+    /**
+     * Free delivery above a configurable order value. Zero — the seeded default — disables it, so
+     * the per-building fee applies exactly as it always has.
+     */
+    private BigDecimal effectiveShippingFee(Connection conn, BigDecimal buildingFee, BigDecimal subtotal)
+            throws SQLException {
+        int freeOver = Settings.getInt(conn, "shipping.freeOverAmount", 0);
+        if (freeOver > 0 && subtotal.compareTo(BigDecimal.valueOf(freeOver)) >= 0) {
+            return BigDecimal.ZERO;
+        }
+        return buildingFee;
+    }
+
+    /**
+     * Whether the canteen is inside its serving hours right now, in the canteen's own timezone —
+     * not the server's, which is UTC on Render. A window that wraps past midnight (open 18:00,
+     * close 02:00) is read as spanning the day boundary rather than as an empty range.
+     */
+    private boolean isWithinOpeningHours(Connection conn) throws SQLException {
+        LocalTime open = Settings.getTime(conn, "canteen.openTime", LocalTime.MIN);
+        LocalTime close = Settings.getTime(conn, "canteen.closeTime", LocalTime.MAX);
+        LocalTime now = AppClock.timeOfDay(conn);
+        if (open.equals(close)) {
+            return true;
+        }
+        return close.isAfter(open)
+                ? !now.isBefore(open) && now.isBefore(close)
+                : !now.isBefore(open) || now.isBefore(close);
     }
 
     private void forwardToCheckout(HttpServletRequest req, HttpServletResponse resp, Connection conn, Cart cart, User customer)
@@ -302,11 +378,11 @@ public class CheckoutServlet extends HttpServlet {
         req.setAttribute("cart", cart);
         req.setAttribute("buildings", buildingDAO.findAllActive(conn));
         if (customer.isEautStudent()) {
-            req.setAttribute("smartIdDiscount", smartIdDiscount(cart.getSubtotal()));
+            req.setAttribute("smartIdDiscount", smartIdDiscount(conn, cart.getSubtotal()));
         }
         req.setAttribute("walletBalance", customer.getWalletBalance());
         req.setAttribute("loyaltyPoints", customer.getLoyaltyPoints());
-        req.setAttribute("redeemValuePerPoint", redeemValuePerPoint());
+        req.setAttribute("redeemValuePerPoint", redeemValuePerPoint(conn));
         req.setAttribute("customerPhone", customer.getPhone());
         req.setAttribute("customerStudentId", customer.getStudentId());
         req.setAttribute("customerClassName", customer.getClassName());

@@ -98,6 +98,15 @@
 
         <li class="admin-rail-divider" role="presentation"></li>
 
+        <c:if test="${sessionScope.user.permissions['stock.adjust']}">
+            <li>
+                <a class="admin-rail-link ${fn:startsWith(path, '/admin/inventory') ? 'is-active' : ''}"
+                   href="${ctx}/admin/inventory">
+                    <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-boxes"/></svg></span>
+                    <span class="admin-rail-label">Tồn kho &amp; sổ kho</span>
+                </a>
+            </li>
+        </c:if>
         <c:if test="${sessionScope.user.permissions['stock.import']}">
             <li>
                 <a class="admin-rail-link ${fn:startsWith(path, '/admin/stock-imports') ? 'is-active' : ''}"
@@ -131,6 +140,15 @@
                    href="${ctx}/admin/wallet">
                     <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-wallet"/></svg></span>
                     <span class="admin-rail-label">Ví EAUT Pay</span>
+                </a>
+            </li>
+        </c:if>
+        <c:if test="${sessionScope.user.permissions['settings.manage']}">
+            <li>
+                <a class="admin-rail-link ${fn:startsWith(path, '/admin/settings') ? 'is-active' : ''}"
+                   href="${ctx}/admin/settings">
+                    <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg></span>
+                    <span class="admin-rail-label">Cài đặt hệ thống</span>
                 </a>
             </li>
         </c:if>

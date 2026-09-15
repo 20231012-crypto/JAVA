@@ -23,6 +23,10 @@ import com.eaut.canteen.model.PaymentMethod;
 import com.eaut.canteen.model.PaymentStatus;
 import com.eaut.canteen.model.Product;
 import com.eaut.canteen.model.User;
+import com.eaut.canteen.dao.StockMovementDAO;
+import com.eaut.canteen.dao.impl.StockMovementDAOImpl;
+import com.eaut.canteen.model.StockLocation;
+import com.eaut.canteen.model.StockMovementReason;
 import com.eaut.canteen.util.DBConnection;
 
 import jakarta.servlet.ServletException;
@@ -41,6 +45,7 @@ public class OrderActionServlet extends HttpServlet {
     private static final ShelfStockDAO shelfStockDAO = new ShelfStockDAOImpl();
     private static final OrderStatusHistoryDAO historyDAO = new OrderStatusHistoryDAOImpl();
     private static final ProductDAO productDAO = new ProductDAOImpl();
+    private static final StockMovementDAO stockMovementDAO = new StockMovementDAOImpl();
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -124,7 +129,7 @@ public class OrderActionServlet extends HttpServlet {
         if (updated == 0) {
             return false;
         }
-        restoreStock(conn, order.getOrderId());
+        restoreStock(conn, order.getOrderId(), staff, "Hoàn hàng do từ chối đơn " + order.getOrderCode());
         historyDAO.insert(conn, order.getOrderId(), OrderStatus.PENDING, OrderStatus.REJECTED, staff.getUserId(),
                 note == null || note.isBlank() ? "Từ chối đơn" : note);
         return true;
@@ -139,16 +144,18 @@ public class OrderActionServlet extends HttpServlet {
         if (updated == 0) {
             return false;
         }
-        restoreStock(conn, order.getOrderId());
+        restoreStock(conn, order.getOrderId(), staff, "Hoàn hàng do hủy đơn " + order.getOrderCode());
         historyDAO.insert(conn, order.getOrderId(), current, OrderStatus.CANCELLED, staff.getUserId(),
                 note == null || note.isBlank() ? "Hủy đơn" : note);
         return true;
     }
 
-    private void restoreStock(Connection conn, int orderId) throws SQLException {
+    private void restoreStock(Connection conn, int orderId, User staff, String why) throws SQLException {
         List<OrderItem> items = orderItemDAO.findByOrderId(conn, orderId);
         for (OrderItem item : items) {
             shelfStockDAO.increment(conn, item.getProductId(), item.getQuantity());
+            stockMovementDAO.insert(conn, item.getProductId(), StockLocation.SHELF, item.getQuantity(),
+                    StockMovementReason.RESTOCK, orderId, why, staff.getUserId());
         }
     }
 }

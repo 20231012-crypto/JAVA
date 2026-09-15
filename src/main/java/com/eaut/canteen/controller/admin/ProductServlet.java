@@ -11,6 +11,7 @@ import com.eaut.canteen.dao.impl.CategoryDAOImpl;
 import com.eaut.canteen.dao.impl.ProductDAOImpl;
 import com.eaut.canteen.model.Product;
 import com.eaut.canteen.util.DBConnection;
+import com.eaut.canteen.util.RequestParams;
 import com.eaut.canteen.util.FileUploadUtil;
 
 import jakarta.servlet.ServletException;
@@ -21,7 +22,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 
-@WebServlet({"/admin/products", "/admin/products/form", "/admin/products/save", "/admin/products/toggle"})
+@WebServlet({"/admin/products", "/admin/products/form", "/admin/products/save",
+             "/admin/products/toggle", "/admin/products/availability"})
 @MultipartConfig(maxFileSize = 5 * 1024 * 1024)
 public class ProductServlet extends HttpServlet {
 
@@ -61,10 +63,24 @@ public class ProductServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         try (Connection conn = DBConnection.getConnection()) {
+            // Two different switches, deliberately not merged:
+            //   /toggle       -> is_active, takes the dish off the menu entirely
+            //   /availability -> is_available, leaves it on the menu greyed out and unorderable
+            // A kitchen that has run out of an ingredient wants the second one; hiding a popular
+            // dish instead makes students think it was removed for good.
             if ("/admin/products/toggle".equals(req.getServletPath())) {
-                int productId = Integer.parseInt(req.getParameter("productId"));
-                boolean active = Boolean.parseBoolean(req.getParameter("active"));
-                productDAO.setActive(conn, productId, active);
+                Integer productId = RequestParams.intOrNull(req.getParameter("productId"));
+                if (productId != null) {
+                    productDAO.setActive(conn, productId, Boolean.parseBoolean(req.getParameter("active")));
+                }
+                resp.sendRedirect(req.getContextPath() + "/admin/products");
+                return;
+            }
+            if ("/admin/products/availability".equals(req.getServletPath())) {
+                Integer productId = RequestParams.intOrNull(req.getParameter("productId"));
+                if (productId != null) {
+                    productDAO.setAvailable(conn, productId, Boolean.parseBoolean(req.getParameter("available")));
+                }
                 resp.sendRedirect(req.getContextPath() + "/admin/products");
                 return;
             }

@@ -92,6 +92,9 @@
                 <c:if test="${order.discountAmount > 0}">
                     <tr><th colspan="3">Giảm giá EAUT Smart ID</th><td>-<fmt:formatNumber value="${order.discountAmount}" type="number" groupingUsed="true" />₫</td></tr>
                 </c:if>
+                <c:if test="${order.walletDiscountAmount > 0}">
+                    <tr><th colspan="3">Ưu đãi trả bằng Ví EAUT Pay</th><td>-<fmt:formatNumber value="${order.walletDiscountAmount}" type="number" groupingUsed="true" />₫</td></tr>
+                </c:if>
                 <c:if test="${order.loyaltyPointsUsed > 0}">
                     <tr><th colspan="3">Dùng ${order.loyaltyPointsUsed} điểm</th><td>-<fmt:formatNumber value="${order.loyaltyDiscountAmount}" type="number" groupingUsed="true" />₫</td></tr>
                 </c:if>

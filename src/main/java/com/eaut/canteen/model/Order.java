@@ -26,6 +26,8 @@ public class Order {
     private BigDecimal discountAmount = BigDecimal.ZERO;
     private int loyaltyPointsUsed;
     private BigDecimal loyaltyDiscountAmount = BigDecimal.ZERO;
+    /** The EAUT Pay incentive. Kept apart from discountAmount so the receipt can name each one. */
+    private BigDecimal walletDiscountAmount = BigDecimal.ZERO;
     private BigDecimal totalAmount;
     private OrderStatus orderStatus;
     private PaymentMethod paymentMethod;
@@ -248,6 +250,14 @@ public class Order {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public BigDecimal getWalletDiscountAmount() {
+        return walletDiscountAmount;
+    }
+
+    public void setWalletDiscountAmount(BigDecimal walletDiscountAmount) {
+        this.walletDiscountAmount = walletDiscountAmount;
     }
 
     public BigDecimal getRefundedAmount() {

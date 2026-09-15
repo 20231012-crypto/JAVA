@@ -49,4 +49,20 @@ public interface ProductDAO {
     void updateImage(Connection conn, int productId, String imageFilename) throws SQLException;
 
     void setActive(Connection conn, int productId, boolean active) throws SQLException;
+
+    /**
+     * The manual sold-out switch. Distinct from {@link #setActive}: this keeps the dish on the menu
+     * and greys it out, rather than hiding it.
+     */
+    void setAvailable(Connection conn, int productId, boolean available) throws SQLException;
+
+    /** Per-dish low-stock warning level. */
+    void updateLowStockThreshold(Connection conn, int productId, int threshold) throws SQLException;
+
+    /**
+     * Dishes whose shelf count has fallen to their own threshold, worst first. Replaces filtering
+     * the whole product list in Java against a hardcoded 5 — which was written twice, in
+     * StoreReportServlet and AdminDashboardServlet, with no reference between them.
+     */
+    List<Product> findLowStock(Connection conn) throws SQLException;
 }

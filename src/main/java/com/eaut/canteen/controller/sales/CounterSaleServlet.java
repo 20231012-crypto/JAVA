@@ -24,6 +24,10 @@ import com.eaut.canteen.model.PaymentMethod;
 import com.eaut.canteen.model.PaymentStatus;
 import com.eaut.canteen.model.Product;
 import com.eaut.canteen.model.User;
+import com.eaut.canteen.dao.StockMovementDAO;
+import com.eaut.canteen.dao.impl.StockMovementDAOImpl;
+import com.eaut.canteen.model.StockLocation;
+import com.eaut.canteen.model.StockMovementReason;
 import com.eaut.canteen.util.DBConnection;
 
 import jakarta.servlet.ServletException;
@@ -39,6 +43,7 @@ public class CounterSaleServlet extends HttpServlet {
     private static final ProductDAO productDAO = new ProductDAOImpl();
     private static final OrderDAO orderDAO = new OrderDAOImpl();
     private static final OrderItemDAO orderItemDAO = new OrderItemDAOImpl();
+    private static final StockMovementDAO stockMovementDAO = new StockMovementDAOImpl();
     private static final ShelfStockDAO shelfStockDAO = new ShelfStockDAOImpl();
     private static final OrderStatusHistoryDAO historyDAO = new OrderStatusHistoryDAOImpl();
 
@@ -120,6 +125,11 @@ public class CounterSaleServlet extends HttpServlet {
 
                 for (CartItem cartItem : cart.getItems()) {
                     int updated = shelfStockDAO.decrementIfEnough(conn, cartItem.getProductId(), cartItem.getQuantity());
+                    if (updated > 0) {
+                        stockMovementDAO.insert(conn, cartItem.getProductId(), StockLocation.SHELF,
+                                -cartItem.getQuantity(), StockMovementReason.SALE, orderId,
+                                "Bán tại quầy", staff.getUserId());
+                    }
                     if (updated == 0) {
                         conn.rollback();
                         req.getSession().setAttribute("actionError",

@@ -83,6 +83,15 @@ public class ProductDAOImpl implements ProductDAO {
             "UPDATE products SET image_filename = ? WHERE product_id = ?";
     private static final String SET_ACTIVE =
             "UPDATE products SET is_active = ? WHERE product_id = ?";
+    private static final String SET_AVAILABLE =
+            "UPDATE products SET is_available = ? WHERE product_id = ?";
+    private static final String UPDATE_THRESHOLD =
+            "UPDATE products SET low_stock_threshold = ? WHERE product_id = ?";
+    // Compared against the dish's own threshold in SQL rather than a constant in Java, so the two
+    // screens that show "sắp hết" can no longer disagree about what that means.
+    private static final String FIND_LOW_STOCK =
+            BASE_SELECT + "WHERE p.is_active = TRUE AND COALESCE(s.quantity, 0) <= p.low_stock_threshold " +
+            "ORDER BY COALESCE(s.quantity, 0), p.name";
 
     @Override
     public List<Product> findAllActive(Connection conn) throws SQLException {
@@ -313,6 +322,36 @@ public class ProductDAOImpl implements ProductDAO {
         return products;
     }
 
+    @Override
+    public void setAvailable(Connection conn, int productId, boolean available) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(SET_AVAILABLE)) {
+            ps.setBoolean(1, available);
+            ps.setInt(2, productId);
+            ps.executeUpdate();
+        }
+    }
+
+    @Override
+    public void updateLowStockThreshold(Connection conn, int productId, int threshold) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(UPDATE_THRESHOLD)) {
+            ps.setInt(1, threshold);
+            ps.setInt(2, productId);
+            ps.executeUpdate();
+        }
+    }
+
+    @Override
+    public List<Product> findLowStock(Connection conn) throws SQLException {
+        List<Product> products = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(FIND_LOW_STOCK);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                products.add(mapRow(rs));
+            }
+        }
+        return products;
+    }
+
     private Product mapRow(ResultSet rs) throws SQLException {
         Product product = new Product();
         product.setProductId(rs.getInt("product_id"));
@@ -327,6 +366,8 @@ public class ProductDAOImpl implements ProductDAO {
         product.setImageFilename(rs.getString("image_filename"));
         product.setUnit(rs.getString("unit"));
         product.setActive(rs.getBoolean("is_active"));
+        product.setAvailable(rs.getBoolean("is_available"));
+        product.setLowStockThreshold(rs.getInt("low_stock_threshold"));
         product.setAvgPrepMinutes(rs.getInt("avg_prep_minutes"));
         product.setShelfQuantity(rs.getInt("shelf_quantity"));
         product.setWarehouseQuantity(rs.getInt("warehouse_quantity"));

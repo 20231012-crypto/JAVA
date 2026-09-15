@@ -14,6 +14,10 @@ import com.eaut.canteen.dao.impl.StockTransferDAOImpl;
 import com.eaut.canteen.dao.impl.WarehouseStockDAOImpl;
 import com.eaut.canteen.model.StockTransfer;
 import com.eaut.canteen.model.User;
+import com.eaut.canteen.dao.StockMovementDAO;
+import com.eaut.canteen.dao.impl.StockMovementDAOImpl;
+import com.eaut.canteen.model.StockLocation;
+import com.eaut.canteen.model.StockMovementReason;
 import com.eaut.canteen.util.DBConnection;
 
 import jakarta.servlet.ServletException;
@@ -29,6 +33,7 @@ public class StockTransferServlet extends HttpServlet {
     private static final WarehouseStockDAO warehouseStockDAO = new WarehouseStockDAOImpl();
     private static final ShelfStockDAO shelfStockDAO = new ShelfStockDAOImpl();
     private static final StockTransferDAO stockTransferDAO = new StockTransferDAOImpl();
+    private static final StockMovementDAO stockMovementDAO = new StockMovementDAOImpl();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -62,6 +67,12 @@ public class StockTransferServlet extends HttpServlet {
                 }
 
                 shelfStockDAO.increment(conn, productId, quantity);
+                // Two rows, not one: the warehouse losing stock and the shelf gaining it are both
+                // real movements, and a single row would leave one of the two counters unexplained.
+                stockMovementDAO.insert(conn, productId, StockLocation.WAREHOUSE, -quantity,
+                        StockMovementReason.TRANSFER_OUT, null, "Chuyển từ kho lên kệ", staff.getUserId());
+                stockMovementDAO.insert(conn, productId, StockLocation.SHELF, quantity,
+                        StockMovementReason.TRANSFER_IN, null, "Nhận lên kệ bán", staff.getUserId());
 
                 StockTransfer transfer = new StockTransfer();
                 transfer.setStoreStaffId(staff.getUserId());
