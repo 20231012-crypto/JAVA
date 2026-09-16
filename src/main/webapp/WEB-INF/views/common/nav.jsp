@@ -46,7 +46,7 @@
                     <c:if test="${sessionScope.user.permissions['admin.dashboard']}"><a href="${ctx}/admin">Quản trị</a></c:if>
                 </c:if>
                 <c:if test="${sessionScope.user.permissions['orders.queue']}"><a href="${ctx}/sales/orders">Đơn hàng</a></c:if>
-                <c:if test="${sessionScope.user.permissions['sales.counter']}"><a href="${ctx}/sales/counter-sale">Bán tại quầy</a></c:if>
+                <c:if test="${sessionScope.user.permissions['sales.counter']}"><a href="${ctx}/pos">Bán tại quầy</a></c:if>
                 <c:if test="${sessionScope.user.permissions['store.transfer']}"><a href="${ctx}/store/transfers">Chuyển hàng lên kệ</a></c:if>
                 <c:if test="${sessionScope.user.permissions['store.fulfillment']}"><a href="${ctx}/store/orders">Đơn cần giao</a></c:if>
                 <a href="${ctx}/attendance">Chấm công</a>

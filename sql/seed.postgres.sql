@@ -53,7 +53,9 @@ INSERT INTO role_permissions (role_id, permission_key)
      'customers.manage','attendance.view','stock.adjust','settings.manage',
      -- orders.queue and orders.action were SALES_STAFF-only, which left ADMIN unable to reach an
      -- order at all — and orders.refund is useless to someone who cannot open one.
-     'orders.manage','orders.refund','orders.queue','orders.action');
+     -- The dashboard offers the till as a sales channel, so the manager must be able to open it;
+     -- an organisation that wants the separation back removes this in /admin/roles.
+     'orders.manage','orders.refund','orders.queue','orders.action','sales.counter');
 
 -- STORE_STAFF do the counting, so the stock-take and write-off screen is theirs as much as the
 -- admin's.

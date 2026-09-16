@@ -70,15 +70,15 @@ public class ProductDAOImpl implements ProductDAO {
             "ORDER BY (p.original_price - p.price) DESC, p.name LIMIT ?";
 
     private static final String INSERT_PRODUCT =
-            "INSERT INTO products (category_id, name, description, price, original_price, promo_target_quantity, unit, is_active, avg_prep_minutes) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            "INSERT INTO products (category_id, name, description, price, original_price, promo_target_quantity, unit, is_active, avg_prep_minutes, tax_percent) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String INSERT_WAREHOUSE_STOCK =
             "INSERT INTO warehouse_stock (product_id, quantity) VALUES (?, 0)";
     private static final String INSERT_SHELF_STOCK =
             "INSERT INTO shelf_stock (product_id, quantity) VALUES (?, 0)";
     private static final String UPDATE =
             "UPDATE products SET category_id = ?, name = ?, description = ?, price = ?, original_price = ?, " +
-            "promo_target_quantity = ?, unit = ?, avg_prep_minutes = ? WHERE product_id = ?";
+            "promo_target_quantity = ?, unit = ?, avg_prep_minutes = ?, tax_percent = ? WHERE product_id = ?";
     private static final String UPDATE_IMAGE =
             "UPDATE products SET image_filename = ? WHERE product_id = ?";
     private static final String SET_ACTIVE =
@@ -150,6 +150,7 @@ public class ProductDAOImpl implements ProductDAO {
             ps.setString(7, product.getUnit());
             ps.setBoolean(8, true);
             ps.setInt(9, product.getAvgPrepMinutes());
+            ps.setBigDecimal(10, product.getTaxPercent());
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 keys.next();
@@ -177,7 +178,8 @@ public class ProductDAOImpl implements ProductDAO {
             setNullableInt(ps, 6, product.getPromoTargetQuantity());
             ps.setString(7, product.getUnit());
             ps.setInt(8, product.getAvgPrepMinutes());
-            ps.setInt(9, product.getProductId());
+            ps.setBigDecimal(9, product.getTaxPercent());
+            ps.setInt(10, product.getProductId());
             ps.executeUpdate();
         }
     }
@@ -368,6 +370,7 @@ public class ProductDAOImpl implements ProductDAO {
         product.setActive(rs.getBoolean("is_active"));
         product.setAvailable(rs.getBoolean("is_available"));
         product.setLowStockThreshold(rs.getInt("low_stock_threshold"));
+        product.setTaxPercent(rs.getBigDecimal("tax_percent"));
         product.setAvgPrepMinutes(rs.getInt("avg_prep_minutes"));
         product.setShelfQuantity(rs.getInt("shelf_quantity"));
         product.setWarehouseQuantity(rs.getInt("warehouse_quantity"));

@@ -48,16 +48,10 @@ public class CounterSaleServlet extends HttpServlet {
     private static final OrderStatusHistoryDAO historyDAO = new OrderStatusHistoryDAOImpl();
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-        try (Connection conn = DBConnection.getConnection()) {
-            req.setAttribute("pageTitle", "Bán hàng tại quầy");
-            req.setAttribute("products", productDAO.findAllActive(conn));
-            req.setAttribute("cart", getCounterCart(req));
-            req.getRequestDispatcher("/WEB-INF/views/sales/counter-sale.jsp").forward(req, resp);
-        } catch (SQLException e) {
-            throw new ServletException(e);
-        }
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        // The product-grid till was replaced by the full-screen one at /pos. Redirecting rather
+        // than deleting keeps bookmarks, the staff nav link and anyone's muscle memory working.
+        resp.sendRedirect(req.getContextPath() + "/pos");
     }
 
     @Override

@@ -7,7 +7,33 @@
 <jsp:include page="/WEB-INF/views/common/nav.jsp" />
 <main class="page-content">
     <div class="container">
-        <h1>Tổng quan</h1>
+        <div class="channel-head">
+            <h1>Tổng quan</h1>
+
+            <%-- The two sales channels, the way Sapo puts them: a manager standing at the counter
+                 should reach the till in one click, not through a menu. The POS link is gated by
+                 sales.counter, so an account that cannot ring up a sale is not shown a door it
+                 would be refused at. --%>
+            <div class="channel-switch" aria-label="Kênh bán hàng">
+                <span class="channel-switch-label">Kênh bán hàng</span>
+                <a class="channel-btn" href="${ctx}/products" target="_blank" rel="noopener">
+                    <span class="channel-btn-icon" aria-hidden="true"><svg class="icon"><use href="#i-store"/></svg></span>
+                    <span class="channel-btn-text">
+                        <strong>Website</strong>
+                        <small>Trang đặt hàng của sinh viên</small>
+                    </span>
+                </a>
+                <c:if test="${sessionScope.user.permissions['sales.counter']}">
+                    <a class="channel-btn channel-btn-primary" href="${ctx}/pos">
+                        <span class="channel-btn-icon" aria-hidden="true"><svg class="icon"><use href="#i-receipt"/></svg></span>
+                        <span class="channel-btn-text">
+                            <strong>POS</strong>
+                            <small>Bán hàng tại quầy</small>
+                        </span>
+                    </a>
+                </c:if>
+            </div>
+        </div>
 
         <%-- KPI row. Each revenue figure carries its change against the same length of time
              immediately before it — the number alone says nothing about whether trade is up. --%>

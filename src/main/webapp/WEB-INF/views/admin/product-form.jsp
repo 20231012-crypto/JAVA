@@ -56,6 +56,17 @@
             <div class="form-group">
                 <label for="avgPrepMinutes">Thời gian chế biến trung bình (phút)</label>
                 <input type="number" id="avgPrepMinutes" name="avgPrepMinutes" min="1" max="120" value="${empty product.productId ? 10 : product.avgPrepMinutes}">
+            </div>
+
+            <div class="form-group">
+                <label for="taxPercent">Thuế GTGT (%)</label>
+                <input type="number" id="taxPercent" name="taxPercent" min="0" max="99" step="0.5"
+                       value="${empty product.productId ? 0 : product.taxPercent}">
+                <span class="hint">
+                    Thuế đặt ở đây một lần; máy POS chỉ chọn món và thu tiền, không phải chọn thuế từng đơn.
+                    <strong>Giá bán ở trên đã bao gồm thuế</strong> — ô này ghi lại phần thuế nằm trong giá đó
+                    để in tách trên hóa đơn, nên sửa nó không làm khách phải trả thêm.
+                </span>
                 <span class="hint">Dùng để tính đồng hồ đếm ngược trên bảng bếp khi đơn được duyệt.</span>
             </div>
             <div class="form-group">

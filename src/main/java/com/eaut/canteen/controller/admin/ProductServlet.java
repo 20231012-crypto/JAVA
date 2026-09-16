@@ -112,6 +112,7 @@ public class ProductServlet extends HttpServlet {
         product.setCategoryId(Integer.parseInt(req.getParameter("categoryId")));
         String avgPrepMinutes = req.getParameter("avgPrepMinutes");
         product.setAvgPrepMinutes(avgPrepMinutes == null || avgPrepMinutes.isBlank() ? 10 : Integer.parseInt(avgPrepMinutes));
+        product.setTaxPercent(parseTaxPercent(req.getParameter("taxPercent")));
 
         String originalPrice = req.getParameter("originalPrice");
         product.setOriginalPrice(originalPrice == null || originalPrice.isBlank() ? null : new BigDecimal(originalPrice));
@@ -182,5 +183,27 @@ public class ProductServlet extends HttpServlet {
             applied++;
         }
         req.getSession().setAttribute("actionMessage", "Đã áp dụng cho " + applied + " món.");
+    }
+
+    /**
+     * VAT rate for this dish. Out-of-range or unparseable means no tax rather than a failed save:
+     * the field is optional, and a typo here should not block editing a dish's name.
+     */
+    private java.math.BigDecimal parseTaxPercent(String raw) {
+        String trimmed = RequestParams.trimmedOrNull(raw);
+        if (trimmed == null) {
+            return java.math.BigDecimal.ZERO;
+        }
+        try {
+            java.math.BigDecimal value = new java.math.BigDecimal(trimmed);
+            // The column CHECKs the same range; clamping here turns a rejected INSERT into a
+            // sensible save instead of a 500.
+            if (value.signum() < 0 || value.compareTo(java.math.BigDecimal.valueOf(99)) > 0) {
+                return java.math.BigDecimal.ZERO;
+            }
+            return value;
+        } catch (NumberFormatException e) {
+            return java.math.BigDecimal.ZERO;
+        }
     }
 }

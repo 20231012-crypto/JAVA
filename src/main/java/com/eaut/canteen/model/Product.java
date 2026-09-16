@@ -31,6 +31,12 @@ public class Product {
     private boolean available = true;
     /** Per-dish low-stock warning level. Bottled water and set lunches do not share a sensible one. */
     private int lowStockThreshold = 5;
+    /**
+     * VAT rate for this dish. Set when the product is created, because bottled drinks and prepared
+     * food are taxed differently and a cashier should not be deciding which at the till.
+     * {@code price} is tax-INCLUSIVE; this records how much of it is tax.
+     */
+    private BigDecimal taxPercent = BigDecimal.ZERO;
     /** Populated only by DAO methods that join warehouse_stock (e.g. admin listing). */
     private int warehouseQuantity;
     /** Not from the products table — set manually by the controller from FavoriteDAO for the current session's user, if logged in. */
@@ -201,6 +207,27 @@ public class Product {
      */
     public boolean isSellable() {
         return active && available && shelfQuantity > 0;
+    }
+
+    public BigDecimal getTaxPercent() {
+        return taxPercent;
+    }
+
+    public void setTaxPercent(BigDecimal taxPercent) {
+        this.taxPercent = taxPercent == null ? BigDecimal.ZERO : taxPercent;
+    }
+
+    /**
+     * The VAT contained in one unit at the current price. Because the price already includes the
+     * tax, the portion is price x rate / (100 + rate) — not price x rate / 100, which would be the
+     * answer for a pre-tax price and would overstate it.
+     */
+    public BigDecimal getUnitTaxAmount() {
+        if (taxPercent == null || taxPercent.signum() <= 0 || price == null) {
+            return BigDecimal.ZERO;
+        }
+        return price.multiply(taxPercent)
+                .divide(BigDecimal.valueOf(100).add(taxPercent), 0, java.math.RoundingMode.HALF_UP);
     }
 
     public boolean isInStock() {

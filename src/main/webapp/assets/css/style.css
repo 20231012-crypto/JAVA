@@ -3068,3 +3068,94 @@ kbd {
         width: 120px;
     }
 }
+
+/* ===== Sales-channel switcher on the dashboard =====
+   Two doors out of the back office: the student-facing site, and the till. A manager standing at
+   the counter should reach the POS in one click rather than through a menu. */
+.channel-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.channel-switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.channel-switch-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+}
+
+.channel-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 16px 9px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    color: var(--color-text);
+    transition: border-color var(--duration-fast) var(--ease-standard),
+                box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.channel-btn:hover {
+    border-color: var(--color-institutional);
+    box-shadow: var(--shadow-card);
+    text-decoration: none;
+}
+
+.channel-btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-btn);
+    background: var(--color-institutional-soft);
+    color: var(--color-institutional);
+    flex: 0 0 auto;
+}
+
+.channel-btn-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.channel-btn-text small {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+/* The till is where a manager is heading more often than the storefront, so it carries the accent
+   while the website link stays quiet. */
+.channel-btn-primary .channel-btn-icon {
+    background: var(--color-accent);
+    color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .channel-btn {
+        transition: none;
+    }
+}
+
+@media screen and (max-width: 700px) {
+    .channel-switch-label {
+        display: none;
+    }
+
+    .channel-btn-text small {
+        display: none;
+    }
+}

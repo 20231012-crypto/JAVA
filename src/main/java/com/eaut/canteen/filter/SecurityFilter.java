@@ -68,6 +68,9 @@ public class SecurityFilter implements Filter {
             new PathRule("/sales/orders/mark-paid", "orders.payment_confirm"),
             new PathRule("/sales/orders", "orders.queue"),
             new PathRule("/sales/counter-sale", "sales.counter"),
+            // The till moved to /pos as a sales channel of its own; same permission, so anyone who
+            // could ring up a sale before still can and nobody new gained the ability.
+            new PathRule("/pos", "sales.counter"),
             new PathRule("/sales/shop-status", "shop.status"),
             new PathRule("/store/transfers", "store.transfer"),
             new PathRule("/store/orders", "store.fulfillment"));

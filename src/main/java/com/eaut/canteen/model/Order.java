@@ -28,6 +28,13 @@ public class Order {
     private BigDecimal loyaltyDiscountAmount = BigDecimal.ZERO;
     /** The EAUT Pay incentive. Kept apart from discountAmount so the receipt can name each one. */
     private BigDecimal walletDiscountAmount = BigDecimal.ZERO;
+    /**
+     * VAT contained in this sale, snapshotted at the moment it happened. Prices are tax-inclusive,
+     * so this is a portion of totalAmount rather than an addition to it — a receipt breaks it out,
+     * it is never added on. Stored rather than recomputed for the same reason order_items keeps
+     * unit_price: a rate edited next term must not rewrite last term's receipts.
+     */
+    private BigDecimal taxAmount = BigDecimal.ZERO;
     private BigDecimal totalAmount;
     private OrderStatus orderStatus;
     private PaymentMethod paymentMethod;
@@ -258,6 +265,14 @@ public class Order {
 
     public void setWalletDiscountAmount(BigDecimal walletDiscountAmount) {
         this.walletDiscountAmount = walletDiscountAmount;
+    }
+
+    public BigDecimal getTaxAmount() {
+        return taxAmount;
+    }
+
+    public void setTaxAmount(BigDecimal taxAmount) {
+        this.taxAmount = taxAmount == null ? BigDecimal.ZERO : taxAmount;
     }
 
     public BigDecimal getRefundedAmount() {

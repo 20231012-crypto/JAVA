@@ -1,0 +1,792 @@
+/* ===== Point of sale =====
+   Loaded only by the till screen, on top of style.css for the shared tokens and buttons.
+
+   A till is not a web page. It fills the screen exactly once, never scrolls as a whole, and every
+   region scrolls inside itself — a cashier reaching for a button that has moved because the list
+   grew is a cashier who mis-rings an order. Hence the fixed grid below rather than document flow. */
+
+.pos-body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--color-bg);
+}
+
+.pos-shell {
+    display: grid;
+    grid-template-rows: 48px 1fr;
+    height: 100vh;
+}
+
+/* ---- top bar ---- */
+
+.pos-topbar {
+    display: grid;
+    grid-template-columns: 48px minmax(220px, 380px) 1fr auto;
+    align-items: center;
+    gap: 8px;
+    background: var(--color-institutional);
+    color: #fff;
+    padding-right: 14px;
+}
+
+.pos-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.pos-brand:hover {
+    background: rgba(255, 255, 255, 0.2);
+    text-decoration: none;
+}
+
+.pos-brand-mark {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.pos-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border-radius: var(--radius-btn);
+    padding: 0 10px;
+    height: 32px;
+    color: var(--color-text-muted);
+}
+
+.pos-search input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--color-text);
+}
+
+.pos-search input:focus {
+    outline: none;
+}
+
+/* Suggestions hang below their field and over everything else — the order list must not push it
+   around, and the pay panel must not cover it. */
+.pos-suggest {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-container);
+    max-height: 320px;
+    overflow-y: auto;
+    z-index: 50;
+    color: var(--color-text);
+}
+
+.pos-suggest[hidden] {
+    display: none !important;
+}
+
+.pos-suggest button {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    width: 100%;
+    border: none;
+    background: none;
+    padding: 9px 12px;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--color-text);
+}
+
+.pos-suggest button:hover,
+.pos-suggest button:focus-visible,
+.pos-suggest button.is-highlighted {
+    background: var(--color-institutional-soft);
+}
+
+.pos-suggest button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pos-suggest-hint {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+.pos-suggest-empty {
+    padding: 12px;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+/* ---- order tabs ---- */
+
+.pos-tabs {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.pos-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.pos-tab-form {
+    display: flex;
+    margin: 0;
+}
+
+.pos-tab {
+    display: flex;
+    align-items: center;
+    border-radius: var(--radius-btn) var(--radius-btn) 0 0;
+    padding: 0 4px 0 0;
+}
+
+.pos-tab.is-active {
+    background: var(--color-bg);
+}
+
+.pos-tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    background: none;
+    color: rgba(255, 255, 255, 0.85);
+    font-family: inherit;
+    font-size: 0.85rem;
+    padding: 8px 6px 8px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.pos-tab.is-active .pos-tab-btn {
+    color: var(--color-institutional);
+    font-weight: 600;
+}
+
+/* The dot is the "this tab has an order in progress" cue Sapo uses; it only reads as one when the
+   tab is the active one, so it takes the accent colour there and stays muted elsewhere. */
+.pos-tab-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.pos-tab.is-active .pos-tab-dot {
+    background: var(--color-success);
+}
+
+.pos-tab-count {
+    background: var(--color-accent);
+    color: #fff;
+    border-radius: var(--radius-pill);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0 6px;
+    min-width: 18px;
+    text-align: center;
+}
+
+.pos-tab-close,
+.pos-tab-add {
+    border: none;
+    background: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 4px 6px;
+    border-radius: var(--radius-btn);
+}
+
+.pos-tab.is-active .pos-tab-close {
+    color: var(--color-text-muted);
+}
+
+.pos-tab-close:hover,
+.pos-tab-add:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+
+.pos-tab-add {
+    font-size: 1.1rem;
+    margin-left: 4px;
+}
+
+.pos-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 0.82rem;
+}
+
+.pos-branch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.2;
+}
+
+.pos-branch small {
+    display: block;
+    opacity: 0.7;
+    font-size: 0.72rem;
+}
+
+.pos-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+/* ---- main three-column body ---- */
+
+.pos-main {
+    display: grid;
+    grid-template-columns: 48px 1fr minmax(300px, 340px);
+    min-height: 0;
+}
+
+.pos-rail {
+    background: #fff;
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0;
+    gap: 4px;
+}
+
+.pos-rail-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-btn);
+    color: var(--color-text-muted);
+}
+
+.pos-rail-link:hover {
+    background: var(--color-institutional-soft);
+    color: var(--color-institutional);
+    text-decoration: none;
+}
+
+.pos-rail-link.is-active {
+    background: var(--color-institutional-soft);
+    color: var(--color-institutional);
+}
+
+.pos-rail-bottom {
+    margin-top: auto;
+}
+
+/* ---- order list ---- */
+
+.pos-order {
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    min-height: 0;
+    background: #fff;
+    border-right: 1px solid var(--color-border);
+}
+
+/* Rows are assigned explicitly because the alert between the header and the list is conditional.
+   Left to auto-placement, a page with no alert shifts everything up a row and the list — the part
+   that should absorb the spare height — lands on an auto row while the footer takes the 1fr,
+   leaving the order area floating above a band of empty white. */
+.pos-order-head { grid-row: 1; }
+.pos-alert { grid-row: 2; }
+.pos-lines { grid-row: 3; }
+.pos-order-foot { grid-row: 4; }
+
+/* The four column widths are declared once here and reused by every line, which is what keeps the
+   headings above the numbers they label. */
+.pos-order-head,
+.pos-line {
+    display: grid;
+    grid-template-columns: 1fr auto 130px 110px 120px 32px;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+}
+
+.pos-order-head {
+    grid-template-columns: auto 1fr 130px 110px 120px 32px;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+.pos-order-title strong {
+    color: var(--color-text);
+}
+
+.pos-split {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.pos-split label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    margin: 0;
+}
+
+.pos-hint-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border);
+    font-size: 0.65rem;
+    font-style: italic;
+    cursor: help;
+}
+
+.pos-col-price,
+.pos-col-qty,
+.pos-col-total {
+    text-align: right;
+}
+
+.pos-alert {
+    margin: 10px 16px 0;
+}
+
+.pos-lines {
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.pos-line {
+    border-bottom: 1px solid var(--color-border);
+    grid-template-columns: 1fr 130px 110px 120px 32px;
+}
+
+.pos-line-name {
+    font-weight: 500;
+}
+
+.pos-badge-custom {
+    margin-left: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-warning);
+    background: var(--color-warning-soft);
+    border-radius: var(--radius-pill);
+    padding: 1px 7px;
+}
+
+.pos-qty-form {
+    display: flex;
+    justify-content: flex-end;
+    gap: 4px;
+    margin: 0;
+}
+
+.pos-qty-form input {
+    width: 64px;
+    text-align: center;
+    padding: 5px 6px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-btn);
+    font-family: inherit;
+}
+
+.pos-line-remove {
+    margin: 0;
+}
+
+.pos-line-remove button {
+    border: none;
+    background: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--radius-btn);
+}
+
+.pos-line-remove button:hover {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+}
+
+.pos-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 6px;
+    color: var(--color-text-muted);
+}
+
+.pos-empty-art {
+    width: 150px;
+    height: 125px;
+    fill: none;
+    stroke: var(--color-border);
+    stroke-width: 3;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.pos-empty-hint {
+    font-size: 0.85rem;
+}
+
+.pos-order-foot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--color-border);
+}
+
+.pos-note-form {
+    flex: 1;
+    margin: 0;
+    display: flex;
+    gap: 6px;
+}
+
+.pos-note-form input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-btn);
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.pos-staff {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+.pos-custom-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    background: var(--color-institutional-soft);
+    color: var(--color-institutional);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 9px 14px;
+    border-radius: var(--radius-btn);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.pos-custom-btn:hover {
+    background: #d3e0f5;
+}
+
+/* ---- payment panel ---- */
+
+.pos-pay {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    min-height: 0;
+    background: #fff;
+}
+
+.pos-customer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+}
+
+.pos-customer input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--color-text);
+}
+
+.pos-customer input:focus {
+    outline: none;
+}
+
+.pos-customer-name {
+    flex: 1;
+    color: var(--color-text);
+    font-weight: 600;
+}
+
+.pos-customer-clear {
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--color-text-muted);
+}
+
+.pos-pay-body {
+    padding: 14px;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.pos-pay-title {
+    font-size: 1rem;
+    margin-bottom: 12px;
+}
+
+.pos-pay-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    font-size: 0.9rem;
+}
+
+.pos-pay-row small {
+    color: var(--color-text-muted);
+}
+
+.pos-discount-row {
+    margin: 0;
+}
+
+.pos-discount-row label {
+    color: var(--color-institutional);
+    cursor: pointer;
+    margin: 0;
+}
+
+.pos-discount-row input {
+    width: 110px;
+    text-align: right;
+    padding: 5px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-btn);
+    font-family: inherit;
+}
+
+.pos-pay-total {
+    border-top: 1px solid var(--color-border);
+    margin-top: 6px;
+    padding-top: 12px;
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.pos-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.pos-pay-actions {
+    border-top: 1px solid var(--color-border);
+    padding: 12px 14px;
+    margin: 0;
+}
+
+.pos-method {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+}
+
+.pos-method label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    margin: 0;
+}
+
+.pos-method-label {
+    color: var(--color-text-muted);
+    width: 100%;
+    font-size: 0.78rem;
+}
+
+.pos-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.pos-actions .btn {
+    width: 100%;
+}
+
+/* A shortcut hint sitting on a solid button needs its own treatment — the shared kbd style is a
+   light key cap, which on the orange pay button reads as a blank white smudge. */
+.pos-actions .btn kbd,
+.pos-custom-btn kbd {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: inherit;
+}
+
+.pos-custom-btn kbd {
+    background: rgba(11, 60, 136, 0.1);
+    border-color: rgba(11, 60, 136, 0.2);
+}
+
+/* ---- custom product dialog ---- */
+
+.pos-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+}
+
+.pos-modal[hidden] {
+    display: none !important;
+}
+
+.pos-modal-box {
+    background: #fff;
+    border-radius: var(--radius-container);
+    padding: 22px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: var(--shadow-container);
+}
+
+.pos-modal-box h2 {
+    margin-bottom: 4px;
+}
+
+.pos-modal-box .hint {
+    display: block;
+    margin-bottom: 16px;
+}
+
+/* ---- printing ----
+   The bill is the same DOM, restyled: a separate print template would be a second thing to keep in
+   step with the order, and they would drift. */
+@media print {
+    .pos-topbar,
+    .pos-rail,
+    .pos-order-foot,
+    .pos-pay-actions,
+    .pos-customer,
+    .pos-split,
+    .pos-line-remove,
+    .pos-check,
+    .pos-modal {
+        display: none !important;
+    }
+
+    .pos-body,
+    .pos-shell,
+    .pos-main,
+    .pos-order,
+    .pos-pay {
+        display: block;
+        height: auto;
+        overflow: visible;
+        border: none;
+    }
+
+    .pos-lines {
+        overflow: visible;
+    }
+
+    .pos-qty-form input {
+        border: none;
+        width: auto;
+    }
+}
+
+/* A till runs on a fixed screen, but a manager may open it on a laptop. Below this the pay panel
+   moves under the order rather than squeezing both into an unusable width. */
+@media screen and (max-width: 1000px) {
+    .pos-body {
+        height: auto;
+        overflow: auto;
+    }
+
+    .pos-shell {
+        height: auto;
+        grid-template-rows: auto 1fr;
+    }
+
+    .pos-main {
+        grid-template-columns: 48px 1fr;
+    }
+
+    .pos-pay {
+        grid-column: 1 / -1;
+        border-top: 1px solid var(--color-border);
+    }
+
+    .pos-topbar {
+        grid-template-columns: 48px 1fr;
+        grid-template-rows: auto auto;
+        row-gap: 6px;
+        padding-bottom: 6px;
+    }
+
+    .pos-tabs,
+    .pos-topbar-right {
+        grid-column: 1 / -1;
+        padding: 0 10px;
+    }
+}

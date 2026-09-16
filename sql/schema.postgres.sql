@@ -119,6 +119,9 @@ CREATE TABLE products (
   is_active      BOOLEAN NOT NULL DEFAULT TRUE,           -- FALSE hides the dish from the menu entirely
   is_available   BOOLEAN NOT NULL DEFAULT TRUE,           -- FALSE leaves it visible but greyed out and unorderable
   low_stock_threshold INT NOT NULL DEFAULT 5 CHECK (low_stock_threshold >= 0),  -- per dish: "under 5" is meaningless across bottled water and set lunches
+  -- VAT rate for this dish, set once when it is created so the till never has to choose one.
+  -- price above is tax-INCLUSIVE; this records how much of it is tax, for the receipt breakdown.
+  tax_percent    DECIMAL(5,2) NOT NULL DEFAULT 0 CHECK (tax_percent >= 0 AND tax_percent < 100),
   avg_prep_minutes INT NOT NULL DEFAULT 10,              -- backs the KDS countdown timer (orders.estimated_ready_at)
   created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -195,6 +198,9 @@ CREATE TABLE orders (
   -- The EAUT Pay incentive, kept apart from discount_amount so the receipt can name each discount
   -- rather than printing a combined figure under the Smart ID label.
   wallet_discount_amount DECIMAL(12,0) NOT NULL DEFAULT 0 CHECK (wallet_discount_amount >= 0),
+  -- VAT contained in the sale, snapshotted at the time: a rate edited next term must not rewrite
+  -- last term's receipts.
+  tax_amount            DECIMAL(12,0) NOT NULL DEFAULT 0 CHECK (tax_amount >= 0),
   -- Refund bookkeeping. refunded_at doubles as the "already refunded" flag: the admin refund
   -- claims the order with UPDATE ... WHERE refunded_at IS NULL, which is what stops two
   -- simultaneous clicks both paying the student back.
