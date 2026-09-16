@@ -459,6 +459,53 @@ public class OrderDAOImpl implements OrderDAO {
     }
 
     @Override
+    public List<BigDecimal> sumRevenueForWindows(Connection conn,
+            java.util.List<java.time.LocalDateTime[]> windows) throws SQLException {
+        if (windows.isEmpty()) {
+            return List.of();
+        }
+
+        // One SUM ... FILTER per window, so N windows come back as N columns of one row. The WHERE
+        // narrows to the widest window first, which keeps the scan to the rows that can contribute
+        // to any of them.
+        StringBuilder sql = new StringBuilder("SELECT ");
+        java.time.LocalDateTime earliest = windows.get(0)[0];
+        java.time.LocalDateTime latest = windows.get(0)[1];
+        for (int i = 0; i < windows.size(); i++) {
+            if (i > 0) {
+                sql.append(", ");
+            }
+            sql.append("COALESCE(SUM(total_amount) FILTER (WHERE created_at >= ? AND created_at < ?), 0) AS w")
+               .append(i);
+            if (windows.get(i)[0].isBefore(earliest)) {
+                earliest = windows.get(i)[0];
+            }
+            if (windows.get(i)[1].isAfter(latest)) {
+                latest = windows.get(i)[1];
+            }
+        }
+        sql.append(" FROM orders WHERE order_status = 'COMPLETED' AND created_at >= ? AND created_at < ?");
+
+        List<BigDecimal> sums = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int index = 1;
+            for (java.time.LocalDateTime[] window : windows) {
+                ps.setTimestamp(index++, java.sql.Timestamp.valueOf(window[0]));
+                ps.setTimestamp(index++, java.sql.Timestamp.valueOf(window[1]));
+            }
+            ps.setTimestamp(index++, java.sql.Timestamp.valueOf(earliest));
+            ps.setTimestamp(index, java.sql.Timestamp.valueOf(latest));
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                for (int i = 0; i < windows.size(); i++) {
+                    sums.add(rs.getBigDecimal("w" + i));
+                }
+            }
+        }
+        return sums;
+    }
+
+    @Override
     public Map<String, Integer> orderOutcomeCounts(Connection conn, java.time.LocalDateTime from,
                                                    java.time.LocalDateTime to) throws SQLException {
         Map<String, Integer> counts = new LinkedHashMap<>();

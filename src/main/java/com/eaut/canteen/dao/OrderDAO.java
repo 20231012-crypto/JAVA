@@ -104,6 +104,17 @@ public interface OrderDAO {
     java.math.BigDecimal sumRevenueBetween(Connection conn, java.time.LocalDateTime from,
                                            java.time.LocalDateTime to) throws SQLException;
 
+    /**
+     * Revenue for several windows at once, in the same order they were given.
+     *
+     * <p>The dashboard needs six — today, this week, this month, and the comparable period before
+     * each — and asking six times cost six round trips. On the deployed site that is ~340ms of
+     * waiting for six numbers the database produces in well under a millisecond, which is why they
+     * are gathered with conditional aggregates in a single statement instead.
+     */
+    List<java.math.BigDecimal> sumRevenueForWindows(Connection conn,
+            List<java.time.LocalDateTime[]> windows) throws SQLException;
+
     /** Keys "completed" and "cancelled" (cancelled counts rejections too) for [from, to). */
     Map<String, Integer> orderOutcomeCounts(Connection conn, java.time.LocalDateTime from,
                                             java.time.LocalDateTime to) throws SQLException;

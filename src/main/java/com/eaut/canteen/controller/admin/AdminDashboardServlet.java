@@ -73,9 +73,7 @@ public class AdminDashboardServlet extends HttpServlet {
             LocalDateTime startOfWeek = AppClock.startOfThisWeek(conn);
             LocalDateTime startOfMonth = AppClock.startOfThisMonth(conn);
 
-            putRevenueWithTrend(req, conn, "today", startOfToday, endOfToday);
-            putRevenueWithTrend(req, conn, "week", startOfWeek, endOfToday);
-            putRevenueWithTrend(req, conn, "month", startOfMonth, endOfToday);
+            putRevenueWithTrends(req, conn, startOfToday, startOfWeek, startOfMonth, endOfToday);
 
             Map<String, Integer> outcomes = orderDAO.orderOutcomeCounts(conn, startOfMonth, endOfToday);
             req.setAttribute("completedThisMonth", outcomes.getOrDefault("completed", 0));
@@ -85,10 +83,12 @@ public class AdminDashboardServlet extends HttpServlet {
             req.setAttribute("walletFloat", userDAO.sumWalletFloat(conn));
 
             // Live operational counts — deliberately not date-bounded: "how many orders are
-            // waiting right now" has nothing to do with which day they were placed.
-            req.setAttribute("pendingCount", orderDAO.countByStatus(conn, OrderStatus.PENDING));
-            req.setAttribute("confirmedCount", orderDAO.countByStatus(conn, OrderStatus.CONFIRMED));
-            req.setAttribute("shippingCount", orderDAO.countByStatus(conn, OrderStatus.SHIPPING));
+            // waiting right now" has nothing to do with which day they were placed. One grouped
+            // query rather than three, for the same reason as the revenue windows above.
+            Map<String, Integer> byStatus = orderDAO.countsByStatus(conn);
+            req.setAttribute("pendingCount", byStatus.getOrDefault(OrderStatus.PENDING.name(), 0));
+            req.setAttribute("confirmedCount", byStatus.getOrDefault(OrderStatus.CONFIRMED.name(), 0));
+            req.setAttribute("shippingCount", byStatus.getOrDefault(OrderStatus.SHIPPING.name(), 0));
 
             req.setAttribute("hourPoints", hourSeries(conn, startOfToday, endOfToday));
             req.setAttribute("weekdayPoints", weekdaySeries(conn, startOfWeek.minusDays(21), endOfToday));
@@ -107,16 +107,34 @@ public class AdminDashboardServlet extends HttpServlet {
     }
 
     /**
-     * A revenue figure plus how it compares with the same length of time immediately before it.
-     * "Today vs yesterday", "this week vs last week" — the comparison is what makes the number mean
-     * anything; 2.4 million đồng on its own says nothing about whether trade is up.
+     * The three revenue figures and how each compares with the same length of time immediately
+     * before it. The comparison is what makes the number mean anything; 2.4 million đồng on its own
+     * says nothing about whether trade is up.
+     *
+     * <p>All six come back from one statement. Asked separately they were six round trips to a
+     * database on the other side of the world, for six numbers it computes in microseconds.
      */
-    private void putRevenueWithTrend(HttpServletRequest req, Connection conn, String key,
-                                     LocalDateTime from, LocalDateTime to) throws SQLException {
-        BigDecimal current = orderDAO.sumRevenueBetween(conn, from, to);
-        BigDecimal previous = orderDAO.sumRevenueBetween(conn, AppClock.previousWindowStart(from, to), from);
-        req.setAttribute("revenue" + capitalize(key), current);
-        req.setAttribute("revenue" + capitalize(key) + "Trend", percentChange(previous, current));
+    private void putRevenueWithTrends(HttpServletRequest req, Connection conn,
+                                      LocalDateTime startOfToday, LocalDateTime startOfWeek,
+                                      LocalDateTime startOfMonth, LocalDateTime now) throws SQLException {
+        String[] keys = {"Today", "Week", "Month"};
+        LocalDateTime[] starts = {startOfToday, startOfWeek, startOfMonth};
+
+        // Current window then its predecessor, for each of the three, in a fixed order the reader
+        // below relies on.
+        List<LocalDateTime[]> windows = new ArrayList<>();
+        for (LocalDateTime start : starts) {
+            windows.add(new LocalDateTime[]{start, now});
+            windows.add(new LocalDateTime[]{AppClock.previousWindowStart(start, now), start});
+        }
+
+        List<BigDecimal> sums = orderDAO.sumRevenueForWindows(conn, windows);
+        for (int i = 0; i < keys.length; i++) {
+            BigDecimal current = sums.get(i * 2);
+            BigDecimal previous = sums.get(i * 2 + 1);
+            req.setAttribute("revenue" + keys[i], current);
+            req.setAttribute("revenue" + keys[i] + "Trend", percentChange(previous, current));
+        }
     }
 
     /**
@@ -131,10 +149,6 @@ public class AdminDashboardServlet extends HttpServlet {
                 .multiply(BigDecimal.valueOf(100))
                 .divide(previous, 0, RoundingMode.HALF_UP)
                 .intValue();
-    }
-
-    private String capitalize(String s) {
-        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
     /** Revenue through the trading day, one point per hour, scaled into a 0-100 viewBox. */

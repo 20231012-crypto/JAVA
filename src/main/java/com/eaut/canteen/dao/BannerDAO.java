@@ -3,6 +3,7 @@ package com.eaut.canteen.dao;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 import com.eaut.canteen.model.Banner;
 
@@ -10,6 +11,13 @@ public interface BannerDAO {
 
     /** Active banners for one position (HEAD/FOOTER/LEFT/RIGHT), ordered for display. */
     List<Banner> findActiveByPosition(Connection conn, String position) throws SQLException;
+
+    /**
+     * Every currently-visible banner, keyed by position. The catalog page needs all four positions
+     * and used to ask for them one at a time — four round trips to fetch one small table.
+     * Positions with no banner are present as empty lists, so callers never have to null-check.
+     */
+    Map<String, List<Banner>> findActiveGroupedByPosition(Connection conn) throws SQLException;
 
     List<Banner> findAllForAdmin(Connection conn) throws SQLException;
 

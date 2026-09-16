@@ -8,6 +8,7 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.eaut.canteen.dao.BannerDAO;
 import com.eaut.canteen.model.Banner;
@@ -24,6 +25,14 @@ public class BannerDAOImpl implements BannerDAO {
     // replacing it, so the manual switch still takes a banner down immediately regardless of dates,
     // and a banner with no dates behaves exactly as it did before scheduling existed.
     // end_at is exclusive so a banner set to end at midnight is gone the instant that date starts.
+    // Same visibility rule as FIND_ACTIVE_BY_POSITION below, minus the position filter: one round
+    // trip for the whole (small) table instead of one per position.
+    private static final String FIND_ACTIVE_ALL_POSITIONS =
+            BASE_SELECT + "WHERE is_active = TRUE " +
+            "AND (start_at IS NULL OR start_at <= CURRENT_TIMESTAMP) " +
+            "AND (end_at IS NULL OR end_at > CURRENT_TIMESTAMP) " +
+            "ORDER BY position, sort_order, banner_id";
+
     private static final String FIND_ACTIVE_BY_POSITION =
             BASE_SELECT + "WHERE is_active = TRUE AND position = ? " +
             "AND (start_at IS NULL OR start_at <= CURRENT_TIMESTAMP) " +
@@ -62,6 +71,24 @@ public class BannerDAOImpl implements BannerDAO {
             }
         }
         return banners;
+    }
+
+    @Override
+    public Map<String, List<Banner>> findActiveGroupedByPosition(Connection conn) throws SQLException {
+        Map<String, List<Banner>> byPosition = new java.util.HashMap<>();
+        // Seeded with every position so a caller can read one that has no banners without a
+        // null check, and so the JSP's "is there a rail?" test stays a simple emptiness test.
+        for (String position : new String[]{"HEAD", "FOOTER", "LEFT", "RIGHT"}) {
+            byPosition.put(position, new ArrayList<>());
+        }
+        try (PreparedStatement ps = conn.prepareStatement(FIND_ACTIVE_ALL_POSITIONS);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Banner banner = mapRow(rs);
+                byPosition.computeIfAbsent(banner.getPosition(), key -> new ArrayList<>()).add(banner);
+            }
+        }
+        return byPosition;
     }
 
     @Override

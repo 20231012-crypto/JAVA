@@ -26,6 +26,7 @@ import com.eaut.canteen.model.OrderStatus;
 import com.eaut.canteen.model.Product;
 import com.eaut.canteen.model.RecentActivityItem;
 import com.eaut.canteen.model.User;
+import com.eaut.canteen.model.Banner;
 import com.eaut.canteen.util.DBConnection;
 import com.eaut.canteen.util.Settings;
 import com.eaut.canteen.util.RequestParams;
@@ -166,14 +167,19 @@ public class CatalogServlet extends HttpServlet {
 
         // Layout auto-adjusts to whichever positions actually have an active banner — see
         // catalog.jsp/style.css .catalog-layout — instead of always reserving the space.
-        req.setAttribute("headBanners", bannerDAO.findActiveByPosition(conn, "HEAD"));
+        // One query for all four positions instead of one per position: on the deployed site a
+        // round trip to Neon costs ~57ms, so four of them for one small table was ~170ms of pure
+        // waiting.
+        Map<String, List<Banner>> banners = bannerDAO.findActiveGroupedByPosition(conn);
+        req.setAttribute("headBanners", banners.get("HEAD"));
+        req.setAttribute("footerBanners", banners.get("FOOTER"));
+        req.setAttribute("leftBanners", banners.get("LEFT"));
+        req.setAttribute("rightBanners", banners.get("RIGHT"));
+
         // Read once per catalog render rather than per page site-wide: this is the only page the
         // effects are meant for, and Settings caches so the cost is a map lookup.
         req.setAttribute("effectsMode", Settings.getString(conn, "effects.mode", "NONE"));
         req.setAttribute("effectsIntensity", Settings.getInt(conn, "effects.intensity", 2));
-        req.setAttribute("leftBanners", bannerDAO.findActiveByPosition(conn, "LEFT"));
-        req.setAttribute("rightBanners", bannerDAO.findActiveByPosition(conn, "RIGHT"));
-        req.setAttribute("footerBanners", bannerDAO.findActiveByPosition(conn, "FOOTER"));
 
         req.getRequestDispatcher("/WEB-INF/views/customer/catalog.jsp").forward(req, resp);
     }

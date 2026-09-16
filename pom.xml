@@ -45,6 +45,21 @@
     </dependency>
 
     <!-- PostgreSQL JDBC driver (Render + Neon deploy, see render-deploy.md) -->
+    <!-- Connection pool. Every request used to open a fresh connection to Neon, and measured from
+         Vietnam that handshake (TCP + TLS + Postgres auth across a long link) cost ~400ms on every
+         single page that touches the database — more than all its queries put together. Pooling is
+         the one change that removes that cost outright.
+
+         HikariCP rather than a hand-rolled pool: borrowing and returning connections correctly
+         (resetting autoCommit, rolling back a dirty connection, evicting broken ones, staying
+         thread-safe) is exactly the kind of code that looks simple and is not, and this
+         application moves real money. -->
+    <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
+      <version>5.1.0</version>
+    </dependency>
+
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
