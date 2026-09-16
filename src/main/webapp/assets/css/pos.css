@@ -46,9 +46,13 @@
 }
 
 .pos-brand-mark {
-    font-family: "Plus Jakarta Sans", sans-serif;
-    font-weight: 700;
-    font-size: 1.2rem;
+    /* Logo trường là ảnh vuông. object-fit: contain giữ nguyên tỷ lệ — cover sẽ cắt mất viền
+       của con dấu trường, thứ dễ nhận ra nhất trong logo. */
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+    border-radius: 4px;
+    background: #fff;
 }
 
 .pos-search {

@@ -31,6 +31,7 @@ INSERT INTO permissions (permission_key, group_name, display_name, sort_order) V
   ('customers.manage',       'Quản trị',       'Quản lý tài khoản khách hàng',         52),
   ('attendance.view',        'Quản trị',       'Xem báo cáo chấm công nhân viên',      55),
   -- Added with the admin rebuild (migrations 013/015/016).
+  ('suppliers.manage',       'Kho & vận hành', 'Quản lý nhà cung cấp',                 72),
   ('stock.adjust',           'Kho & vận hành', 'Kiểm kê, hủy hàng & xem sổ kho',        75),
   ('orders.manage',          'Bán hàng',       'Xem & lọc toàn bộ đơn hàng',            95),
   ('orders.refund',          'Tài chính',      'Hủy đơn và hoàn tiền vào ví khách',    145),
@@ -50,7 +51,7 @@ INSERT INTO role_permissions (role_id, permission_key)
   WHERE r.role_key = 'ADMIN' AND p.permission_key IN
     ('admin.dashboard','categories.manage','products.manage','buildings.manage','banners.manage',
      'staff.manage','roles.manage','stock.import','wallet.topup','reports.view','shop.status',
-     'customers.manage','attendance.view','stock.adjust','settings.manage',
+     'customers.manage','attendance.view','stock.adjust','settings.manage','suppliers.manage',
      -- orders.queue and orders.action were SALES_STAFF-only, which left ADMIN unable to reach an
      -- order at all — and orders.refund is useless to someone who cannot open one.
      -- The dashboard offers the till as a sales channel, so the manager must be able to open it;

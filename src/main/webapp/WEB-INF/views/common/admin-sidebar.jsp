@@ -104,6 +104,15 @@
                 </a>
             </li>
         </c:if>
+        <c:if test="${sessionScope.user.permissions['suppliers.manage']}">
+            <li>
+                <a class="admin-rail-link ${fn:startsWith(path, '/admin/suppliers') ? 'is-active' : ''}"
+                   href="${ctx}/admin/suppliers">
+                    <span class="admin-rail-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-truck"/></svg></span>
+                    <span class="admin-rail-label">Nhà cung cấp</span>
+                </a>
+            </li>
+        </c:if>
 
         <c:if test="${sessionScope.user.permissions['customers.manage']
                       or sessionScope.user.permissions['staff.manage']

@@ -6,10 +6,12 @@ import java.sql.SQLException;
 
 import com.eaut.canteen.dao.ProductDAO;
 import com.eaut.canteen.dao.ShelfStockDAO;
+import com.eaut.canteen.dao.StockImportDAO;
 import com.eaut.canteen.dao.StockMovementDAO;
 import com.eaut.canteen.dao.WarehouseStockDAO;
 import com.eaut.canteen.dao.impl.ProductDAOImpl;
 import com.eaut.canteen.dao.impl.ShelfStockDAOImpl;
+import com.eaut.canteen.dao.impl.StockImportDAOImpl;
 import com.eaut.canteen.dao.impl.StockMovementDAOImpl;
 import com.eaut.canteen.dao.impl.WarehouseStockDAOImpl;
 import com.eaut.canteen.model.Product;
@@ -46,6 +48,7 @@ public class InventoryServlet extends HttpServlet {
     private static final int MAX_ADJUSTMENT = 100_000;
 
     private static final ProductDAO productDAO = new ProductDAOImpl();
+    private static final StockImportDAO stockImportDAO = new StockImportDAOImpl();
     private static final StockMovementDAO movementDAO = new StockMovementDAOImpl();
     private static final ShelfStockDAO shelfStockDAO = new ShelfStockDAOImpl();
     private static final WarehouseStockDAO warehouseStockDAO = new WarehouseStockDAOImpl();
@@ -64,6 +67,9 @@ public class InventoryServlet extends HttpServlet {
 
             req.setAttribute("products", productDAO.findAllForAdmin(conn));
             req.setAttribute("lowStock", productDAO.findLowStock(conn));
+            // "Hàng đang về" phân biệt "hết hàng, phải đặt gấp" với "hết hàng nhưng chiều nay
+            // có" — trước đây trang này không có nên nhìn đâu cũng thấy phải đặt thêm.
+            req.setAttribute("incoming", stockImportDAO.incomingByProduct(conn));
             req.setAttribute("movements",
                     movementDAO.findFiltered(conn, productId, reason, null, null,
                             LEDGER_PAGE_SIZE, (page - 1) * LEDGER_PAGE_SIZE));

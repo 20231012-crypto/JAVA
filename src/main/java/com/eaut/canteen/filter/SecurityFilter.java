@@ -49,6 +49,7 @@ public class SecurityFilter implements Filter {
             new PathRule("/admin/staff", "staff.manage"),
             new PathRule("/admin/roles", "roles.manage"),
             new PathRule("/admin/stock-imports", "stock.import"),
+            new PathRule("/admin/suppliers", "suppliers.manage"),
             new PathRule("/admin/wallet", "wallet.topup"),
             new PathRule("/admin/customers", "customers.manage"),
             new PathRule("/admin/attendance", "attendance.view"),

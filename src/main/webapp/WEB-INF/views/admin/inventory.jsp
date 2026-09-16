@@ -78,13 +78,24 @@
         <div class="table-scroll">
             <table class="data-table">
                 <thead>
-                    <tr><th>Món</th><th>Tồn kho</th><th>Tồn kệ</th><th>Ngưỡng cảnh báo</th><th>Trạng thái</th></tr>
+                    <tr><th>Món</th><th>Tồn kho</th><th>Đang về</th><th>Tồn kệ</th><th>Ngưỡng cảnh báo</th><th>Trạng thái</th></tr>
                 </thead>
                 <tbody>
                     <c:forEach var="p" items="${products}">
                         <tr>
                             <td><c:out value="${p.name}" /></td>
                             <td>${p.warehouseQuantity}</td>
+                            <td>
+                                <%-- Số đã đặt nhà cung cấp mà chưa nhận. Có nó thì "sắp hết" mới đọc
+                                     được đúng: hết hàng nhưng chiều nay có 50 thùng về là chuyện khác
+                                     hẳn với hết hàng và chưa đặt gì. --%>
+                                <c:choose>
+                                    <c:when test="${incoming[p.productId] > 0}">
+                                        <a href="${ctx}/admin/stock-imports?status=DRAFT">+${incoming[p.productId]}</a>
+                                    </c:when>
+                                    <c:otherwise><span class="hint">—</span></c:otherwise>
+                                </c:choose>
+                            </td>
                             <td>
                                 ${p.shelfQuantity}
                                 <c:if test="${p.active and p.lowStock}">

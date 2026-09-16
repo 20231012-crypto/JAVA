@@ -26,7 +26,7 @@
 
     <header class="pos-topbar">
         <a class="pos-brand" href="${ctx}/admin" title="Về trang quản trị">
-            <span class="pos-brand-mark">S</span>
+            <img class="pos-brand-mark" src="${ctx}/assets/images/brand/eaut-logo.jpg" alt="EAUT">
         </a>
 
         <%-- F3 focuses this. A cashier's hands stay on the keyboard, so the search is the primary

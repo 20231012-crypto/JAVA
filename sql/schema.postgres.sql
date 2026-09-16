@@ -140,22 +140,70 @@ CREATE TABLE shelf_stock (
   quantity    INT NOT NULL DEFAULT 0 CHECK (quantity >= 0)
 );
 
--- Nhập hàng: Admin/Manager stock-in receipt (header + lines)
-CREATE TABLE stock_imports (
-  import_id      SERIAL PRIMARY KEY,
-  admin_id       INT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
-  supplier_name  VARCHAR(150) NULL,
-  imported_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  note           VARCHAR(255) NULL
+-- Nhà cung cấp. Phải khai báo TRƯỚC stock_imports vì phiếu nhập tham chiếu tới đây.
+CREATE TABLE suppliers (
+  supplier_id  SERIAL PRIMARY KEY,
+  name         VARCHAR(150) NOT NULL,
+  phone        VARCHAR(20)  NULL,
+  email        VARCHAR(150) NULL,
+  address      VARCHAR(255) NULL,
+  note         VARCHAR(255) NULL,
+  is_active    BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE stock_import_items (
-  import_item_id  SERIAL PRIMARY KEY,
-  import_id       INT NOT NULL REFERENCES stock_imports(import_id) ON DELETE CASCADE,
-  product_id      INT NOT NULL REFERENCES products(product_id) ON DELETE RESTRICT,
-  quantity        INT NOT NULL,
-  unit_cost       DECIMAL(12,0) NOT NULL
+-- Chỉ ràng buộc trùng tên trên bản ghi còn hoạt động, để tên của một NCC đã ngừng vẫn dùng lại được.
+CREATE UNIQUE INDEX uq_suppliers_name_active ON suppliers (lower(name)) WHERE is_active;
+
+-- Nhập hàng: phiếu nhập từ nhà cung cấp (đầu phiếu + các dòng).
+--
+-- Quy trình hai bước, không phải một: lập phiếu ghi lại việc ĐẶT hàng (status DRAFT, kho chưa
+-- động), rồi khi hàng về mới điền số thực nhận và xác nhận thì warehouse_stock mới cộng. Khoảng
+-- chênh giữa quantity (đặt) và received_quantity (nhận) chính là chỗ bắt được giao thiếu, hàng vỡ
+-- và giao nhầm — mô hình một bước trước đây luôn ghi sổ đúng bằng số đặt, kể cả khi kho không khớp.
+CREATE TABLE stock_imports (
+  import_id       SERIAL PRIMARY KEY,
+  code            VARCHAR(20) NULL UNIQUE,
+  admin_id        INT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
+  supplier_id     INT NULL REFERENCES suppliers(supplier_id) ON DELETE SET NULL,
+  -- Bản chụp tên NCC tại thời điểm lập phiếu, cùng lý do order_items giữ unit_price: đổi tên nhà
+  -- cung cấp về sau không được viết lại chứng từ đã phát sinh.
+  supplier_name   VARCHAR(150) NULL,
+  status          VARCHAR(16) NOT NULL DEFAULT 'DRAFT'
+                    CHECK (status IN ('DRAFT', 'PARTIAL', 'RECEIVED', 'CANCELLED')),
+  expected_date   DATE NULL,
+  discount_amount DECIMAL(12,0) NOT NULL DEFAULT 0,
+  other_cost      DECIMAL(12,0) NOT NULL DEFAULT 0,
+  paid_amount     DECIMAL(12,0) NOT NULL DEFAULT 0,
+  imported_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  received_at     TIMESTAMP NULL,
+  received_by     INT NULL REFERENCES users(user_id) ON DELETE SET NULL,
+  cancelled_at    TIMESTAMP NULL,
+  updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  note            VARCHAR(255) NULL,
+  CONSTRAINT chk_stock_imports_money
+    CHECK (discount_amount >= 0 AND other_cost >= 0 AND paid_amount >= 0)
 );
+
+CREATE INDEX idx_stock_imports_status   ON stock_imports(status, imported_at DESC);
+CREATE INDEX idx_stock_imports_supplier ON stock_imports(supplier_id);
+
+-- Mã phiếu lấy từ sequence chứ không suy ra từ import_id sau khi chèn — cùng lý do với
+-- order_ticket_seq: có mã trước khi có hàng, một câu INSERT, không tranh chấp unique.
+CREATE SEQUENCE stock_import_code_seq START 1;
+
+CREATE TABLE stock_import_items (
+  import_item_id    SERIAL PRIMARY KEY,
+  import_id         INT NOT NULL REFERENCES stock_imports(import_id) ON DELETE CASCADE,
+  product_id        INT NOT NULL REFERENCES products(product_id) ON DELETE RESTRICT,
+  quantity          INT NOT NULL CHECK (quantity > 0),
+  received_quantity INT NOT NULL DEFAULT 0,
+  unit_cost         DECIMAL(12,0) NOT NULL,
+  CONSTRAINT chk_import_items_received
+    CHECK (received_quantity >= 0 AND received_quantity <= quantity)
+);
+
+CREATE INDEX idx_import_items_product ON stock_import_items(product_id);
 
 -- Store staff transfers stock kho -> kệ; one row per product per physical restock action.
 CREATE TABLE stock_transfers (
