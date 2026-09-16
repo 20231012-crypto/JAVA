@@ -39,9 +39,14 @@ public final class FileUploadUtil {
         Files.createDirectories(uploadDir);
         Path target = uploadDir.resolve(generatedName);
 
+        // Shrunk before it is written, not after. A photo straight off a phone camera is several
+        // megabytes and gets rendered in a 200px card — storing the original would put back exactly
+        // the problem the seed photos had (11.2MB of dish pictures for one menu page).
+        byte[] uploaded;
         try (InputStream in = filePart.getInputStream()) {
-            Files.copy(in, target);
+            uploaded = in.readAllBytes();
         }
+        Files.write(target, ImageResizer.shrink(uploaded));
 
         return generatedName;
     }

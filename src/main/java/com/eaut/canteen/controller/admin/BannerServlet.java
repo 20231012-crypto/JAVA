@@ -12,6 +12,7 @@ import com.eaut.canteen.dao.impl.BannerDAOImpl;
 import com.eaut.canteen.model.Banner;
 import com.eaut.canteen.util.AppClock;
 import com.eaut.canteen.util.DBConnection;
+import com.eaut.canteen.util.ImageResizer;
 import com.eaut.canteen.util.RequestParams;
 
 import jakarta.servlet.ServletException;
@@ -141,6 +142,11 @@ public class BannerServlet extends HttpServlet {
 
         if (hasUpload) {
             byte[] imageData = readAllBytes(imagePart.getInputStream());
+            // Images only. A banner may also be a short video clip, and feeding those bytes to an
+            // image decoder would either fail or — worse — silently replace the clip with a still.
+            if (ALLOWED_IMAGE_TYPES.contains(contentType)) {
+                imageData = ImageResizer.shrink(imageData);
+            }
             bannerDAO.updateImage(conn, banner.getBannerId(), imageData, contentType);
         }
 
